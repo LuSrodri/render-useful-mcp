@@ -1,0 +1,141 @@
+##
+# Watches Render's published API description and opens a pull request when it changes.
+#
+# Render does not serve its OpenAPI document from a stable URL, so `scripts/fetch-spec.ts`
+# extracts it from the docs HTML. That is fragile by nature, which is why a failed
+# extraction fails this workflow loudly instead of being reported as "no changes" — going
+# quietly blind to upstream changes would be far worse than a noisy red run.
+#
+# The PR is never merged automatically. New Render endpoints can be breaking (a removed
+# tool, a newly required argument), so a human reviews the summary the diff produces.
+##
+name: Spec sync
+
+on:
+  schedule:
+    # 06:00 UTC on Mondays. Render ships API changes rarely; daily runs would mostly
+    # produce noise, and a week's delay on a new endpoint costs nothing.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# A second run while one is in flight would race on the same branch.
+concurrency:
+  group: spec-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      # Keep the pre-change catalogue so the PR body can describe what actually moved.
+      - name: Snapshot the current catalogue
+        run: cp src/generated/operations.json "$RUNNER_TEMP/before.json"
+
+      # Any failure here is a real failure: either the network is down or, more likely,
+      # Render changed their docs platform and the extraction needs to be re-derived.
+      - name: Fetch the current Render spec
+        run: npx tsx scripts/fetch-spec.ts
+
+      - name: Detect changes
+        id: detect
+        run: |
+          if git diff --quiet spec/render-openapi.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Spec is unchanged."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Spec changed."
+          fi
+
+      - name: Regenerate the tool catalogue
+        if: steps.detect.outputs.changed == 'true'
+        run: npm run generate
+
+      # A spec change that does not alter the catalogue is formatting or prose only.
+      # Opening a PR for that is pure noise, so stop here.
+      - name: Check whether the catalogue actually changed
+        if: steps.detect.outputs.changed == 'true'
+        id: catalogue
+        run: |
+          if git diff --quiet src/generated/operations.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Spec changed but the tool catalogue did not."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Runs before the PR is opened: a catalogue that fails the suite is still worth
+      # surfacing, but the reviewer must see that up front rather than discover it in CI.
+      - name: Verify the regenerated catalogue
+        if: steps.catalogue.outputs.changed == 'true'
+        id: verify
+        continue-on-error: true
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+
+      - name: Summarise the change
+        if: steps.catalogue.outputs.changed == 'true'
+        id: summary
+        run: |
+          {
+            echo 'body<<PR_BODY_EOF'
+            echo "Render's published API description changed. This PR updates the vendored spec and the generated tool catalogue."
+            echo
+            npx tsx scripts/diff-catalogue.ts "$RUNNER_TEMP/before.json" src/generated/operations.json
+            echo
+            if [ "${{ steps.verify.outcome }}" = "success" ]; then
+              echo '✅ Lint, type-check and tests pass against the regenerated catalogue.'
+            else
+              echo '> [!CAUTION]'
+              echo '> Lint, type-check or tests **failed** against the regenerated catalogue.'
+              echo '> The generator refuses to emit a catalogue it cannot fully model, so this usually'
+              echo '> means Render introduced a shape the generator needs to learn. See the run logs.'
+            fi
+            echo
+            echo '---'
+            echo '_Opened automatically by `.github/workflows/spec-sync.yml`._'
+            echo PR_BODY_EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the pull request
+        if: steps.catalogue.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BODY: ${{ steps.summary.outputs.body }}
+        run: |
+          BRANCH="spec-sync"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add spec/render-openapi.json src/generated/operations.json
+          git commit -m "Sync Render API spec and regenerate tool catalogue"
+          # Force-push: the branch is a disposable mirror of the latest upstream spec,
+          # not a history worth preserving across runs.
+          git push --force origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --body "$BODY"
+            echo "Updated existing pull request."
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "Sync Render API spec" \
+              --body "$BODY"
+          fi

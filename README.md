@@ -155,13 +155,26 @@ The test suite covers catalogue invariants (all 207 operations, no dangling `$re
 
 ### Updating to a new Render API version
 
-Replace `spec/render-openapi.json`, then:
+This is automated. `.github/workflows/spec-sync.yml` runs weekly, fetches Render's current
+API description, regenerates the catalogue, and opens a pull request when the set of tools
+actually changes — with a summary of which tools were added, removed or changed shape, and
+a warning when the change is breaking. Nothing merges automatically.
+
+To do it by hand, or to check right now:
 
 ```bash
-npm run generate   # rebuild the catalogue
+npm run sync-spec   # fetch the current spec into spec/render-openapi.json
+npm run generate    # rebuild the catalogue from it
 git diff src/generated/operations.json
 npm test
 ```
+
+Render does not serve its OpenAPI document from a stable URL — the documented `.json` and
+`.yaml` endpoints 404 — so `scripts/fetch-spec.ts` extracts it from the docs HTML. That is
+fragile by nature, so it validates what it extracts (title, server, minimum operation
+count) and fails loudly rather than overwriting a good spec with a truncated one. If Render
+changes their docs platform, the sync workflow goes red instead of quietly reporting "no
+changes" forever.
 
 The generator refuses to emit a catalogue it cannot fully understand — an unmapped tag, a
 name collision, a cyclic `$ref`, a path parameter missing from its template, or a body

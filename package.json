@@ -57,7 +57,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "npm run generate && npm run lint && npm run typecheck && npm run test",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "sync-spec": "tsx scripts/fetch-spec.ts",
+    "diff-catalogue": "tsx scripts/diff-catalogue.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
