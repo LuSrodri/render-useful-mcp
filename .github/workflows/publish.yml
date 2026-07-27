@@ -1,0 +1,66 @@
+##
+# Publishes to npm via Trusted Publishing (OIDC) when a `v*` tag is pushed.
+#
+# No NPM_TOKEN is involved: npm exchanges GitHub's short-lived OIDC token for a
+# scoped publish credential. The trust relationship is configured on npmjs.com and
+# is bound to this exact filename — renaming this file breaks publishing until the
+# configuration on npmjs.com is updated to match.
+##
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  # Required for OIDC. Without it npm falls back to token auth and fails with ENEEDAUTH.
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest # Trusted publishing does not support self-hosted runners.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          # Dependency caching is deliberately omitted: a release builds from a clean tree.
+
+      # Trusted publishing needs npm >= 11.5.1, which is newer than the npm bundled
+      # with some Node 24 patch releases. Upgrading explicitly removes that variable.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Fail if the tag does not match package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag v$TAG does not match package.json version $PKG." >&2
+            exit 1
+          fi
+          echo "Publishing version $PKG"
+
+      - run: npm ci
+
+      # The published catalogue must be the one that was reviewed, not one the build
+      # silently regenerated from a spec that changed underneath it.
+      - name: Verify generated catalogue is up to date
+        run: |
+          npm run generate
+          git diff --exit-code src/generated/operations.json
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      # Provenance attestation is generated automatically for public repo + public package.
+      - run: npm publish
