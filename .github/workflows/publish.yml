@@ -31,11 +31,12 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           # Dependency caching is deliberately omitted: a release builds from a clean tree.
 
-      # Trusted publishing needs npm >= 11.5.1, which is newer than the npm bundled
-      # with some Node 24 patch releases. Upgrading explicitly removes that variable.
-      - name: Ensure npm supports trusted publishing
+      # Trusted publishing needs npm >= 11.5.1. Node 24 has bundled a new enough npm
+      # since 24.7.0, so the runner's own npm is used deliberately — installing
+      # npm@latest here would silently opt into whatever major ships next.
+      - name: Show toolchain versions
         run: |
-          npm install -g npm@latest
+          node --version
           npm --version
 
       - name: Fail if the tag does not match package.json
