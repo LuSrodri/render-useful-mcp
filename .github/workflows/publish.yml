@@ -25,10 +25,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # `registry-url` is deliberately omitted, despite npm's own example including it.
+      # It makes setup-node write `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`
+      # into the runner's .npmrc. With trusted publishing there is no NODE_AUTH_TOKEN, so
+      # that expands to an empty credential, npm concludes auth is already configured and
+      # never starts the OIDC exchange — failing with ENEEDAUTH/E404.
+      # See npm/documentation#1960 and actions/setup-node#1440.
+      # registry.npmjs.org is the default registry anyway, so nothing is lost.
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
           # Dependency caching is deliberately omitted: a release builds from a clean tree.
 
       # Trusted publishing needs npm >= 11.5.1. Node 24 has bundled a new enough npm
@@ -64,4 +70,5 @@ jobs:
       - run: npm run build
 
       # Provenance attestation is generated automatically for public repo + public package.
-      - run: npm publish
+      # --verbose so an auth failure shows which credential path npm actually took.
+      - run: npm publish --verbose
