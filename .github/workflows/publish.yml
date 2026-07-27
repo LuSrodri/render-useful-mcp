@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest # Trusted publishing does not support self-hosted runners.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # `registry-url` is deliberately omitted, despite npm's own example including it.
       # It makes setup-node write `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`
@@ -45,7 +45,11 @@ jobs:
       # never starts the OIDC exchange — failing with ENEEDAUTH/E404.
       # See npm/documentation#1960 and actions/setup-node#1440.
       # registry.npmjs.org is the default registry anyway, so nothing is lost.
-      - uses: actions/setup-node@v4
+      #
+      # Omitting it also keeps setup-node's `token` input (which defaults to github.token)
+      # out of the picture: the action only calls configAuthentication when registry-url is
+      # set, so NODE_AUTH_TOKEN is never exported and cannot shadow the OIDC credential.
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           # Dependency caching is deliberately omitted: a release builds from a clean tree.
