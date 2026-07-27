@@ -1,10 +1,20 @@
 ##
-# Publishes to npm via Trusted Publishing (OIDC) when a `v*` tag is pushed.
+# Publishes to npm via Trusted Publishing (OIDC) when a `v*` tag is pushed, or when
+# dispatched manually against an existing tag to retry a failed release.
 #
 # No NPM_TOKEN is involved: npm exchanges GitHub's short-lived OIDC token for a
-# scoped publish credential. The trust relationship is configured on npmjs.com and
-# is bound to this exact filename — renaming this file breaks publishing until the
-# configuration on npmjs.com is updated to match.
+# scoped publish credential. The trust relationship is configured on npmjs.com under
+# Settings -> Trusted Publisher, and every field it stores is compared literally:
+#
+#   Organization or user   LuSrodri          <- GitHub user, NOT the npm login `lusrodri`
+#   Repository             render-useful-mcp
+#   Workflow filename      publish.yml       <- renaming this file breaks publishing
+#   Environment name       (empty)           <- this workflow declares no environment
+#   Allowed actions        npm publish
+#
+# The comparison is case-sensitive and npm validates none of it when you save. A
+# mismatch surfaces only at publish time, as a misleading
+# `OIDC token exchange error - package not found`.
 ##
 name: Publish
 
@@ -12,6 +22,9 @@ on:
   push:
     tags:
       - 'v*'
+  # Lets a failed release be retried from the Actions tab without moving the tag.
+  # Pick the tag under "Use workflow from"; the guard below rejects branches.
+  workflow_dispatch:
 
 permissions:
   # Required for OIDC. Without it npm falls back to token auth and fails with ENEEDAUTH.
@@ -45,8 +58,15 @@ jobs:
           node --version
           npm --version
 
-      - name: Fail if the tag does not match package.json
+      # Every published version must correspond to a tag, including on manual retries —
+      # otherwise a dispatch from `main` could ship whatever happens to be committed.
+      - name: Require a tag matching package.json
         run: |
+          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "This workflow must run from a tag, but ran from $GITHUB_REF_TYPE '$GITHUB_REF_NAME'." >&2
+            echo "Re-dispatch it and select a v* tag under 'Use workflow from'." >&2
+            exit 1
+          fi
           TAG="${GITHUB_REF_NAME#v}"
           PKG="$(node -p "require('./package.json').version")"
           if [ "$TAG" != "$PKG" ]; then
@@ -54,6 +74,18 @@ jobs:
             exit 1
           fi
           echo "Publishing version $PKG"
+
+      # A retry after a *successful* publish would otherwise spend the whole build only
+      # to hit npm's "cannot publish over previously published version" at the last step.
+      - name: Fail early if this version is already on npm
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION is already published. Bump the version to release again." >&2
+            exit 1
+          fi
+          echo "$NAME@$VERSION is not on npm yet."
 
       - run: npm ci
 

@@ -153,6 +153,40 @@ npm run check       # generate + lint + typecheck + test
 
 The test suite covers catalogue invariants (all 207 operations, no dangling `$ref`, path params required, annotations match HTTP semantics), request mapping, retry and pagination behaviour, the composite tools, and a full in-memory MCP client/server round trip.
 
+### Updating to a new Render API version
+
+Replace `spec/render-openapi.json`, then:
+
+```bash
+npm run generate   # rebuild the catalogue
+git diff src/generated/operations.json
+npm test
+```
+
+The generator refuses to emit a catalogue it cannot fully understand — an unmapped tag, a
+name collision, a cyclic `$ref`, a path parameter missing from its template, or a body
+property that would shadow a query parameter all fail the build. CI additionally asserts
+that the committed catalogue matches what the spec produces, so a spec update without a
+regenerate cannot merge.
+
+### Releasing
+
+Releases publish from CI via npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers),
+using GitHub OIDC rather than a stored npm token, and carry a provenance attestation.
+
+```bash
+npm version patch    # or minor / major
+git push --follow-tags
+```
+
+Pushing a `v*` tag runs `.github/workflows/publish.yml`, which verifies the tag matches
+`package.json`, that the version is not already on npm, and that the generated catalogue is
+current — then lints, type-checks, tests, builds and publishes.
+
+If a release fails for a reason outside the code, re-run it from the Actions tab via
+**Run workflow**, selecting the tag under _Use workflow from_. The workflow rejects
+dispatches from a branch, so a published version always corresponds to a tag.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
