@@ -49,24 +49,13 @@ export const TOOLSET_DESCRIPTIONS: Readonly<Record<ToolsetId, string>> = {
 };
 
 /**
- * Enabled when the caller does not choose explicitly.
+ * Enabled when the caller does not choose explicitly: everything.
  *
- * Everything stable and routinely used is on. Beta surfaces (`workflows`), endpoints Render
- * has deprecated, and the large but situational observability/admin bundles stay off so the
- * default tool list remains workable.
+ * The server's purpose is to expose as much of the Render API as the key is allowed to
+ * reach, so withholding endpoints by default would be the wrong trade. Toolsets exist to
+ * let a caller *narrow* the surface — via `RENDER_MCP_TOOLSETS` — not to gate it.
  */
-export const DEFAULT_TOOLSETS: readonly ToolsetId[] = [
-  'services',
-  'static-sites',
-  'postgres',
-  'key-value',
-  'disks',
-  'env-groups',
-  'projects',
-  'blueprints',
-  'logs',
-  'workspaces',
-];
+export const DEFAULT_TOOLSETS: readonly ToolsetId[] = TOOLSET_IDS;
 
 /**
  * Maps every OpenAPI tag in the Render spec onto a toolset.

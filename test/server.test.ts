@@ -119,16 +119,23 @@ describe('MCP server', () => {
     expect((result.content[0] as { text: string }).text).toContain('Unknown tool');
   });
 
-  it('grows the tool list when a toolset is enabled at runtime', async () => {
-    const before = (await client.listTools()).tools.length;
+  it('exposes every Render endpoint by default', async () => {
+    const { tools } = await client.listTools();
+    // 207 generated operations + 4 workflow tools + the toolsets meta-tool.
+    expect(tools).toHaveLength(212);
+  });
 
-    const result = (await client.callTool({
+  it('grows the tool list when a narrowed server enables a toolset at runtime', async () => {
+    const { client: narrow } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) });
+    const before = (await narrow.listTools()).tools.length;
+
+    const result = (await narrow.callTool({
       name: 'render_toolsets',
       arguments: { enable: 'metrics' },
     })) as CallToolResult;
     expect(result.isError).toBeFalsy();
 
-    const after = await client.listTools();
+    const after = await narrow.listTools();
     expect(after.tools.length).toBeGreaterThan(before);
     expect(after.tools.map((tool) => tool.name)).toContain('render_get_cpu');
   });

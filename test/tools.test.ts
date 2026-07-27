@@ -206,23 +206,34 @@ function sampleFor(schema: Record<string, unknown>): unknown {
 
 describe('ToolRegistry', () => {
   const options = { enabledToolsets: DEFAULT_TOOLSETS, readOnly: false, dynamicToolsets: true };
+  /** An operator who deliberately narrowed the surface; `metrics` is excluded. */
+  const narrowed = { ...options, enabledToolsets: ['services'] as const };
 
   it('registers every generated tool plus the composite and meta tools', () => {
     const registry = new ToolRegistry(options);
     expect(registry.all()).toHaveLength(operations.length + 5);
   });
 
-  it('hides tools belonging to disabled toolsets', () => {
+  it('exposes every toolset by default, so nothing the API allows is withheld', () => {
     const registry = new ToolRegistry(options);
     const visible = new Set(registry.visible().map((tool) => tool.name));
 
+    expect(registry.visible()).toHaveLength(registry.all().length);
+    for (const name of ['render_list_services', 'render_get_cpu', 'render_list_redis', 'render_list_workflows']) {
+      expect(visible, name).toContain(name);
+    }
+  });
+
+  it('hides tools when the operator narrows the surface', () => {
+    const registry = new ToolRegistry(narrowed);
+    const visible = new Set(registry.visible().map((tool) => tool.name));
+
     expect(visible).toContain('render_list_services');
-    expect(visible).not.toContain('render_get_cpu'); // metrics is off by default
-    expect(visible).not.toContain('render_list_redis'); // deprecated is off by default
+    expect(visible).not.toContain('render_get_cpu');
   });
 
   it('explains how to reach a hidden tool instead of denying it exists', () => {
-    const registry = new ToolRegistry(options);
+    const registry = new ToolRegistry(narrowed);
     const error = (() => {
       try {
         registry.resolve('render_get_cpu');
@@ -239,7 +250,7 @@ describe('ToolRegistry', () => {
   });
 
   it('points at the env var instead when dynamic toolsets are disabled', () => {
-    const registry = new ToolRegistry({ ...options, dynamicToolsets: false });
+    const registry = new ToolRegistry({ ...narrowed, dynamicToolsets: false });
     expect(() => registry.resolve('render_get_cpu')).toThrow(PolicyError);
     try {
       registry.resolve('render_get_cpu');
@@ -249,7 +260,7 @@ describe('ToolRegistry', () => {
   });
 
   it('enables a toolset at runtime and notifies listeners once', () => {
-    const registry = new ToolRegistry(options);
+    const registry = new ToolRegistry(narrowed);
     let notifications = 0;
     registry.onChange(() => {
       notifications += 1;

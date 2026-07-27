@@ -147,9 +147,9 @@ export class ToolRegistry {
       title: 'List or enable Render toolsets',
       description:
         'Lists every Render toolset with its tool count and whether it is enabled, and optionally enables one. ' +
-        'The server hides less-common toolsets (metrics, webhooks, workflows, maintenance, registry, network, ' +
-        'deprecated) by default to keep the tool list small. Call this when a Render capability you need has no ' +
-        'matching tool — enabling a toolset makes its tools available immediately.',
+        'All toolsets are enabled by default, so this is mainly useful for discovering which Render capabilities ' +
+        'exist, or for re-enabling a toolset when the operator narrowed the surface with RENDER_MCP_TOOLSETS. ' +
+        'Enabling a toolset makes its tools available immediately.',
       toolset: 'core',
       mutating: false,
       annotations: {

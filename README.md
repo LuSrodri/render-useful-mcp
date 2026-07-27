@@ -8,14 +8,12 @@ Written in TypeScript. Every API tool is generated from Render's own OpenAPI doc
 
 ## Why this one
 
-Most API wrappers stop at "one tool per endpoint". That is necessary but not sufficient — 207 tools is more than most clients handle well, and the raw endpoints assume you already know ids you don't have.
+Most API wrappers stop at a curated subset of endpoints, which drifts out of date and leaves you stuck the moment you need something the author skipped.
 
-This server addresses both:
-
-- **Complete.** All 207 operations, generated from the spec. No hand-maintained subset that drifts.
-- **Manageable.** Tools are grouped into 17 toolsets. A sensible default is enabled; the model can turn on the rest mid-session without a restart.
+- **Complete, by construction.** All 207 operations, generated from Render's own OpenAPI document. Everything the API allows your key to do is reachable out of the box — no opt-in required.
 - **Usable by a model.** Names resolve to ids fuzzily, your workspace id is filled in automatically, deploys can be waited on in one call, and failures come back with a hint instead of a bare status code.
-- **Safe by default.** Read-only mode, MCP destructive/read-only annotations derived from the actual HTTP semantics, and secret redaction in logs.
+- **Narrowable when you want it.** The 17 toolsets are all on by default; `RENDER_MCP_TOOLSETS` and `RENDER_MCP_READ_ONLY` exist to restrict the surface deliberately, not to gate it.
+- **Honest about risk.** MCP destructive/read-only/idempotent annotations are derived from real HTTP semantics, so clients can make sensible auto-approval decisions. Secrets are redacted from logs.
 
 ## Install
 
@@ -66,7 +64,7 @@ claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
 | ------------------------------- | --------------------------- | ------------------------------------------------------------------------- |
 | `RENDER_API_KEY`                | —                           | **Required.** Your Render API key.                                        |
 | `RENDER_WORKSPACE_ID`           | —                           | Workspace id applied wherever an `ownerId` is needed and none was given.  |
-| `RENDER_MCP_TOOLSETS`           | see below                   | `all`, or a comma-separated list of toolsets.                             |
+| `RENDER_MCP_TOOLSETS`           | `all`                       | Narrow the surface to a comma-separated list of toolsets.                 |
 | `RENDER_MCP_READ_ONLY`          | `false`                     | When true, only non-mutating (GET) tools are exposed at all.              |
 | `RENDER_MCP_DYNAMIC_TOOLSETS`   | `true`                      | Registers `render_toolsets` so the model can enable toolsets mid-session. |
 | `RENDER_MCP_TIMEOUT_MS`         | `60000`                     | Per-request timeout.                                                      |
@@ -77,36 +75,39 @@ claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
 
 ## Toolsets
 
-All 207 generated tools belong to exactly one toolset. Exposing every tool at once costs a lot of context and measurably degrades tool selection, so the server enables the common ones and leaves the rest one call away.
+**All 17 toolsets are enabled by default** — the server exposes everything your API key is allowed to reach. Toolsets are a way to _narrow_ the surface on purpose, not a gate you have to unlock.
 
-| Toolset        | Tools | On by default | Covers                                                             |
-| -------------- | ----- | ------------- | ------------------------------------------------------------------ |
-| `services`     | 42    | ✅            | Services, deploys, custom domains, one-off jobs, cron runs, events |
-| `postgres`     | 21    | ✅            | Postgres instances, users, exports, PITR, query insights           |
-| `env-groups`   | 13    | ✅            | Environment groups, their variables and secret files               |
-| `projects`     | 12    | ✅            | Projects and environments                                          |
-| `logs`         | 10    | ✅            | Log queries, label discovery, log streams                          |
-| `static-sites` | 9     | ✅            | Header rules, redirects and rewrites                               |
-| `key-value`    | 8     | ✅            | Key Value (Redis-compatible) instances                             |
-| `workspaces`   | 8     | ✅            | Workspaces, members, current user, audit logs                      |
-| `disks`        | 7     | ✅            | Persistent disks and snapshots                                     |
-| `blueprints`   | 6     | ✅            | Blueprints and Blueprint syncs                                     |
-| `metrics`      | 23    | —             | CPU, memory, bandwidth, HTTP, disk, connections, metrics streams   |
-| `workflows`    | 15    | —             | Render Workflows and workflow tasks (public beta)                  |
-| `webhooks`     | 11    | —             | Webhooks and notification settings                                 |
-| `deprecated`   | 8     | —             | Legacy Redis endpoints, superseded by Key Value                    |
-| `network`      | 5     | —             | Dedicated outbound IP sets                                         |
-| `registry`     | 5     | —             | Container registry credentials                                     |
-| `maintenance`  | 4     | —             | Scheduled maintenance runs                                         |
+| Toolset        | Tools | Covers                                                             |
+| -------------- | ----- | ------------------------------------------------------------------ |
+| `services`     | 42    | Services, deploys, custom domains, one-off jobs, cron runs, events |
+| `metrics`      | 23    | CPU, memory, bandwidth, HTTP, disk, connections, metrics streams   |
+| `postgres`     | 21    | Postgres instances, users, exports, PITR, query insights           |
+| `workflows`    | 15    | Render Workflows and workflow tasks (public beta)                  |
+| `env-groups`   | 13    | Environment groups, their variables and secret files               |
+| `projects`     | 12    | Projects and environments                                          |
+| `webhooks`     | 11    | Webhooks and notification settings                                 |
+| `logs`         | 10    | Log queries, label discovery, log streams                          |
+| `static-sites` | 9     | Header rules, redirects and rewrites                               |
+| `key-value`    | 8     | Key Value (Redis-compatible) instances                             |
+| `workspaces`   | 8     | Workspaces, members, current user, audit logs                      |
+| `deprecated`   | 8     | Legacy Redis endpoints, superseded by Key Value                    |
+| `disks`        | 7     | Persistent disks and snapshots                                     |
+| `blueprints`   | 6     | Blueprints and Blueprint syncs                                     |
+| `network`      | 5     | Dedicated outbound IP sets                                         |
+| `registry`     | 5     | Container registry credentials                                     |
+| `maintenance`  | 4     | Scheduled maintenance runs                                         |
 
-To change the selection up front:
+Reasons you might narrow it anyway:
 
 ```jsonc
-"env": { "RENDER_MCP_TOOLSETS": "all" }                    // everything
-"env": { "RENDER_MCP_TOOLSETS": "services,logs,metrics" }  // just these
+// A client that struggles with 212 tools, or a session scoped to one job.
+"env": { "RENDER_MCP_TOOLSETS": "services,logs,metrics" }
+
+// An agent that should be able to look but not touch.
+"env": { "RENDER_MCP_READ_ONLY": "true" }
 ```
 
-At runtime, the model can call `render_toolsets` to list the current state or enable a group. The server then emits `notifications/tools/list_changed` and the new tools become available immediately — no restart.
+If you do narrow it, the model can still call `render_toolsets` to see what exists and re-enable a group. The server emits `notifications/tools/list_changed` and the new tools appear immediately — no restart.
 
 ## Tools
 

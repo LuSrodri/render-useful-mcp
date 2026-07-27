@@ -116,7 +116,7 @@ describe('generated catalogue', () => {
     expect(streaming).toEqual(['render_stream_task_runs_events']);
   });
 
-  it('keeps deprecated Render endpoints out of the default toolsets', () => {
+  it('isolates deprecated Render endpoints in their own toolset and labels them', () => {
     const deprecated = operations.filter((operation) => operation.deprecated);
     expect(deprecated.length).toBe(8);
     for (const operation of deprecated) {
