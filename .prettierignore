@@ -1,0 +1,5 @@
+dist
+coverage
+node_modules
+spec/render-openapi.json
+src/generated/operations.json

@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Generated data files — keep diffs reviewable but never merged by hand.
+src/generated/operations.json linguist-generated=true
+spec/render-openapi.json linguist-vendored=true
