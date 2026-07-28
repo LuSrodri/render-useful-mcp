@@ -1,0 +1,77 @@
+/**
+ * Invariants of `server.json`, the MCP Registry manifest.
+ *
+ * The registry rejects a mismatched manifest at publish time, which is the worst moment to
+ * find out: npm has already been published by then and its versions are immutable, so a
+ * broken manifest costs a whole version number to fix. These checks move that failure into
+ * `npm test`, where it costs nothing.
+ */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
+
+function readJson(relativePath: string): Record<string, unknown> {
+  const path = fileURLToPath(new URL(`../${relativePath}`, import.meta.url));
+  return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+}
+
+const manifest = readJson('server.json');
+const pkg = readJson('package.json');
+
+const packages = manifest['packages'] as Array<Record<string, unknown>>;
+const npmPackage = packages[0] as Record<string, unknown>;
+
+describe('server.json', () => {
+  it('claims the namespace that GitHub OIDC actually grants', () => {
+    // The registry compares the server name against `io.github.<repository_owner>/*` with a
+    // case-sensitive prefix match, and GitHub's OIDC claim carries the owner's login exactly
+    // as GitHub cases it. `io.github.lusrodri/...` would be rejected with a 403.
+    expect(manifest['name']).toBe('io.github.LuSrodri/render-useful-mcp');
+  });
+
+  it('matches the ownership marker published inside the npm package', () => {
+    // This pair is how the registry proves the publisher owns the npm package: it fetches
+    // the tarball's package.json and requires `mcpName` to equal the server name.
+    expect(pkg['mcpName']).toBe(manifest['name']);
+  });
+
+  it('fits the registry description limit', () => {
+    // Not a style preference: the schema caps it at 100 and rejects anything longer. The
+    // npm description is far longer, so the two deliberately differ.
+    const description = manifest['description'];
+    expect(description).toBeTypeOf('string');
+    expect((description as string).length).toBeGreaterThan(0);
+    expect((description as string).length).toBeLessThanOrEqual(100);
+  });
+
+  it('points at the package this repository actually publishes', () => {
+    expect(npmPackage['registryType']).toBe('npm');
+    expect(npmPackage['identifier']).toBe(pkg['name']);
+    expect((npmPackage['transport'] as Record<string, unknown>)['type']).toBe('stdio');
+  });
+
+  it('declares the version being released, in both places the registry reads', () => {
+    // The release workflow rewrites both fields from the tag before publishing, so a stale
+    // value here never reaches the registry — but keeping them in step means `mcp-publisher
+    // publish` also works when run by hand from a clean checkout.
+    expect(manifest['version']).toBe(pkg['version']);
+    expect(npmPackage['version']).toBe(pkg['version']);
+  });
+
+  it('requires the API key and marks it secret', () => {
+    const env = npmPackage['environmentVariables'] as Array<Record<string, unknown>>;
+    const apiKey = env.find((entry) => entry['name'] === 'RENDER_API_KEY');
+    expect(apiKey).toBeDefined();
+    expect(apiKey?.['isRequired']).toBe(true);
+    expect(apiKey?.['isSecret']).toBe(true);
+  });
+
+  it('only advertises environment variables the server reads', () => {
+    const env = npmPackage['environmentVariables'] as Array<Record<string, unknown>>;
+    const documented = readFileSync(fileURLToPath(new URL('../.env.example', import.meta.url)), 'utf8');
+    for (const entry of env) {
+      expect(documented, `${String(entry['name'])} is not in .env.example`).toContain(`${String(entry['name'])}=`);
+    }
+  });
+});

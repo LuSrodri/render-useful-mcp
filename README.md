@@ -29,6 +29,10 @@ Or run it without installing, which is what most MCP client configs do:
 npx -y render-useful-mcp
 ```
 
+It is also listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.LuSrodri/render-useful-mcp`, so clients that browse the registry can find and
+configure it without being pointed at the npm package by hand.
+
 ## Configure your MCP client
 
 Get an API key from **Render Dashboard → Account Settings → API Keys**.
@@ -184,8 +188,12 @@ regenerate cannot merge.
 
 ### Releasing
 
-Releases publish from CI via npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers),
-using GitHub OIDC rather than a stored npm token, and carry a provenance attestation.
+A release publishes to two places: the package to npm, and metadata describing it to the
+[MCP Registry](https://registry.modelcontextprotocol.io). Both authenticate with the
+workflow's GitHub OIDC token — npm via
+[Trusted Publishing](https://docs.npmjs.com/trusted-publishers), the registry via
+`mcp-publisher login github-oidc` — so no npm token or registry secret is stored anywhere.
+The npm publish carries a provenance attestation.
 
 ```bash
 npm version patch    # or minor / major
@@ -193,12 +201,33 @@ git push --follow-tags
 ```
 
 Pushing a `v*` tag runs `.github/workflows/publish.yml`, which verifies the tag matches
-`package.json`, that the version is not already on npm, and that the generated catalogue is
-current — then lints, type-checks, tests, builds and publishes.
+`package.json` and that the generated catalogue is current, works out which of the two
+targets still need this version, then lints, type-checks, tests, builds and publishes.
+
+The order is fixed: npm first, then the registry. The registry proves you own the package
+by fetching the published tarball and looking for `mcpName` in its `package.json`, so it
+cannot accept a version npm has not served yet.
 
 If a release fails for a reason outside the code, re-run it from the Actions tab via
-**Run workflow**, selecting the tag under _Use workflow from_. The workflow rejects
-dispatches from a branch, so a published version always corresponds to a tag.
+**Run workflow**, selecting the tag under _Use workflow from_. Each target is checked
+independently, so a retry after a half-finished release skips whatever already succeeded
+instead of failing on npm's immutable versions. The workflow rejects dispatches from a
+branch, so a published version always corresponds to a tag.
+
+#### The registry manifest
+
+`server.json` is the registry's copy of this server's metadata. Two of its fields are load
+bearing and both are asserted by `test/server-json.test.ts`:
+
+- `name` must be `io.github.LuSrodri/...`. The registry derives the namespace you may
+  publish to from the OIDC token's `repository_owner` claim and compares it case
+  sensitively, so the lowercased spelling is rejected with a 403.
+- `mcpName` in `package.json` must equal that same name. It is the ownership proof
+  described above; without it the registry refuses the package.
+
+The version fields track `package.json` — `npm version` keeps them in step via the `version`
+lifecycle script, so `mcp-publisher publish` also works from a clean local checkout. CI
+stamps them from the tag again before publishing, so the tag is what decides what ships.
 
 ## License
 

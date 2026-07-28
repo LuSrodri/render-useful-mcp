@@ -1,6 +1,7 @@
 {
   "name": "render-useful-mcp",
   "version": "1.0.1",
+  "mcpName": "io.github.LuSrodri/render-useful-mcp",
   "description": "A complete, production-grade Model Context Protocol server for the Render Public API — all 207 official endpoints plus higher-level workflow tools.",
   "keywords": [
     "mcp",
@@ -58,6 +59,7 @@
     "test:coverage": "vitest run --coverage",
     "check": "npm run generate && npm run lint && npm run typecheck && npm run test",
     "prepublishOnly": "npm run build",
+    "version": "tsx scripts/sync-server-version.ts && git add server.json",
     "sync-spec": "tsx scripts/fetch-spec.ts",
     "diff-catalogue": "tsx scripts/diff-catalogue.ts"
   },

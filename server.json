@@ -1,0 +1,62 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.LuSrodri/render-useful-mcp",
+  "title": "Render Useful MCP",
+  "description": "MCP server for the Render Public API: all 207 endpoints plus workflow tools.",
+  "version": "1.0.1",
+  "websiteUrl": "https://github.com/LuSrodri/render-useful-mcp#readme",
+  "repository": {
+    "url": "https://github.com/LuSrodri/render-useful-mcp",
+    "source": "github",
+    "id": "1314047660"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "render-useful-mcp",
+      "version": "1.0.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "RENDER_API_KEY",
+          "description": "Render API key, created at https://dashboard.render.com/u/settings#api-keys",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string",
+          "placeholder": "rnd_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        {
+          "name": "RENDER_WORKSPACE_ID",
+          "description": "Default workspace, applied wherever a tool needs an ownerId and the caller omitted one.",
+          "isRequired": false,
+          "format": "string",
+          "placeholder": "tea-xxxxxxxxxxxxxxxxxxxx"
+        },
+        {
+          "name": "RENDER_MCP_TOOLSETS",
+          "description": "Comma-separated toolsets to expose, or 'all'. Defaults to all 17 toolsets.",
+          "isRequired": false,
+          "format": "string",
+          "placeholder": "services,logs,postgres"
+        },
+        {
+          "name": "RENDER_MCP_READ_ONLY",
+          "description": "Expose only non-mutating tools.",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "false"
+        },
+        {
+          "name": "RENDER_MCP_DYNAMIC_TOOLSETS",
+          "description": "Let the model enable toolsets mid-session via the render_toolsets tool.",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "true"
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,18 @@
 ##
-# Publishes to npm via Trusted Publishing (OIDC) when a `v*` tag is pushed, or when
-# dispatched manually against an existing tag to retry a failed release.
+# Releases to two places when a `v*` tag is pushed, or when dispatched manually against an
+# existing tag to retry a failed release:
 #
-# No NPM_TOKEN is involved: npm exchanges GitHub's short-lived OIDC token for a
-# scoped publish credential. The trust relationship is configured on npmjs.com under
-# Settings -> Trusted Publisher, and every field it stores is compared literally:
+#   1. npm            — the artifact itself.
+#   2. MCP Registry   — metadata only, pointing at the npm package published in step 1.
+#
+# Both authenticate with the same GitHub OIDC token; neither uses a stored secret.
+#
+# ---------------------------------------------------------------------------------------
+# npm, via Trusted Publishing
+#
+# npm exchanges GitHub's short-lived OIDC token for a scoped publish credential. The trust
+# relationship is configured on npmjs.com under Settings -> Trusted Publisher, and every
+# field it stores is compared literally:
 #
 #   Organization or user   LuSrodri          <- GitHub user, NOT the npm login `lusrodri`
 #   Repository             render-useful-mcp
@@ -15,6 +23,19 @@
 # The comparison is case-sensitive and npm validates none of it when you save. A
 # mismatch surfaces only at publish time, as a misleading
 # `OIDC token exchange error - package not found`.
+#
+# ---------------------------------------------------------------------------------------
+# MCP Registry, via `mcp-publisher login github-oidc`
+#
+# Nothing needs configuring on the registry side: it derives the namespace from the OIDC
+# token's `repository_owner` claim and grants `io.github.LuSrodri/*`. Two consequences
+# worth knowing, both enforced by `test/server-json.test.ts`:
+#
+#   - The namespace comparison is a case-sensitive prefix match against the GitHub login,
+#     so the name in `server.json` must be `io.github.LuSrodri/...`, not `io.github.lusrodri/...`.
+#   - The registry proves package ownership by fetching the published npm tarball and
+#     requiring its `package.json` to carry `mcpName` equal to that same name. So the
+#     registry can only ever be published *after* npm, never before.
 ##
 name: Publish
 
@@ -65,6 +86,7 @@ jobs:
       # Every published version must correspond to a tag, including on manual retries —
       # otherwise a dispatch from `main` could ship whatever happens to be committed.
       - name: Require a tag matching package.json
+        id: version
         run: |
           if [ "$GITHUB_REF_TYPE" != "tag" ]; then
             echo "This workflow must run from a tag, but ran from $GITHUB_REF_TYPE '$GITHUB_REF_NAME'." >&2
@@ -77,19 +99,54 @@ jobs:
             echo "Tag v$TAG does not match package.json version $PKG." >&2
             exit 1
           fi
+          echo "version=$PKG" >> "$GITHUB_OUTPUT"
+          echo "package=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+          echo "server=$(node -p "require('./server.json').name")" >> "$GITHUB_OUTPUT"
           echo "Publishing version $PKG"
 
-      # A retry after a *successful* publish would otherwise spend the whole build only
-      # to hit npm's "cannot publish over previously published version" at the last step.
-      - name: Fail early if this version is already on npm
+      # Publishing to npm is irreversible and publishing to the registry rejects a version
+      # it already holds, so each target is checked separately rather than the whole run
+      # being failed. That is what makes a retry useful: if npm succeeded last time and the
+      # registry did not, re-dispatching the tag skips npm and finishes the job.
+      - name: Work out what still needs publishing
+        id: state
+        env:
+          NAME: ${{ steps.version.outputs.package }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SERVER: ${{ steps.version.outputs.server }}
         run: |
-          NAME="$(node -p "require('./package.json').name")"
-          VERSION="$(node -p "require('./package.json').version")"
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
-            echo "$NAME@$VERSION is already published. Bump the version to release again." >&2
+            NPM_DONE=true
+          else
+            NPM_DONE=false
+          fi
+
+          # The registry has no "does this version exist" endpoint; search returns every
+          # version of a server, so match on the exact name and version ourselves.
+          REGISTRY_DONE="$(
+            curl -fsS --get \
+              --data-urlencode "search=$SERVER" \
+              https://registry.modelcontextprotocol.io/v0.1/servers \
+            | VERSION="$VERSION" SERVER="$SERVER" node -e '
+                let raw = "";
+                process.stdin.on("data", (chunk) => (raw += chunk)).on("end", () => {
+                  const servers = JSON.parse(raw).servers ?? [];
+                  const match = servers.some((entry) => {
+                    const server = entry.server ?? entry;
+                    return server.name === process.env.SERVER && server.version === process.env.VERSION;
+                  });
+                  process.stdout.write(String(match));
+                });
+              '
+          )"
+
+          echo "npm=$NPM_DONE registry=$REGISTRY_DONE"
+          if [ "$NPM_DONE" = "true" ] && [ "$REGISTRY_DONE" = "true" ]; then
+            echo "$NAME@$VERSION is already on npm and in the MCP Registry. Bump the version to release again." >&2
             exit 1
           fi
-          echo "$NAME@$VERSION is not on npm yet."
+          echo "publish-npm=$([ "$NPM_DONE" = "false" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "publish-registry=$([ "$REGISTRY_DONE" = "false" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - run: npm ci
 
@@ -107,4 +164,72 @@ jobs:
 
       # Provenance attestation is generated automatically for public repo + public package.
       # --verbose so an auth failure shows which credential path npm actually took.
-      - run: npm publish --verbose
+      - name: Publish to npm
+        if: steps.state.outputs.publish-npm == 'true'
+        run: npm publish --verbose
+
+      # The registry validates ownership by fetching the tarball's package.json from
+      # registry.npmjs.org, which lags `npm publish` by a few seconds. Without this wait the
+      # very first release fails on "Registry validation failed for package" — a confusing
+      # error for what is only a propagation delay.
+      - name: Wait for npm to serve the new version
+        if: steps.state.outputs.publish-npm == 'true' && steps.state.outputs.publish-registry == 'true'
+        env:
+          NAME: ${{ steps.version.outputs.package }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS "https://registry.npmjs.org/$NAME" \
+              | VERSION="$VERSION" node -e '
+                  let raw = "";
+                  process.stdin.on("data", (chunk) => (raw += chunk)).on("end", () => {
+                    process.exit(JSON.parse(raw).versions?.[process.env.VERSION] ? 0 : 1);
+                  });
+                ';
+            then
+              echo "$NAME@$VERSION is being served after $attempt attempt(s)."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "$NAME@$VERSION did not appear on registry.npmjs.org within 150s." >&2
+          echo "npm published successfully; re-dispatch this tag to retry the registry step alone." >&2
+          exit 1
+
+      # Pinning is deliberately avoided: the registry is in preview and rejects binaries
+      # that predate a deployment with "invalid audience", so the newest release is the only
+      # version guaranteed to work against it today.
+      - name: Install mcp-publisher
+        if: steps.state.outputs.publish-registry == 'true'
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar xz mcp-publisher
+
+      # server.json carries the released version in two places, and both must equal the tag.
+      # The committed values track package.json (asserted by test/server-json.test.ts) so a
+      # hand-run `mcp-publisher publish` also works, but stamping them here means the tag —
+      # not the working tree — is what decides.
+      - name: Stamp the released version into server.json
+        if: steps.state.outputs.publish-registry == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const version = process.env.VERSION;
+            const manifest = JSON.parse(fs.readFileSync("server.json", "utf8"));
+            manifest.version = version;
+            for (const pkg of manifest.packages ?? []) pkg.version = version;
+            fs.writeFileSync("server.json", `${JSON.stringify(manifest, null, 2)}\n`);
+          '
+          node -p "JSON.stringify(require('./server.json'), null, 2)"
+
+      # Exchanges the job's OIDC token for a 5-minute registry JWT. No secret involved; the
+      # `id-token: write` permission above is what makes it possible.
+      - name: Authenticate to the MCP Registry
+        if: steps.state.outputs.publish-registry == 'true'
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to the MCP Registry
+        if: steps.state.outputs.publish-registry == 'true'
+        run: ./mcp-publisher publish
