@@ -75,3 +75,59 @@ describe('server.json', () => {
     }
   });
 });
+
+/**
+ * The same settings are described in four places: `server.json` (which the MCP Registry
+ * renders in client UIs), the README table, `.env.example` and the code. They drift, and
+ * `server.json` drifts most quietly — nothing renders it during development, so a stale
+ * description ships to every client that browses the registry.
+ *
+ * No test can prove four prose descriptions still mean the same thing. These check the two
+ * things that *are* mechanical: that the surfaces describe the same set of variables, and
+ * that a claim already known to be false cannot come back.
+ */
+describe('environment variable documentation', () => {
+  const readFile = (relativePath: string): string =>
+    readFileSync(fileURLToPath(new URL(`../${relativePath}`, import.meta.url)), 'utf8');
+
+  const readme = readFile('README.md');
+  const envExample = readFile('.env.example');
+  const manifestEnv = (npmPackage['environmentVariables'] as Array<Record<string, unknown>>).map((entry) =>
+    String(entry['name']),
+  );
+
+  const namesIn = (source: string, pattern: RegExp): string[] => [
+    ...new Set([...source.matchAll(pattern)].map((match) => match[1] as string)),
+  ];
+
+  const readmeNames = namesIn(readme, /^\|\s*`(RENDER_[A-Z_]+)`\s*\|/gm);
+  const envExampleNames = namesIn(envExample, /^#?\s*(RENDER_[A-Z_]+)=/gm);
+
+  it('documents the same variables in the README table and .env.example', () => {
+    expect([...readmeNames].sort()).toEqual([...envExampleNames].sort());
+  });
+
+  it('advertises a subset of the documented variables in the registry manifest', () => {
+    // server.json deliberately lists only the settings worth surfacing in a client's setup
+    // UI, so it is a subset rather than an equal set — but never a superset.
+    for (const name of manifestEnv) {
+      expect(readmeNames, `${name} is advertised to the registry but missing from the README`).toContain(name);
+    }
+  });
+
+  it('never claims a toolset can be enabled at runtime', () => {
+    // The exact regression this guards: `render_toolsets` stopped mutating the visible set
+    // when the server moved to protocol revision 2026-07-28, which forbids `tools/list`
+    // varying as a side effect of another call. The README was updated; server.json and
+    // .env.example were not, and the stale text shipped to the registry in 1.1.0.
+    const stale = /enabl\w*\s+(a\s+)?toolsets?\s+(at\s+runtime|mid-session)|toolsets?\s+mid-session/i;
+
+    for (const [label, source] of [
+      ['server.json', JSON.stringify(manifest)],
+      ['README.md', readme],
+      ['.env.example', envExample],
+    ] as const) {
+      expect(stale.test(source), `${label} still describes runtime toolset enabling`).toBe(false);
+    }
+  });
+});
