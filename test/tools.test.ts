@@ -245,34 +245,36 @@ describe('ToolRegistry', () => {
 
     expect(error).toBeInstanceOf(PolicyError);
     expect(error!.toToolMessage()).toContain('metrics');
-    // The hint must name a tool that actually exists.
-    expect(error!.toToolMessage()).toContain('render_toolsets');
+    // The only way to reach it is a config change, so the hint must say exactly that.
+    expect(error!.toToolMessage()).toContain('RENDER_MCP_TOOLSETS');
+    expect(error!.toToolMessage()).toContain('restart');
   });
 
-  it('points at the env var instead when dynamic toolsets are disabled', () => {
-    const registry = new ToolRegistry({ ...narrowed, dynamicToolsets: false });
-    expect(() => registry.resolve('render_get_cpu')).toThrow(PolicyError);
-    try {
-      registry.resolve('render_get_cpu');
-    } catch (caught) {
-      expect((caught as PolicyError).toToolMessage()).toContain('RENDER_MCP_TOOLSETS');
+  it('gives the same env-var hint whether or not the meta-tool is registered', () => {
+    const withMetaTool = new ToolRegistry(narrowed);
+    const withoutMetaTool = new ToolRegistry({ ...narrowed, dynamicToolsets: false });
+
+    for (const registry of [withMetaTool, withoutMetaTool]) {
+      try {
+        registry.resolve('render_get_cpu');
+        expect.unreachable('expected a PolicyError');
+      } catch (caught) {
+        expect(caught).toBeInstanceOf(PolicyError);
+        expect((caught as PolicyError).toToolMessage()).toContain('RENDER_MCP_TOOLSETS');
+      }
     }
   });
 
-  it('enables a toolset at runtime and notifies listeners once', () => {
+  it('never changes the visible set once constructed', async () => {
     const registry = new ToolRegistry(narrowed);
-    let notifications = 0;
-    registry.onChange(() => {
-      notifications += 1;
-    });
+    const before = registry.visible().map((tool) => tool.name);
 
-    const before = registry.visible().length;
-    expect(registry.enableToolset('metrics').changed).toBe(true);
-    expect(registry.enableToolset('metrics').changed).toBe(false);
+    // Calling the meta-tool is the only path that used to mutate visibility.
+    const metaTool = registry.resolve('render_toolsets');
+    await metaTool.handler({}, {} as never);
 
-    expect(notifications).toBe(1);
-    expect(registry.visible().length).toBeGreaterThan(before);
-    expect(registry.resolve('render_get_cpu').name).toBe('render_get_cpu');
+    expect(registry.visible().map((tool) => tool.name)).toEqual(before);
+    expect(() => registry.resolve('render_get_cpu')).toThrow(PolicyError);
   });
 
   it('withholds every mutating tool in read-only mode', () => {

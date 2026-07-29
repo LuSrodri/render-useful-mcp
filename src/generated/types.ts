@@ -13,6 +13,14 @@ export type JsonSchema = {
   [keyword: string]: unknown;
 };
 
+/**
+ * A tool's argument schema, which MCP requires to be an object schema.
+ *
+ * The generator emits nothing else and the catalogue invariants assert it, so the
+ * constraint is stated here rather than re-checked at every use.
+ */
+export type ObjectJsonSchema = JsonSchema & { type: 'object' };
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /**
@@ -49,7 +57,7 @@ export interface OperationDefinition {
   readonly bodyMode: BodyMode;
   /** Argument names that belong in the request body when `bodyMode` is `flattened`/`multipart`. */
   readonly bodyProps: readonly string[];
-  readonly inputSchema: JsonSchema;
+  readonly inputSchema: ObjectJsonSchema;
 }
 
 export interface OperationCatalogue {

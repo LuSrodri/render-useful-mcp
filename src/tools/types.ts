@@ -5,7 +5,7 @@
  * A single shared shape lets the server treat both kinds identically for listing,
  * validation, policy enforcement and result formatting.
  */
-import type { JsonSchema } from '../generated/types.js';
+import type { ObjectJsonSchema } from '../generated/types.js';
 import type { Config } from '../config.js';
 import type { Logger } from '../logging.js';
 import type { RenderClient } from '../render/client.js';
@@ -39,7 +39,7 @@ export interface ToolDefinition {
   readonly name: string;
   readonly title: string;
   readonly description: string;
-  readonly inputSchema: JsonSchema;
+  readonly inputSchema: ObjectJsonSchema;
   readonly annotations: ToolAnnotations;
   readonly toolset: ToolsetId | 'core';
   /** Excluded when the server runs in read-only mode. */
