@@ -34,6 +34,34 @@ describe('loadConfig', () => {
     expect(error!.toToolMessage()).toContain('dashboard.render.com');
   });
 
+  it('treats a blank API key as missing rather than as a schema violation', () => {
+    // `${RENDER_API_KEY:-}` in a client config expands to this when the variable is unset.
+    expect(() => loadConfig({ env: { RENDER_API_KEY: '   ' }, version: '1.0.0' })).toThrow(ConfigurationError);
+    try {
+      loadConfig({ env: { RENDER_API_KEY: '' }, version: '1.0.0' });
+    } catch (caught) {
+      expect((caught as ConfigurationError).toToolMessage()).toContain('dashboard.render.com');
+    }
+  });
+
+  it('names the real problem when the client left a placeholder unsubstituted', () => {
+    // A client that fails to interpolate passes the literal text through. It is non-empty,
+    // so without this check it would reach Render and come back as an unexplained 401.
+    const error = (() => {
+      try {
+        loadConfig({ env: { RENDER_API_KEY: '${RENDER_API_KEY}' }, version: '1.0.0' });
+        return undefined;
+      } catch (caught) {
+        return caught as ConfigurationError;
+      }
+    })();
+
+    expect(error).toBeInstanceOf(ConfigurationError);
+    const message = error!.toToolMessage();
+    expect(message).toContain('did not');
+    expect(message).toContain('${RENDER_API_KEY}');
+  });
+
   it('parses boolean and numeric overrides', () => {
     const config = loadConfig({
       env: {

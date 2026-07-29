@@ -1,0 +1,17 @@
+{
+  "name": "lusrodri-render",
+  "owner": {
+    "name": "LuSrodri",
+    "url": "https://github.com/LuSrodri"
+  },
+  "description": "Render integration for Claude Code, built on the render-useful-mcp server.",
+  "plugins": [
+    {
+      "name": "render",
+      "source": "./plugin",
+      "description": "Manage Render services, deploys, databases and logs through the Render Public API.",
+      "category": "infrastructure",
+      "tags": ["render", "paas", "devops", "deployment", "hosting"]
+    }
+  ]
+}

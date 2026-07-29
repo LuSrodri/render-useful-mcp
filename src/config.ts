@@ -48,7 +48,9 @@ function positiveIntFromEnv(min: number, max: number): z.ZodType<number, string>
 }
 
 const envSchema = z.object({
-  RENDER_API_KEY: z.string().trim().min(1, 'must not be empty').optional(),
+  // Deliberately not `.min(1)`: an empty value is reported by the dedicated check below,
+  // which can point at the dashboard instead of emitting a bare schema violation.
+  RENDER_API_KEY: z.string().trim().optional(),
   RENDER_API_BASE_URL: z.url({ message: 'must be a valid URL' }).optional(),
   RENDER_WORKSPACE_ID: z.string().trim().min(1).optional(),
   RENDER_MCP_TOOLSETS: z.string().optional(),
@@ -78,6 +80,19 @@ export function loadConfig({ env = process.env, version }: LoadConfigOptions): C
       'RENDER_API_KEY is not set.',
       'Create an API key at https://dashboard.render.com/u/settings#api-keys and expose it to the MCP server ' +
         'via the "env" block of your client configuration.',
+    );
+  }
+
+  // A client that interpolates `${VAR}` into its config passes the literal text through
+  // when the variable is unset. That value is non-empty, so it would otherwise sail past
+  // every check here and surface as an unexplained 401 on the first Render call.
+  if (/^\$\{.*\}$/.test(raw.RENDER_API_KEY)) {
+    throw new ConfigurationError(
+      `RENDER_API_KEY is the literal placeholder "${raw.RENDER_API_KEY}", which means your MCP client did not ` +
+        'substitute it.',
+      'Set the environment variable in the shell that launches your MCP client — for example ' +
+        '`export RENDER_API_KEY=rnd_...` — or replace the placeholder with the key itself in the client ' +
+        'configuration.',
     );
   }
 

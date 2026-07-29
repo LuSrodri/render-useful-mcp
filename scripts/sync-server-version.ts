@@ -1,14 +1,15 @@
 #!/usr/bin/env tsx
 /**
- * Copies the version from `package.json` into `server.json`.
+ * Copies the version from `package.json` into every manifest that repeats it:
+ * `server.json` (twice) and the Claude Code plugin manifest.
  *
- * The MCP Registry manifest repeats the released version in two places, and
- * `test/server-json.test.ts` requires both to equal `package.json`. `npm version` only
- * knows about `package.json`, so without this the bump commit would leave the tree failing
- * its own test suite — discovered at release time, which is the worst moment for it.
+ * Each of those is read by something outside this repository — the MCP Registry and the
+ * plugin marketplace — and `npm version` only knows about `package.json`. Without this the
+ * bump commit would leave the tree failing its own test suite, discovered at release time,
+ * which is the worst moment for it.
  *
  * Wired to the `version` npm lifecycle script, which runs after the bump and before the
- * commit, so the rewritten manifest lands in the version commit itself.
+ * commit, so the rewritten manifests land in the version commit itself.
  *
  * Usage: tsx scripts/sync-server-version.ts
  */
@@ -32,11 +33,18 @@ if (version === undefined) {
   throw new Error('package.json has no version to copy.');
 }
 
+function save(path: string, value: unknown): void {
+  writeFileSync(resolve(ROOT, path), `${JSON.stringify(value, null, 2)}\n`);
+  console.log(`${path} set to ${version}`);
+}
+
 const manifest = load('server.json');
 manifest.version = version;
 for (const pkg of manifest.packages ?? []) {
   pkg.version = version;
 }
+save('server.json', manifest);
 
-writeFileSync(resolve(ROOT, 'server.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`server.json set to ${version}`);
+const plugin = load('plugin/.claude-plugin/plugin.json');
+plugin.version = version;
+save('plugin/.claude-plugin/plugin.json', plugin);
