@@ -69,3 +69,10 @@ auto-approval decisions. Deleting a service is marked destructive; listing servi
 
 For an agent that should never mutate anything, set `RENDER_MCP_READ_ONLY=true` — mutating
 tools are then not exposed at all, rather than merely discouraged.
+
+## Privacy
+
+No telemetry, no analytics, no backend. The server runs locally and contacts exactly one
+host — Render's API. Your key is sent only to Render, never written to disk, and redacted
+from log output. See
+[PRIVACY.md](https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md).

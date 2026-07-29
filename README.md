@@ -244,6 +244,13 @@ The version fields track `package.json` — `npm version` keeps them in step via
 lifecycle script, so `mcp-publisher publish` also works from a clean local checkout. CI
 stamps them from the tag again before publishing, so the tag is what decides what ships.
 
+## Privacy
+
+No telemetry, no analytics, no backend. The server runs on your machine and contacts exactly
+one host — Render's API. Your key is read from the environment, sent only to Render, never
+written to disk, and redacted from log output. Full detail, including how to verify each
+claim yourself: [PRIVACY.md](PRIVACY.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
