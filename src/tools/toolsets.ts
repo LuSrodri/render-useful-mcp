@@ -2,8 +2,9 @@
  * Toolsets group the 207 generated tools into coherent, independently switchable bundles.
  *
  * Exposing all of them at once costs a lot of context and measurably degrades tool
- * selection, so the server ships a sensible default and lets callers opt in to the rest
- * either up front (`RENDER_MCP_TOOLSETS`) or at runtime (`render_toolsets`).
+ * selection, so the server ships a sensible default and lets operators narrow the surface
+ * with `RENDER_MCP_TOOLSETS`. The selection is read once at startup and never changes;
+ * `render_toolsets` reports it.
  */
 
 export const TOOLSET_IDS = [

@@ -4,10 +4,15 @@
  * These exercise the actual protocol surface — `tools/list`, `tools/call`, error results —
  * rather than calling handlers directly, so schema serialisation and transport-level
  * behaviour are covered too.
+ *
+ * Both protocol eras are covered, because they take different code paths through the SDK
+ * and produce different wire shapes. A client that opens with the 2025 `initialize`
+ * handshake pins a legacy instance; `serveStdio` serves the 2026-07-28 era, where results
+ * carry `resultType` and the cacheable ones carry `ttlMs`/`cacheScope`.
  */
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Client } from '@modelcontextprotocol/client';
+import { InMemoryTransport } from '@modelcontextprotocol/server';
+import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createServer, serialise } from '../src/server.js';
@@ -15,32 +20,47 @@ import { RenderClient } from '../src/render/client.js';
 import { createLogger } from '../src/logging.js';
 import { stubFetch, testConfig, type StubResponse } from './helpers.js';
 
+type Era = 'legacy' | 'modern';
+
 async function connect(
   script: StubResponse | StubResponse[],
   configOverrides: Partial<ReturnType<typeof testConfig>> = {},
+  era: Era = 'legacy',
 ): Promise<{ client: Client; requests: ReturnType<typeof stubFetch>['requests'] }> {
   const config = testConfig(configOverrides);
   const { fetch, requests } = stubFetch(script);
-  const renderClient = new RenderClient({
-    apiKey: config.apiKey,
-    baseUrl: config.baseUrl,
-    userAgent: config.userAgent,
-    timeoutMs: config.requestTimeoutMs,
-    logger: createLogger('silent'),
-    retryPolicy: { maxRetries: 0, baseDelayMs: 1, maxDelayMs: 1 },
-    fetchImpl: fetch,
-  });
+  const build = (): ReturnType<typeof createServer>['server'] =>
+    createServer({
+      config,
+      version: 'test',
+      logger: createLogger('silent'),
+      client: new RenderClient({
+        apiKey: config.apiKey,
+        baseUrl: config.baseUrl,
+        userAgent: config.userAgent,
+        timeoutMs: config.requestTimeoutMs,
+        logger: createLogger('silent'),
+        retryPolicy: { maxRetries: 0, baseDelayMs: 1, maxDelayMs: 1 },
+        fetchImpl: fetch,
+      }),
+    }).server;
 
-  const { server } = createServer({
-    config,
-    version: 'test',
-    logger: createLogger('silent'),
-    client: renderClient,
-  });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  if (era === 'modern') {
+    // `serveStdio` owns the era decision, so it is what puts the server on 2026-07-28;
+    // pinning the client to the same revision keeps the test from silently falling back.
+    serveStdio(build, { transport: serverTransport });
+    const client = new Client(
+      { name: 'test-client', version: '1.0.0' },
+      { versionNegotiation: { mode: { pin: '2026-07-28' } } },
+    );
+    await client.connect(clientTransport);
+    return { client, requests };
+  }
 
   const client = new Client({ name: 'test-client', version: '1.0.0' });
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+  await Promise.all([client.connect(clientTransport), build().connect(serverTransport)]);
 
   return { client, requests };
 }
@@ -83,7 +103,7 @@ describe('MCP server', () => {
     const result = (await connected.callTool({
       name: 'render_list_services',
       arguments: { limit: 5 },
-    })) as CallToolResult;
+    }));
 
     expect(result.isError).toBeFalsy();
     expect((result.content[0] as { text: string }).text).toContain('srv-1');
@@ -93,7 +113,7 @@ describe('MCP server', () => {
     const result = (await client.callTool({
       name: 'render_retrieve_service',
       arguments: {},
-    })) as CallToolResult;
+    }));
 
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('serviceId');
@@ -104,7 +124,7 @@ describe('MCP server', () => {
     const result = (await connected.callTool({
       name: 'render_retrieve_service',
       arguments: { serviceId: 'srv-missing' },
-    })) as CallToolResult;
+    }));
 
     expect(result.isError).toBe(true);
     const text = (result.content[0] as { text: string }).text;
@@ -114,7 +134,7 @@ describe('MCP server', () => {
   });
 
   it('refuses an unknown tool with a recoverable message', async () => {
-    const result = (await client.callTool({ name: 'render_nope', arguments: {} })) as CallToolResult;
+    const result = (await client.callTool({ name: 'render_nope', arguments: {} }));
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('Unknown tool');
   });
@@ -125,19 +145,39 @@ describe('MCP server', () => {
     expect(tools).toHaveLength(212);
   });
 
-  it('grows the tool list when a narrowed server enables a toolset at runtime', async () => {
+  it('keeps the tool list fixed across calls, as the protocol requires', async () => {
     const { client: narrow } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) });
-    const before = (await narrow.listTools()).tools.length;
+    const before = (await narrow.listTools()).tools.map((tool) => tool.name);
 
-    const result = (await narrow.callTool({
-      name: 'render_toolsets',
-      arguments: { enable: 'metrics' },
-    })) as CallToolResult;
+    const result = (await narrow.callTool({ name: 'render_toolsets', arguments: {} }));
     expect(result.isError).toBeFalsy();
 
-    const after = await narrow.listTools();
-    expect(after.tools.length).toBeGreaterThan(before);
-    expect(after.tools.map((tool) => tool.name)).toContain('render_get_cpu');
+    const after = (await narrow.listTools()).tools.map((tool) => tool.name);
+    expect(after).toEqual(before);
+    expect(after).not.toContain('render_get_cpu');
+  });
+
+  it('reports disabled toolsets and how to enable them, without enabling anything', async () => {
+    const { client: narrow } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) });
+
+    const result = (await narrow.callTool({ name: 'render_toolsets', arguments: {} }));
+    const payload = JSON.parse((result.content[0] as { text: string }).text) as {
+      toolsets: { toolset: string; enabled: boolean }[];
+      howToEnable?: string;
+    };
+
+    expect(payload.toolsets.find((entry) => entry.toolset === 'services')?.enabled).toBe(true);
+    expect(payload.toolsets.find((entry) => entry.toolset === 'metrics')?.enabled).toBe(false);
+    expect(payload.howToEnable).toContain('RENDER_MCP_TOOLSETS');
+  });
+
+  it('rejects an attempt to enable a toolset through the meta-tool', async () => {
+    const result = (await client.callTool({
+      name: 'render_toolsets',
+      arguments: { enable: 'metrics' },
+    }));
+
+    expect(result.isError).toBe(true);
   });
 
   it('blocks mutating tools in read-only mode', async () => {
@@ -149,9 +189,56 @@ describe('MCP server', () => {
     const result = (await readOnly.callTool({
       name: 'render_delete_service',
       arguments: { serviceId: 'srv-1' },
-    })) as CallToolResult;
+    }));
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('read-only');
+  });
+});
+
+describe('protocol revision 2026-07-28', () => {
+  it('serves the tool list with the cache hints the spec requires', async () => {
+    const { client } = await connect({ body: [] }, {}, 'modern');
+    const result = (await client.listTools()) as Record<string, unknown> & { tools: unknown[] };
+
+    expect(result.tools).toHaveLength(212);
+    // `resultType` is not asserted here: the client consumes the discriminator while
+    // lifting the result, so it is a wire-level field the caller never sees.
+    // `ttlMs` and `cacheScope` are required on cacheable results.
+    expect(result['ttlMs']).toBe(300_000);
+    // The list is derived from configuration alone, identical for every caller.
+    expect(result['cacheScope']).toBe('public');
+  });
+
+  it('declares no capability it does not implement', async () => {
+    const { client } = await connect({ body: [] }, {}, 'modern');
+    const capabilities = client.getServerCapabilities();
+
+    expect(capabilities?.tools).toBeDefined();
+    // Diagnostics go to stderr; the Logging feature is deprecated as of this revision.
+    expect(capabilities?.logging).toBeUndefined();
+    // The tool set never changes, so there is nothing to notify about.
+    expect(capabilities?.tools?.listChanged).toBeFalsy();
+  });
+
+  it('executes tool calls on the new era', async () => {
+    const { client } = await connect({ body: [{ service: { id: 'srv-9', name: 'api' } }] }, {}, 'modern');
+    const result = (await client.callTool({
+      name: 'render_list_services',
+      arguments: { limit: 1 },
+    }));
+
+    expect(result.isError).toBeFalsy();
+    expect((result.content[0] as { text: string }).text).toContain('srv-9');
+  });
+
+  it('keeps the tool list byte-identical across calls', async () => {
+    const { client } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) }, 'modern');
+    const before = await client.listTools();
+
+    await client.callTool({ name: 'render_toolsets', arguments: {} });
+
+    const after = await client.listTools();
+    expect(after.tools).toEqual(before.tools);
   });
 });
 

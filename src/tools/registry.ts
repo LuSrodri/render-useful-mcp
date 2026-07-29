@@ -1,14 +1,17 @@
 /**
  * The set of tools the server exposes, and the policy that decides which are visible.
  *
- * Visibility is dynamic: a client may enable further toolsets mid-session, so the registry
- * owns the enabled set and notifies listeners when it changes.
+ * Visibility is fixed at construction. Protocol revision 2026-07-28 requires the result of
+ * `tools/list` not to vary per-connection "or as a side effect of other requests on the
+ * connection", so the enabled set is decided once, from configuration, and never moves.
+ * `render_toolsets` reports that set; changing it means changing `RENDER_MCP_TOOLSETS` and
+ * restarting.
  */
 import { PolicyError } from '../errors.js';
 import type { ToolDefinition } from './types.js';
 import { buildApiTools } from './api-tools.js';
 import { buildCompositeTools } from './composite/index.js';
-import { TOOLSET_DESCRIPTIONS, TOOLSET_IDS, isToolsetId, type ToolsetId } from './toolsets.js';
+import { TOOLSET_DESCRIPTIONS, TOOLSET_IDS, type ToolsetId } from './toolsets.js';
 
 export interface RegistryOptions {
   readonly enabledToolsets: Iterable<ToolsetId>;
@@ -18,9 +21,8 @@ export interface RegistryOptions {
 
 export class ToolRegistry {
   readonly #tools = new Map<string, ToolDefinition>();
-  readonly #enabled: Set<ToolsetId>;
+  readonly #enabled: ReadonlySet<ToolsetId>;
   readonly #readOnly: boolean;
-  readonly #listeners = new Set<() => void>();
 
   constructor(
     options: RegistryOptions,
@@ -83,25 +85,10 @@ export class ToolRegistry {
     if (!this.#isVisible(tool)) {
       throw new PolicyError(
         `"${name}" belongs to the "${tool.toolset}" toolset, which is not enabled.`,
-        this.#tools.has('render_toolsets')
-          ? `Call render_toolsets with enable: "${tool.toolset}", then call "${name}" again.`
-          : `Add "${tool.toolset}" to RENDER_MCP_TOOLSETS in the MCP server configuration.`,
+        `Add "${tool.toolset}" to RENDER_MCP_TOOLSETS in the MCP server configuration and restart the server.`,
       );
     }
     return tool;
-  }
-
-  enableToolset(toolset: ToolsetId): { readonly changed: boolean; readonly toolCount: number } {
-    const changed = !this.#enabled.has(toolset);
-    this.#enabled.add(toolset);
-    if (changed) this.#notify();
-    return { changed, toolCount: this.visible().length };
-  }
-
-  /** Registers a callback fired whenever the visible tool list changes. */
-  onChange(listener: () => void): () => void {
-    this.#listeners.add(listener);
-    return () => this.#listeners.delete(listener);
   }
 
   /** Per-toolset tool counts, used by the meta-tool and the startup banner. */
@@ -131,67 +118,43 @@ export class ToolRegistry {
     return tool.toolset === 'core' || this.#enabled.has(tool.toolset);
   }
 
-  #notify(): void {
-    for (const listener of this.#listeners) {
-      try {
-        listener();
-      } catch {
-        // A misbehaving listener must not break toolset switching.
-      }
-    }
-  }
-
   #buildToolsetMetaTool(): ToolDefinition {
     return {
       name: 'render_toolsets',
-      title: 'List or enable Render toolsets',
+      title: 'List Render toolsets',
       description:
-        'Lists every Render toolset with its tool count and whether it is enabled, and optionally enables one. ' +
-        'All toolsets are enabled by default, so this is mainly useful for discovering which Render capabilities ' +
-        'exist, or for re-enabling a toolset when the operator narrowed the surface with RENDER_MCP_TOOLSETS. ' +
-        'Enabling a toolset makes its tools available immediately.',
+        'Lists every Render toolset with its tool count and whether it is currently enabled. ' +
+        'All toolsets are enabled by default; this is useful for discovering which Render capabilities exist, ' +
+        'and for finding out what the operator has to change when a needed toolset is disabled. ' +
+        'The set of enabled toolsets is fixed at startup — this tool reports it, it cannot change it.',
       toolset: 'core',
       mutating: false,
       annotations: {
-        title: 'List or enable Render toolsets',
-        readOnlyHint: false,
+        title: 'List Render toolsets',
+        readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
       },
       inputSchema: {
         type: 'object',
-        properties: {
-          enable: {
-            type: 'string',
-            enum: [...TOOLSET_IDS],
-            description: 'Toolset to enable. Omit to only list the current state.',
-          },
-        },
+        properties: {},
         additionalProperties: false,
         $schema: 'http://json-schema.org/draft-07/schema#',
       },
       // Synchronous work, but the tool contract is uniformly async.
-      handler: (args) => {
-        const requested: unknown = args['enable'];
-        if (requested === undefined) {
-          return Promise.resolve({ toolsets: this.stats(), visibleTools: this.visible().length });
-        }
-        if (typeof requested !== 'string' || !isToolsetId(requested)) {
-          throw new PolicyError(
-            `Unknown toolset "${JSON.stringify(requested)}".`,
-            `Valid toolsets: ${TOOLSET_IDS.join(', ')}.`,
-          );
-        }
-        const { changed, toolCount } = this.enableToolset(requested);
+      handler: () => {
+        const toolsets = this.stats();
+        const disabled = toolsets.filter((entry) => !entry.enabled).map((entry) => entry.toolset);
         return Promise.resolve({
-          toolset: requested,
-          enabled: true,
-          alreadyEnabled: !changed,
-          visibleTools: toolCount,
-          message: changed
-            ? `Enabled "${requested}". Its tools are now listed; re-read tools/list to see them.`
-            : `"${requested}" was already enabled.`,
+          toolsets,
+          visibleTools: this.visible().length,
+          ...(disabled.length > 0 && {
+            howToEnable:
+              `Toolsets are selected at startup and cannot be changed from here. To enable ${disabled.join(', ')}, ` +
+              `set RENDER_MCP_TOOLSETS in the MCP server configuration (use "all", or a comma-separated list) ` +
+              `and restart the server.`,
+          }),
         });
       },
     };

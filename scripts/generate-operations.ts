@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import { TOOLSET_BY_TAG, type ToolsetId } from '../src/tools/toolsets.js';
 import { TOOL_NAME_OVERRIDES } from '../src/tools/name-overrides.js';
-import type { BodyMode, JsonSchema, OperationCatalogue, OperationDefinition } from '../src/generated/types.js';
+import type { BodyMode, JsonSchema, ObjectJsonSchema, OperationCatalogue, OperationDefinition } from '../src/generated/types.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SPEC_PATH = resolve(ROOT, 'spec/render-openapi.json');
@@ -205,7 +205,7 @@ function describeParameter(parameter: OpenApiParameter): JsonSchema {
 }
 
 interface BuiltInput {
-  schema: JsonSchema;
+  schema: ObjectJsonSchema;
   pathParams: string[];
   queryParams: string[];
   bodyMode: BodyMode;
@@ -300,7 +300,7 @@ function buildInput(path: string, operation: OpenApiOperation, pathItem: PathIte
     }
   }
 
-  const schema: JsonSchema = {
+  const schema: ObjectJsonSchema = {
     type: 'object',
     properties,
     ...(required.length > 0 ? { required: [...new Set(required)].sort() } : {}),

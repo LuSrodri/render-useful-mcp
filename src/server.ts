@@ -1,13 +1,13 @@
 /**
- * MCP protocol wiring.
+ * MCP protocol wiring, on protocol revision 2026-07-28.
  *
  * The low-level `Server` is used rather than the `McpServer` façade because tool schemas
- * are generated JSON Schema, not Zod. `McpServer.registerTool` only accepts Zod, so going
- * through it would mean converting 207 spec-derived schemas twice and losing constraints
- * along the way. Here the spec's schemas reach the client untouched.
+ * are generated JSON Schema, not Standard Schema. `McpServer.registerTool` only accepts a
+ * `StandardSchemaWithJSON` (Zod v4, ArkType, Valibot), so going through it would mean
+ * converting 207 spec-derived schemas twice and losing constraints along the way. Here the
+ * spec's schemas reach the client untouched.
  */
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Server, type CallToolResult } from '@modelcontextprotocol/server';
 
 import type { Config } from './config.js';
 import { RenderMcpError } from './errors.js';
@@ -56,17 +56,23 @@ export function createServer(options: CreateServerOptions): CreatedServer {
 
   const server = new Server(
     { name: 'render-useful-mcp', version: options.version },
-    { capabilities: { tools: { listChanged: true }, logging: {} } },
+    {
+      // No `listChanged`: the visible set is fixed for the lifetime of the process. The
+      // spec requires the tool list not to vary per-connection or as a side effect of
+      // other requests, so there is nothing to notify about.
+      capabilities: { tools: {} },
+      // Logging is not declared: diagnostics go to stderr (see `logging.ts`), which is
+      // what SEP-2577 prescribes for stdio servers now that the Logging feature is
+      // deprecated.
+      cacheHints: {
+        // Derived purely from this process's configuration — identical for every caller,
+        // and immutable while the process lives — so it is safe for shared caches.
+        'tools/list': { ttlMs: 300_000, cacheScope: 'public' },
+      },
+    },
   );
 
-  // Enabling a toolset mid-session changes the tool list, which clients must be told about.
-  registry.onChange(() => {
-    // Fire-and-forget: a client that has gone away must not fail the tool call that
-    // triggered the change.
-    void server.sendToolListChanged();
-  });
-
-  server.setRequestHandler(ListToolsRequestSchema, () => ({
+  server.setRequestHandler('tools/list', () => ({
     tools: registry.visible().map((tool) => ({
       name: tool.name,
       title: tool.title,
@@ -76,7 +82,7 @@ export function createServer(options: CreateServerOptions): CreatedServer {
     })),
   }));
 
-  server.setRequestHandler(CallToolRequestSchema, async (request, extra): Promise<CallToolResult> => {
+  server.setRequestHandler('tools/call', async (request, ctx): Promise<CallToolResult> => {
     const { name, arguments: rawArgs } = request.params;
     const started = Date.now();
     const callLogger = logger.child({ tool: name });
@@ -89,7 +95,7 @@ export function createServer(options: CreateServerOptions): CreatedServer {
         client,
         config,
         logger: callLogger,
-        signal: extra.signal,
+        signal: ctx.mcpReq.signal,
         callTool: async (otherName, otherArgs) => {
           const other = registry.resolve(otherName);
           return other.handler(validateArgs(otherName, other.inputSchema, otherArgs), context);

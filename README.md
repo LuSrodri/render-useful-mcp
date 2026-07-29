@@ -70,7 +70,7 @@ claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
 | `RENDER_WORKSPACE_ID`           | —                           | Workspace id applied wherever an `ownerId` is needed and none was given.  |
 | `RENDER_MCP_TOOLSETS`           | `all`                       | Narrow the surface to a comma-separated list of toolsets.                 |
 | `RENDER_MCP_READ_ONLY`          | `false`                     | When true, only non-mutating (GET) tools are exposed at all.              |
-| `RENDER_MCP_DYNAMIC_TOOLSETS`   | `true`                      | Registers `render_toolsets` so the model can enable toolsets mid-session. |
+| `RENDER_MCP_DYNAMIC_TOOLSETS`   | `true`                      | Registers `render_toolsets`, which reports the toolsets and their state. |
 | `RENDER_MCP_TIMEOUT_MS`         | `60000`                     | Per-request timeout.                                                      |
 | `RENDER_MCP_MAX_RETRIES`        | `3`                         | Retries for rate limits and transient server errors.                      |
 | `RENDER_MCP_MAX_RESPONSE_BYTES` | `400000`                    | Tool results larger than this are truncated with a note.                  |
@@ -111,7 +111,7 @@ Reasons you might narrow it anyway:
 "env": { "RENDER_MCP_READ_ONLY": "true" }
 ```
 
-If you do narrow it, the model can still call `render_toolsets` to see what exists and re-enable a group. The server emits `notifications/tools/list_changed` and the new tools appear immediately — no restart.
+If you do narrow it, the model can still call `render_toolsets` to see everything that exists and which groups are switched off, so it can tell you exactly what to change. Widening the surface means editing `RENDER_MCP_TOOLSETS` and restarting the server: protocol revision `2026-07-28` requires the result of `tools/list` not to vary per connection or as a side effect of another call, so the enabled set is fixed at startup.
 
 ## Tools
 
@@ -125,7 +125,7 @@ These are always available, in any toolset configuration. They exist because the
 | `render_wait_for_deploy` | Polls a deploy to a terminal state (`live`, `build_failed`, …) with a timeout, instead of the model looping on `render_retrieve_deploy`. Defaults to the latest deploy. |
 | `render_service_status`  | One-call triage: configuration, recent deploys, running instances and recent error logs, fetched concurrently. Answers "why is X broken?".                              |
 | `render_recent_logs`     | Recent logs for a service, resolving the name and workspace id for you, with level/text filters.                                                                        |
-| `render_toolsets`        | Lists toolsets and enables them at runtime.                                                                                                                             |
+| `render_toolsets`        | Lists every toolset with its tool count and whether it is enabled, and names the setting to change when one is not.                                                     |
 
 ### API tools
 
