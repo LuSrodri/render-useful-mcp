@@ -1,5 +1,5 @@
 {
-  "name": "render",
+  "name": "render-useful-mcp",
   "displayName": "Render",
   "version": "1.1.0",
   "description": "Manage Render services, deploys, databases and logs. Wraps all 207 endpoints of the Render Public API plus workflow tools for finding services by name, waiting on deploys and triaging failures.",
