@@ -77,6 +77,48 @@ describe('server.json', () => {
 });
 
 /**
+ * Invariants of the Claude Code plugin, which is the third place this repository is
+ * published from. It is submitted once and then tracked by commit SHA, so a manifest that
+ * drifts out of step with the package is not caught by anything downstream.
+ */
+describe('plugin manifest', () => {
+  const plugin = readJson('plugin/.claude-plugin/plugin.json');
+  const mcpConfig = readJson('plugin/.mcp.json');
+  const servers = mcpConfig['mcpServers'] as Record<string, Record<string, unknown>>;
+  const server = servers['render'] as Record<string, unknown>;
+
+  it('is versioned in step with the package', () => {
+    // `scripts/sync-server-version.ts` rewrites this on `npm version`; the check is here so
+    // a hand-edited manifest cannot drift silently.
+    expect(plugin['version']).toBe(pkg['version']);
+  });
+
+  it('launches the package this repository publishes', () => {
+    expect(server['command']).toBe('npx');
+    expect(server['args']).toEqual(['-y', pkg['name']]);
+  });
+
+  it('passes the API key through without baking one in', () => {
+    const env = server['env'] as Record<string, string>;
+    // The `:-` fallback matters: without it an unset variable reaches the server as the
+    // literal "${RENDER_API_KEY}", which is non-empty and would fail as a 401 instead of a
+    // configuration error. `src/config.ts` rejects both spellings, but the fallback means
+    // the common case produces the better message.
+    expect(env['RENDER_API_KEY']).toBe('${RENDER_API_KEY:-}');
+    expect(JSON.stringify(mcpConfig)).not.toMatch(/rnd_[A-Za-z0-9]/);
+  });
+
+  it('is listed by the marketplace at the path it actually occupies', () => {
+    const marketplace = readJson('.claude-plugin/marketplace.json');
+    const entries = marketplace['plugins'] as Array<Record<string, unknown>>;
+    const entry = entries.find((candidate) => candidate['name'] === plugin['name']);
+
+    expect(entry, `marketplace.json has no entry named "${String(plugin['name'])}"`).toBeDefined();
+    expect(entry?.['source']).toBe('./plugin');
+  });
+});
+
+/**
  * The same settings are described in four places: `server.json` (which the MCP Registry
  * renders in client UIs), the README table, `.env.example` and the code. They drift, and
  * `server.json` drifts most quietly — nothing renders it during development, so a stale

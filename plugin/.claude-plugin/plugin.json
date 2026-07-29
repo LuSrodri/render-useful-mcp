@@ -1,0 +1,14 @@
+{
+  "name": "render",
+  "displayName": "Render",
+  "version": "1.1.0",
+  "description": "Manage Render services, deploys, databases and logs. Wraps all 207 endpoints of the Render Public API plus workflow tools for finding services by name, waiting on deploys and triaging failures.",
+  "author": {
+    "name": "LuSrodri",
+    "url": "https://github.com/LuSrodri"
+  },
+  "homepage": "https://github.com/LuSrodri/render-useful-mcp#readme",
+  "repository": "https://github.com/LuSrodri/render-useful-mcp",
+  "license": "MIT",
+  "keywords": ["render", "paas", "devops", "deployment", "hosting", "postgres", "logs"]
+}

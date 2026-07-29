@@ -22,6 +22,16 @@ Most API wrappers stop at a curated subset of endpoints, which drifts out of dat
 
 Both buttons prefill the config with a placeholder API key — replace it after install.
 
+**Claude Code**, as a plugin — this wires up the server and its docs in one step:
+
+```shell
+/plugin marketplace add LuSrodri/render-useful-mcp
+/plugin install render@lusrodri-render
+```
+
+Export `RENDER_API_KEY` in the shell that launches Claude Code; the plugin reads it from
+the environment rather than storing it. See [`plugin/README.md`](plugin/README.md).
+
 Requires Node.js ≥ 20.11.
 
 ```bash
