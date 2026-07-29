@@ -257,7 +257,15 @@ jobs:
           # GitHub derives the changelog from the commits since the previous tag. Asking the
           # API for it (rather than `gh release create --generate-notes`) leaves room to
           # prepend the install snippet, which the flag would otherwise overwrite.
-          NOTES="$(gh api "repos/$REPO/releases/generate-notes" -f tag_name="$TAG" --jq .body)"
+          #
+          # `|| true` matters: this step runs after npm and the registry have already been
+          # published, and those are irreversible. A hiccup generating prose must degrade to
+          # a release without a changelog, not fail a job whose real work already succeeded.
+          NOTES="$(gh api "repos/$REPO/releases/generate-notes" -f tag_name="$TAG" --jq .body || true)"
+          if [ -z "$NOTES" ]; then
+            echo "Could not generate release notes; publishing the release without them." >&2
+            NOTES="See the commit history for what changed."
+          fi
 
           {
             echo "Published to [npm](https://www.npmjs.com/package/$NAME/v/$VERSION) and the"
