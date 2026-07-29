@@ -50,7 +50,9 @@ on:
 permissions:
   # Required for OIDC. Without it npm falls back to token auth and fails with ENEEDAUTH.
   id-token: write
-  contents: read
+  # `write` rather than `read` so the last step can cut a GitHub Release. Nothing else in
+  # this workflow writes to the repository.
+  contents: write
 
 jobs:
   publish:
@@ -233,3 +235,43 @@ jobs:
       - name: Publish to the MCP Registry
         if: steps.state.outputs.publish-registry == 'true'
         run: ./mcp-publisher publish
+
+      # A tag on its own leaves the Releases page empty, so the only public record of a
+      # version is the npm page. This step is unconditional and idempotent: it runs even
+      # when both publish steps were skipped on a retry, and does nothing if the release
+      # already exists — so a re-dispatch never fails here.
+      - name: Publish a GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          NAME: ${{ steps.version.outputs.package }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SERVER: ${{ steps.version.outputs.server }}
+        run: |
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it alone."
+            exit 0
+          fi
+
+          # GitHub derives the changelog from the commits since the previous tag. Asking the
+          # API for it (rather than `gh release create --generate-notes`) leaves room to
+          # prepend the install snippet, which the flag would otherwise overwrite.
+          NOTES="$(gh api "repos/$REPO/releases/generate-notes" -f tag_name="$TAG" --jq .body)"
+
+          {
+            echo "Published to [npm](https://www.npmjs.com/package/$NAME/v/$VERSION) and the"
+            echo "[MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=$SERVER)."
+            echo
+            echo '```jsonc'
+            echo '// Claude Code: claude mcp add render -- npx -y '"$NAME"'@'"$VERSION"
+            echo '// or, in an MCP client config:'
+            echo '{ "command": "npx", "args": ["-y", "'"$NAME"'@'"$VERSION"'"],'
+            echo '  "env": { "RENDER_API_KEY": "rnd_..." } }'
+            echo '```'
+            echo
+            echo "$NOTES"
+          } > release-notes.md
+
+          gh release create "$TAG" --repo "$REPO" --title "$TAG" --notes-file release-notes.md
+          echo "Created release $TAG."

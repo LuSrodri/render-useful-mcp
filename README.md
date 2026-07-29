@@ -17,6 +17,11 @@ Most API wrappers stop at a curated subset of endpoints, which drifts out of dat
 
 ## Install
 
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_server-0078d4?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=render&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22render-useful-mcp%22%5D%2C%22env%22%3A%7B%22RENDER_API_KEY%22%3A%22rnd_your_key_here%22%7D%7D)
+[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_server-000000?logo=cursor&logoColor=white)](https://cursor.com/link/mcp/install?name=render&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22render-useful-mcp%22%5D%2C%22env%22%3A%7B%22RENDER_API_KEY%22%3A%22rnd_your_key_here%22%7D%7D)
+
+Both buttons prefill the config with a placeholder API key — replace it after install.
+
 Requires Node.js ≥ 20.11.
 
 ```bash

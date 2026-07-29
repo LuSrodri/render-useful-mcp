@@ -51,7 +51,7 @@
         },
         {
           "name": "RENDER_MCP_DYNAMIC_TOOLSETS",
-          "description": "Let the model enable toolsets mid-session via the render_toolsets tool.",
+          "description": "Registers the render_toolsets tool, which reports which toolsets exist and which are enabled.",
           "isRequired": false,
           "format": "boolean",
           "default": "true"

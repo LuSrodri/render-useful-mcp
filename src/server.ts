@@ -67,6 +67,12 @@ export function createServer(options: CreateServerOptions): CreatedServer {
       cacheHints: {
         // Derived purely from this process's configuration — identical for every caller,
         // and immutable while the process lives — so it is safe for shared caches.
+        //
+        // `public` is correct *because* this server is stdio: one process per client, with
+        // no shared cache on the path. Exposing a Streamable HTTP transport would break
+        // that assumption — two instances configured with different RENDER_MCP_TOOLSETS
+        // behind one cache would serve each other's tool lists — and this would have to
+        // become `private`.
         'tools/list': { ttlMs: 300_000, cacheScope: 'public' },
       },
     },
