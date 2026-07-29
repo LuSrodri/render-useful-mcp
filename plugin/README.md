@@ -1,8 +1,14 @@
-# Render plugin
+# render-useful-mcp plugin
 
 Bundles the [`render-useful-mcp`](https://github.com/LuSrodri/render-useful-mcp) MCP server
 so Claude Code can operate your Render account: services, deploys, Postgres, Key Value,
 disks, environment groups, logs, metrics and the rest of the Render Public API.
+
+Unofficial, and not affiliated with Render. Render publishes its own Claude Code plugin at
+[`render-oss/render-plugin-claude-code`](https://github.com/render-oss/render-plugin-claude-code),
+which takes a different approach: hand-written skills and agents for common workflows. This
+one is generated from Render's OpenAPI document and exposes the complete API surface, so the
+two are complementary rather than alternatives — installing both is reasonable.
 
 ## Setup
 

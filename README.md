@@ -26,7 +26,7 @@ Both buttons prefill the config with a placeholder API key — replace it after 
 
 ```shell
 /plugin marketplace add LuSrodri/render-useful-mcp
-/plugin install render@lusrodri-render
+/plugin install render-useful-mcp@lusrodri-render
 ```
 
 Export `RENDER_API_KEY` in the shell that launches Claude Code; the plugin reads it from

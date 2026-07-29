@@ -7,7 +7,7 @@
   "description": "Render integration for Claude Code, built on the render-useful-mcp server.",
   "plugins": [
     {
-      "name": "render",
+      "name": "render-useful-mcp",
       "source": "./plugin",
       "description": "Manage Render services, deploys, databases and logs through the Render Public API.",
       "category": "infrastructure",
