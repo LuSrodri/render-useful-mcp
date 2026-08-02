@@ -32,7 +32,16 @@ Both buttons prefill the config with a placeholder API key — replace it after 
 Export `RENDER_API_KEY` in the shell that launches Claude Code; the plugin reads it from
 the environment rather than storing it. See [`plugin/README.md`](plugin/README.md).
 
-Requires Node.js ≥ 20.11.
+**Claude for macOS and Windows**, as a desktop extension — download the `.mcpb` bundle from
+the [latest release](https://github.com/LuSrodri/render-useful-mcp/releases/latest) and open
+it. Claude installs it and asks for the API key in a form, so nothing is configured by hand.
+The bundle ships its own dependencies; it does not need npm or a global Node install.
+
+Desktop installs default to the `services`, `logs` and `env-groups` toolsets — 70 tools
+rather than all 212 — because every tool definition costs context in every conversation. Set
+the **Toolsets** field to `all`, or to any comma-separated list, to change that.
+
+Requires Node.js ≥ 20.11 for every install route except the desktop extension.
 
 ```bash
 npm install -g render-useful-mcp
@@ -79,18 +88,18 @@ claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
 
 ## Configuration
 
-| Variable                        | Default                     | Description                                                               |
-| ------------------------------- | --------------------------- | ------------------------------------------------------------------------- |
-| `RENDER_API_KEY`                | —                           | **Required.** Your Render API key.                                        |
-| `RENDER_WORKSPACE_ID`           | —                           | Workspace id applied wherever an `ownerId` is needed and none was given.  |
-| `RENDER_MCP_TOOLSETS`           | `all`                       | Narrow the surface to a comma-separated list of toolsets.                 |
-| `RENDER_MCP_READ_ONLY`          | `false`                     | When true, only non-mutating (GET) tools are exposed at all.              |
+| Variable                        | Default                     | Description                                                              |
+| ------------------------------- | --------------------------- | ------------------------------------------------------------------------ |
+| `RENDER_API_KEY`                | —                           | **Required.** Your Render API key.                                       |
+| `RENDER_WORKSPACE_ID`           | —                           | Workspace id applied wherever an `ownerId` is needed and none was given. |
+| `RENDER_MCP_TOOLSETS`           | `all`                       | Narrow the surface to a comma-separated list of toolsets.                |
+| `RENDER_MCP_READ_ONLY`          | `false`                     | When true, only non-mutating (GET) tools are exposed at all.             |
 | `RENDER_MCP_DYNAMIC_TOOLSETS`   | `true`                      | Registers `render_toolsets`, which reports the toolsets and their state. |
-| `RENDER_MCP_TIMEOUT_MS`         | `60000`                     | Per-request timeout.                                                      |
-| `RENDER_MCP_MAX_RETRIES`        | `3`                         | Retries for rate limits and transient server errors.                      |
-| `RENDER_MCP_MAX_RESPONSE_BYTES` | `400000`                    | Tool results larger than this are truncated with a note.                  |
-| `RENDER_MCP_LOG_LEVEL`          | `info`                      | `debug`, `info`, `warn`, `error`, `silent`. Logs go to stderr.            |
-| `RENDER_API_BASE_URL`           | `https://api.render.com/v1` | Override for proxies or testing.                                          |
+| `RENDER_MCP_TIMEOUT_MS`         | `60000`                     | Per-request timeout.                                                     |
+| `RENDER_MCP_MAX_RETRIES`        | `3`                         | Retries for rate limits and transient server errors.                     |
+| `RENDER_MCP_MAX_RESPONSE_BYTES` | `400000`                    | Tool results larger than this are truncated with a note.                 |
+| `RENDER_MCP_LOG_LEVEL`          | `info`                      | `debug`, `info`, `warn`, `error`, `silent`. Logs go to stderr.           |
+| `RENDER_API_BASE_URL`           | `https://api.render.com/v1` | Override for proxies or testing.                                         |
 
 ## Toolsets
 
@@ -172,6 +181,25 @@ npm run check       # generate + lint + typecheck + test
 
 The test suite covers catalogue invariants (all 207 operations, no dangling `$ref`, path params required, annotations match HTTP semantics), request mapping, retry and pagination behaviour, the composite tools, and a full in-memory MCP client/server round trip.
 
+### Building the desktop extension
+
+```bash
+npm run build:mcpb   # -> build/render-useful-mcp-<version>.mcpb
+```
+
+This stages `dist/` plus the production dependency tree into `build/mcpb/` and packs it.
+The bundle is self-contained by design — Claude runs it with no install step — so the
+dependencies are copied out of this repository's `node_modules` rather than reinstalled,
+which is what guarantees the artefact contains the tree the test suite actually ran on.
+
+`manifest.json` at the repository root is the extension's manifest; `npm version` keeps its
+version in step with the package. To inspect a built bundle:
+
+```bash
+npx mcpb info build/render-useful-mcp-<version>.mcpb
+npx mcpb unpack build/render-useful-mcp-<version>.mcpb /tmp/check
+```
+
 ### Updating to a new Render API version
 
 This is automated. `.github/workflows/spec-sync.yml` runs weekly, fetches Render's current
@@ -217,7 +245,9 @@ git push --follow-tags
 
 Pushing a `v*` tag runs `.github/workflows/publish.yml`, which verifies the tag matches
 `package.json` and that the generated catalogue is current, works out which of the two
-targets still need this version, then lints, type-checks, tests, builds and publishes.
+targets still need this version, then lints, type-checks, tests, builds and publishes. It
+also builds the `.mcpb` bundle and attaches it to the GitHub Release, which is the only
+place the desktop extension is distributed from.
 
 The order is fixed: npm first, then the registry. The registry proves you own the package
 by fetching the published tarball and looking for `mcpName` in its `package.json`, so it

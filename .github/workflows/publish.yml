@@ -164,6 +164,20 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      # The bundle Claude for macOS and Windows installs. It is attached to the GitHub
+      # Release below rather than published anywhere, because the MCPB directory has no
+      # registry: users and the submission form both take the file itself.
+      #
+      # `build` has already run, so this calls the packer directly rather than going through
+      # `npm run build:mcpb` and rebuilding `dist/` a second time.
+      - name: Build the desktop extension bundle
+        id: mcpb
+        run: |
+          npx tsx scripts/build-mcpb.ts
+          BUNDLE="build/render-useful-mcp-${{ steps.version.outputs.version }}.mcpb"
+          test -f "$BUNDLE" || { echo "Packer produced no $BUNDLE." >&2; exit 1; }
+          echo "bundle=$BUNDLE" >> "$GITHUB_OUTPUT"
+
       # Provenance attestation is generated automatically for public repo + public package.
       # --verbose so an auth failure shows which credential path npm actually took.
       - name: Publish to npm
@@ -238,8 +252,11 @@ jobs:
 
       # A tag on its own leaves the Releases page empty, so the only public record of a
       # version is the npm page. This step is unconditional and idempotent: it runs even
-      # when both publish steps were skipped on a retry, and does nothing if the release
-      # already exists — so a re-dispatch never fails here.
+      # when both publish steps were skipped on a retry, and leaves the notes of an existing
+      # release alone — so a re-dispatch never fails here.
+      #
+      # The bundle upload is the exception to "leave it alone": it uses --clobber and runs on
+      # both paths, so a retry that exists only to attach a missing artifact does attach it.
       - name: Publish a GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -248,9 +265,12 @@ jobs:
           NAME: ${{ steps.version.outputs.package }}
           VERSION: ${{ steps.version.outputs.version }}
           SERVER: ${{ steps.version.outputs.server }}
+          BUNDLE: ${{ steps.mcpb.outputs.bundle }}
         run: |
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; leaving it alone."
+            echo "Release $TAG already exists; leaving its notes alone."
+            gh release upload "$TAG" "$BUNDLE" --repo "$REPO" --clobber
+            echo "Attached $BUNDLE."
             exit 0
           fi
 
@@ -271,6 +291,8 @@ jobs:
             echo "Published to [npm](https://www.npmjs.com/package/$NAME/v/$VERSION) and the"
             echo "[MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=$SERVER)."
             echo
+            echo "For **Claude for macOS and Windows**, download \`$(basename "$BUNDLE")\` below and open it."
+            echo
             echo '```jsonc'
             echo '// Claude Code: claude mcp add render -- npx -y '"$NAME"'@'"$VERSION"
             echo '// or, in an MCP client config:'
@@ -281,5 +303,5 @@ jobs:
             echo "$NOTES"
           } > release-notes.md
 
-          gh release create "$TAG" --repo "$REPO" --title "$TAG" --notes-file release-notes.md
-          echo "Created release $TAG."
+          gh release create "$TAG" --repo "$REPO" --title "$TAG" --notes-file release-notes.md "$BUNDLE"
+          echo "Created release $TAG with $BUNDLE attached."

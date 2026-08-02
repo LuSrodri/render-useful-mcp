@@ -67,8 +67,21 @@ export interface LoadConfigOptions {
   readonly version: string;
 }
 
+/**
+ * Drops variables whose value is empty or whitespace, so they read as unset.
+ *
+ * MCPB hosts substitute `${user_config.workspace_id}` with the empty string when the user
+ * leaves an optional field blank, rather than omitting the variable. Without this, a blank
+ * "Default workspace ID" in Claude for macOS/Windows fails `RENDER_WORKSPACE_ID`'s `min(1)`
+ * and the extension refuses to start — and an empty `RENDER_MCP_DYNAMIC_TOOLSETS` would
+ * parse as `false`, quietly inverting its default.
+ */
+function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(env).filter(([, value]) => value?.trim() !== ''));
+}
+
 export function loadConfig({ env = process.env, version }: LoadConfigOptions): Config {
-  const parsed = envSchema.safeParse(env);
+  const parsed = envSchema.safeParse(withoutBlanks(env));
   if (!parsed.success) {
     const issues = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new ConfigurationError(`Invalid environment configuration: ${issues}`);

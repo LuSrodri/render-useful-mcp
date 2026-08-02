@@ -104,6 +104,23 @@ describe('loadConfig', () => {
       ConfigurationError,
     );
   });
+
+  it('reads a blank optional variable as unset, not as a value', () => {
+    // What an MCPB host passes for every `user_config` field the user left empty: the
+    // variable is present and empty rather than absent. Before this was handled, a blank
+    // "Default workspace ID" in Claude for macOS/Windows failed `min(1)` and the extension
+    // would not start at all.
+    const config = loadConfig({
+      env: { ...base, RENDER_WORKSPACE_ID: '', RENDER_MCP_TOOLSETS: '', RENDER_MCP_DYNAMIC_TOOLSETS: '' },
+      version: '1.0.0',
+    });
+
+    expect(config.defaultOwnerId).toBeUndefined();
+    expect([...config.toolsets].sort()).toEqual([...DEFAULT_TOOLSETS].sort());
+    // The subtle one: an empty string is falsy to `booleanFromEnv`, so without the blank
+    // filter this default would silently invert.
+    expect(config.dynamicToolsets).toBe(true);
+  });
 });
 
 describe('parseToolsets', () => {

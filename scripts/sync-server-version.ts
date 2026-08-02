@@ -1,10 +1,11 @@
 #!/usr/bin/env tsx
 /**
  * Copies the version from `package.json` into every manifest that repeats it:
- * `server.json` (twice) and the Claude Code plugin manifest.
+ * `server.json` (twice), the Claude Code plugin manifest, and the MCPB manifest.
  *
- * Each of those is read by something outside this repository — the MCP Registry and the
- * plugin marketplace — and `npm version` only knows about `package.json`. Without this the
+ * Each of those is read by something outside this repository — the MCP Registry, the plugin
+ * marketplace and Claude for macOS/Windows — and `npm version` only knows about
+ * `package.json`. Without this the
  * bump commit would leave the tree failing its own test suite, discovered at release time,
  * which is the worst moment for it.
  *
@@ -48,3 +49,10 @@ save('server.json', manifest);
 const plugin = load('plugin/.claude-plugin/plugin.json');
 plugin.version = version;
 save('plugin/.claude-plugin/plugin.json', plugin);
+
+// The MCPB bundle is built from this file and uploaded by hand, so nothing downstream ever
+// catches a stale version — it just ships one, under a version number that means something
+// else on npm.
+const mcpb = load('manifest.json');
+mcpb.version = version;
+save('manifest.json', mcpb);

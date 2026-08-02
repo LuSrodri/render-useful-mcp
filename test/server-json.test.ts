@@ -11,6 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { parseToolsets } from '../src/config.js';
+import { ToolRegistry } from '../src/tools/registry.js';
+import { TOOLSET_IDS } from '../src/tools/toolsets.js';
+
 function readJson(relativePath: string): Record<string, unknown> {
   const path = fileURLToPath(new URL(`../${relativePath}`, import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
@@ -115,6 +119,105 @@ describe('plugin manifest', () => {
 
     expect(entry, `marketplace.json has no entry named "${String(plugin['name'])}"`).toBeDefined();
     expect(entry?.['source']).toBe('./plugin');
+  });
+});
+
+/**
+ * Invariants of `manifest.json`, the MCPB manifest that Claude for macOS and Windows reads.
+ *
+ * This one is submitted as a built `.mcpb` artefact through a form, reviewed by hand, and
+ * installed by users who never see this repository. Nothing downstream validates it against
+ * the code, so a field that drifts — an entry point that moved, an env var the server stopped
+ * reading — ships as a broken install with no error until launch.
+ */
+describe('mcpb manifest', () => {
+  const mcpb = readJson('manifest.json');
+  const server = mcpb['server'] as Record<string, unknown>;
+  const mcpConfig = server['mcp_config'] as Record<string, unknown>;
+  const userConfig = mcpb['user_config'] as Record<string, Record<string, unknown>>;
+
+  it('is versioned in step with the package', () => {
+    expect(mcpb['version']).toBe(pkg['version']);
+  });
+
+  it('points the author at a GitHub profile', () => {
+    // A submission requirement of the MCPB directory form, and the only link a reviewer has
+    // back to a person.
+    const author = mcpb['author'] as Record<string, unknown>;
+    expect(author['name']).toBe('LuSrodri');
+    expect(author['url']).toBe('https://github.com/LuSrodri');
+  });
+
+  it('launches the entry point that scripts/build-mcpb.mjs actually stages', () => {
+    // The build copies `dist/` to `server/`. If either half of that pairing changes alone,
+    // the bundle installs cleanly and then fails to start.
+    expect(server['type']).toBe('node');
+    expect(server['entry_point']).toBe('server/index.js');
+    expect(mcpConfig['command']).toBe('node');
+    expect(mcpConfig['args']).toEqual(['${__dirname}/server/index.js']);
+  });
+
+  it('only maps environment variables the server reads', () => {
+    const env = mcpConfig['env'] as Record<string, string>;
+    const documented = readFileSync(fileURLToPath(new URL('../.env.example', import.meta.url)), 'utf8');
+
+    for (const name of Object.keys(env)) {
+      expect(documented, `${name} is mapped by the manifest but is not in .env.example`).toContain(`${name}=`);
+    }
+  });
+
+  it('fills every mapped variable from a declared user_config key', () => {
+    // An unresolved `${user_config.x}` is passed through literally, so a typo here reaches
+    // the server as the placeholder text rather than as a missing value.
+    const env = mcpConfig['env'] as Record<string, string>;
+
+    for (const [name, value] of Object.entries(env)) {
+      const key = /^\$\{user_config\.([a-z_]+)\}$/.exec(value)?.[1];
+      expect(key, `${name} is not filled from user_config`).toBeDefined();
+      expect(userConfig, `user_config has no "${String(key)}" for ${name}`).toHaveProperty(key!);
+    }
+  });
+
+  it('requires the API key and marks it sensitive', () => {
+    expect(userConfig['api_key']?.['required']).toBe(true);
+    expect(userConfig['api_key']?.['sensitive']).toBe(true);
+    expect(JSON.stringify(mcpb)).not.toMatch(/rnd_[A-Za-z0-9]{10}/);
+  });
+
+  it('defaults to a toolset selection the server accepts', () => {
+    // The default deliberately differs from the package default of all 17 toolsets: 207 tool
+    // definitions is a large, permanent context cost in a desktop client. It still has to be
+    // a selection `parseToolsets` can resolve.
+    const value = userConfig['toolsets']?.['default'];
+    expect(value).toBeTypeOf('string');
+    expect(() => parseToolsets(value as string)).not.toThrow();
+    expect(parseToolsets(value as string).size).toBeGreaterThan(0);
+  });
+
+  it('declares the workflow tools by their real names', () => {
+    // `tools_generated` covers the 207 API tools; the five listed by hand are what a
+    // directory listing shows, so a rename that skipped this file would advertise tools that
+    // do not exist.
+    const declared = (mcpb['tools'] as Array<Record<string, unknown>>).map((tool) => String(tool['name']));
+    const registry = new ToolRegistry({
+      enabledToolsets: new Set(TOOLSET_IDS),
+      readOnly: false,
+      dynamicToolsets: true,
+    });
+    const actual = new Set(registry.all().map((tool) => tool.name));
+
+    expect(mcpb['tools_generated']).toBe(true);
+    for (const name of declared) {
+      expect(actual, `manifest.json advertises "${name}", which the registry does not build`).toContain(name);
+    }
+  });
+
+  it('links a privacy policy for every service it sends data to', () => {
+    // Required by §3.A of the Software Directory Policy. The user's key and their Render
+    // account data both leave the machine, so Render's own policy belongs here too.
+    const policies = mcpb['privacy_policies'] as string[];
+    expect(policies.some((url) => url.includes('LuSrodri/render-useful-mcp'))).toBe(true);
+    expect(policies.some((url) => url.includes('render.com'))).toBe(true);
   });
 });
 

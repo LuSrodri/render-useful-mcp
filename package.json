@@ -47,6 +47,7 @@
   "scripts": {
     "generate": "tsx scripts/generate-operations.ts",
     "build": "npm run generate && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "build:mcpb": "npm run build && tsx scripts/build-mcpb.ts",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
@@ -59,7 +60,7 @@
     "test:coverage": "vitest run --coverage",
     "check": "npm run generate && npm run lint && npm run typecheck && npm run test",
     "prepublishOnly": "npm run build",
-    "version": "tsx scripts/sync-server-version.ts && git add server.json",
+    "version": "tsx scripts/sync-server-version.ts && git add server.json manifest.json plugin/.claude-plugin/plugin.json",
     "sync-spec": "tsx scripts/fetch-spec.ts",
     "diff-catalogue": "tsx scripts/diff-catalogue.ts"
   },
@@ -70,6 +71,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
     "@eslint/js": "^9.39.0",
     "@modelcontextprotocol/client": "^2.0.0",
     "@types/node": "^22.10.0",
