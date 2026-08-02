@@ -3,7 +3,7 @@
   "name": "io.github.LuSrodri/render-useful-mcp",
   "title": "Render Useful MCP",
   "description": "MCP server for the Render Public API: all 207 endpoints plus workflow tools.",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "websiteUrl": "https://github.com/LuSrodri/render-useful-mcp#readme",
   "repository": {
     "url": "https://github.com/LuSrodri/render-useful-mcp",
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "render-useful-mcp",
-      "version": "1.1.1",
+      "version": "1.2.0",
       "transport": {
         "type": "stdio"
       },

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "render-useful-mcp",
   "display_name": "Render Useful MCP",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Manage Render services, deploys, databases and logs from Claude.",
   "long_description": "An unofficial, community-built MCP server for the [Render](https://render.com) Public API.\n\nIt exposes every one of the 207 official API endpoints as a tool, plus five higher-level workflow tools that cover the things people actually ask for: finding a service by name, waiting for a deploy to finish, diagnosing a service, and reading recent logs.\n\nTools are grouped into 17 toolsets so you only load the ones you need. Every tool carries `readOnlyHint` and `destructiveHint` annotations, and a read-only mode hides all mutating tools outright.\n\nNot affiliated with or endorsed by Render.",
   "author": {
@@ -21,13 +21,23 @@
     "https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md",
     "https://render.com/privacy"
   ],
-  "keywords": ["render", "paas", "devops", "deployment", "hosting", "logs", "postgres"],
+  "keywords": [
+    "render",
+    "paas",
+    "devops",
+    "deployment",
+    "hosting",
+    "logs",
+    "postgres"
+  ],
   "server": {
     "type": "node",
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
       "env": {
         "RENDER_API_KEY": "${user_config.api_key}",
         "RENDER_WORKSPACE_ID": "${user_config.workspace_id}",
@@ -91,7 +101,11 @@
   "tools_generated": true,
   "compatibility": {
     "claude_desktop": ">=0.10.0",
-    "platforms": ["darwin", "win32", "linux"],
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
     "runtimes": {
       "node": ">=20.11.0"
     }
