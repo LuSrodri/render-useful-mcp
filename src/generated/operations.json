@@ -6772,6 +6772,7 @@
         "method",
         "task",
         "taskRun",
+        "sandbox",
         "level",
         "type",
         "text",
@@ -6813,7 +6814,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, or workflow."
+            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, workflow, or sandbox group."
           },
           "instance": {
             "type": "array",
@@ -6856,6 +6857,13 @@
               "type": "string"
             },
             "description": "Filter logs by their task run id(s)"
+          },
+          "sandbox": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter logs by sandbox ID."
           },
           "level": {
             "type": "array",
@@ -6929,6 +6937,7 @@
         "method",
         "task",
         "taskRun",
+        "sandbox",
         "level",
         "type",
         "text",
@@ -6982,7 +6991,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, or workflow."
+            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, workflow, or sandbox group."
           },
           "instance": {
             "type": "array",
@@ -7025,6 +7034,13 @@
               "type": "string"
             },
             "description": "Filter logs by their task run id(s)"
+          },
+          "sandbox": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter logs by sandbox ID."
           },
           "level": {
             "type": "array",
@@ -10899,6 +10915,7 @@
         "method",
         "task",
         "taskRun",
+        "sandbox",
         "level",
         "type",
         "text",
@@ -10940,7 +10957,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, or workflow."
+            "description": "Filter logs by their resource. A resource is the id of a server, cronjob, job, postgres, redis, workflow, or sandbox group."
           },
           "instance": {
             "type": "array",
@@ -10983,6 +11000,13 @@
               "type": "string"
             },
             "description": "Filter logs by their task run id(s)"
+          },
+          "sandbox": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter logs by sandbox ID."
           },
           "level": {
             "type": "array",
