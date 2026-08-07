@@ -1,0 +1,8 @@
+# Everything here is public documentation for an open-source project, so every crawler —
+# search engine or AI — is welcome. The two llms.txt files exist precisely so an assistant
+# can read this site cheaply instead of parsing the rendered HTML.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://lusrodri.github.io/render-useful-mcp/sitemap.xml

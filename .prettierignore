@@ -4,3 +4,13 @@ coverage
 node_modules
 spec/render-openapi.json
 src/generated/operations.json
+
+# `scripts/generate-docs.ts` owns the formatting of everything below, and `npm run
+# docs:check` compares byte for byte — letting Prettier reformat them would make the check
+# fail on files nobody edited.
+docs/index.html
+docs/tools.html
+docs/tool-index.json
+docs/sitemap.xml
+docs/llms.txt
+docs/llms-full.txt

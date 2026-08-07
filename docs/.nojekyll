@@ -1,0 +1,3 @@
+Serve this directory verbatim. Without this file GitHub Pages runs the tree through Jekyll,
+which drops paths beginning with an underscore and can rewrite files it believes are
+templates — neither of which is wanted for a directory of static, generated assets.

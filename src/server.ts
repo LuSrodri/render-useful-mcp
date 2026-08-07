@@ -11,6 +11,7 @@ import { Server, type CallToolResult } from '@modelcontextprotocol/server';
 
 import type { Config } from './config.js';
 import { RenderMcpError } from './errors.js';
+import { SERVER_INSTRUCTIONS } from './instructions.js';
 import { createLogger, type Logger } from './logging.js';
 import { RenderClient } from './render/client.js';
 import { ToolRegistry } from './tools/registry.js';
@@ -61,6 +62,9 @@ export function createServer(options: CreateServerOptions): CreatedServer {
       // spec requires the tool list not to vary per-connection or as a side effect of
       // other requests, so there is nothing to notify about.
       capabilities: { tools: {} },
+      // Sent once in the `initialize` result. Cross-tool guidance lives here rather than
+      // being duplicated across the descriptions of every tool it applies to.
+      instructions: SERVER_INSTRUCTIONS,
       // Logging is not declared: diagnostics go to stderr (see `logging.ts`), which is
       // what SEP-2577 prescribes for stdio servers now that the Logging feature is
       // deprecated.

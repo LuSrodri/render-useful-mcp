@@ -4,7 +4,11 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   // `build/` holds the staged MCPB bundle: a copy of `dist/` plus vendored dependencies.
-  { ignores: ['dist/**', 'build/**', 'node_modules/**', 'coverage/**', 'src/generated/operations.json'] },
+  // `docs/` is the published static site: browser JavaScript outside the TypeScript
+  // program, plus files this repository's generator owns end to end.
+  {
+    ignores: ['dist/**', 'build/**', 'docs/**', 'node_modules/**', 'coverage/**', 'src/generated/operations.json'],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {

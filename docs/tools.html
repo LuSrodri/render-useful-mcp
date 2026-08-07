@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tool catalogue — render-useful-mcp</title>
+    <meta name="description" content="All 212 MCP tools exposed by render-useful-mcp: every Render Public API endpoint plus 5 workflow tools, grouped by toolset." />
+    <link rel="canonical" href="https://lusrodri.github.io/render-useful-mcp/tools.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tool catalogue — render-useful-mcp" />
+    <meta property="og:description" content="All 212 MCP tools for the Render Public API, grouped by toolset." />
+    <meta property="og:url" content="https://lusrodri.github.io/render-useful-mcp/tools.html" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A0%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "render-useful-mcp tool catalogue",
+  "description": "All 212 MCP tools exposed by render-useful-mcp.",
+  "url": "https://lusrodri.github.io/render-useful-mcp/tools.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "render-useful-mcp",
+    "url": "https://lusrodri.github.io/render-useful-mcp/"
+  }
+}
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <p class="crumb"><a href="./">render-useful-mcp</a> / tool catalogue</p>
+        <h1>Tool catalogue</h1>
+        <p class="lede">
+          212 tools — all 207 operations of the Render Public API (spec
+          1.0.0) plus 5 workflow tools. Generated from Render's
+          OpenAPI document, so this page is never out of date with the server.
+        </p>
+        <nav class="toc">
+          <a href="#core">Workflow tools</a>
+          <a href="#services">services</a>
+          <a href="#metrics">metrics</a>
+          <a href="#postgres">postgres</a>
+          <a href="#workflows">workflows</a>
+          <a href="#env-groups">env-groups</a>
+          <a href="#projects">projects</a>
+          <a href="#webhooks">webhooks</a>
+          <a href="#logs">logs</a>
+          <a href="#static-sites">static-sites</a>
+          <a href="#deprecated">deprecated</a>
+          <a href="#key-value">key-value</a>
+          <a href="#workspaces">workspaces</a>
+          <a href="#disks">disks</a>
+          <a href="#blueprints">blueprints</a>
+          <a href="#network">network</a>
+          <a href="#registry">registry</a>
+          <a href="#maintenance">maintenance</a>
+        </nav>
+      </header>
+
+      <main>
+        <section id="core">
+          <h2>Workflow tools <span class="count">5</span></h2>
+          <p>Always available, in any toolset configuration.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_find_service">render_find_service</code></td>
+              <td>Resolves a service name — including a partial or approximate one — to a single Render service, returning its id plus close alternatives.</td>
+            </tr>
+            <tr>
+              <td><code id="render_recent_logs">render_recent_logs</code></td>
+              <td>Fetches recent log lines for a service, resolving the service name and workspace id for you.</td>
+            </tr>
+            <tr>
+              <td><code id="render_service_status">render_service_status</code></td>
+              <td>One-call triage for a service: its configuration, latest deploys, running instances and most recent error-level logs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_toolsets">render_toolsets</code></td>
+              <td>Lists every Render toolset with its tool count and whether it is currently enabled.</td>
+            </tr>
+            <tr>
+              <td><code id="render_wait_for_deploy">render_wait_for_deploy</code></td>
+              <td>Polls a deploy until it reaches a terminal state (live, build_failed, update_failed, canceled, deactivated) or the timeout expires.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="services">
+          <h2>services <span class="count">42</span></h2>
+          <p>Services, deploys, custom domains, one-off jobs, cron job runs and events.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_add_or_update_secret_file">render_add_or_update_secret_file</code></td>
+              <td>Add or update secret file.</td>
+            </tr>
+            <tr>
+              <td><code id="render_autoscale_service">render_autoscale_service</code></td>
+              <td>Update autoscaling config.</td>
+            </tr>
+            <tr>
+              <td><code id="render_cancel_cron_job_run">render_cancel_cron_job_run</code></td>
+              <td>Cancel running cron job.</td>
+            </tr>
+            <tr>
+              <td><code id="render_cancel_deploy">render_cancel_deploy</code></td>
+              <td>Cancel deploy.</td>
+            </tr>
+            <tr>
+              <td><code id="render_cancel_job">render_cancel_job</code></td>
+              <td>Cancel running job.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_custom_domain">render_create_custom_domain</code></td>
+              <td>Add custom domain.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_deploy">render_create_deploy</code></td>
+              <td>Trigger deploy.<p class="usage"><strong>Usage:</strong> Omit `commitId`/`imageUrl` to deploy the branch tip or the current image. `clearCache`: `clear` forces a rebuild from scratch and is the first thing to try when a build fails for no visible reason. Returns as soon as the deploy is queued, so follow with render_wait_for_deploy rather than polling render_retrieve_deploy.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_create_job">render_create_job</code></td>
+              <td>Create job.<p class="usage"><strong>Usage:</strong> Starts a one-off job on an existing service, reusing its image and environment. This is not how you create a cron job — a cron job is a service (render_create_service with `type`:`cron_job`), and render_run_cron_job triggers one off-schedule.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_create_service">render_create_service</code></td>
+              <td>Create service.<p class="usage"><strong>Usage:</strong> Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {&quot;type&quot;:&quot;cron_job&quot;,&quot;name&quot;:&quot;nightly-report&quot;,&quot;ownerId&quot;:&quot;tea-…&quot;, &quot;repo&quot;:&quot;https://github.com/acme/reports&quot;,&quot;branch&quot;:&quot;main&quot;, &quot;serviceDetails&quot;:{&quot;runtime&quot;:&quot;docker&quot;,&quot;schedule&quot;:&quot;0 3 * * *&quot;,&quot;plan&quot;:&quot;starter&quot;,&quot;region&quot;:&quot;oregon&quot;, &quot;envSpecificDetails&quot;:{&quot;dockerfilePath&quot;:&quot;./Dockerfile&quot;,&quot;dockerContext&quot;:&quot;.&quot;,&quot;dockerCommand&quot;:&quot;python report.py&quot;}}}. For a cron job running a prebuilt image, drop `repo`/`branch`, set `image` to {&quot;ownerId&quot;:&quot;tea-…&quot;,&quot;imagePath&quot;:&quot;docker.io/acme/reports:latest&quot;}, keep `runtime`:`image`, and give `envSpecificDetails` only the `dockerCommand` to run. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_autoscaling_config">render_delete_autoscaling_config</code></td>
+              <td>Delete autoscaling config.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_custom_domain">render_delete_custom_domain</code></td>
+              <td>Delete custom domain.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_env_var">render_delete_env_var</code></td>
+              <td>Delete environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_secret_file">render_delete_secret_file</code></td>
+              <td>Delete secret file.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_service">render_delete_service</code></td>
+              <td>Delete service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_env_vars_for_service">render_get_env_vars_for_service</code></td>
+              <td>List environment variables.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_custom_domains">render_list_custom_domains</code></td>
+              <td>List custom domains.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_deploys">render_list_deploys</code></td>
+              <td>List deploys.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_events">render_list_events</code></td>
+              <td>List events.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_instances">render_list_instances</code></td>
+              <td>List instances.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_jobs">render_list_jobs</code></td>
+              <td>List jobs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_secret_files_for_service">render_list_secret_files_for_service</code></td>
+              <td>List secret files.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_services">render_list_services</code></td>
+              <td>List services.<p class="usage"><strong>Usage:</strong> Filters are ANDed, and `name` matches as a substring rather than exactly. When the user named one service, render_find_service resolves it in a single call and handles approximate names; reach for this tool to enumerate or filter in bulk.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_preview_service">render_preview_service</code></td>
+              <td>Create service preview (image-backed).</td>
+            </tr>
+            <tr>
+              <td><code id="render_purge_cache">render_purge_cache</code></td>
+              <td>Purge Web Service Cache.</td>
+            </tr>
+            <tr>
+              <td><code id="render_refresh_custom_domain">render_refresh_custom_domain</code></td>
+              <td>Verify DNS configuration.</td>
+            </tr>
+            <tr>
+              <td><code id="render_restart_service">render_restart_service</code></td>
+              <td>Restart service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_resume_service">render_resume_service</code></td>
+              <td>Resume service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_custom_domain">render_retrieve_custom_domain</code></td>
+              <td>Retrieve custom domain.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_deploy">render_retrieve_deploy</code></td>
+              <td>Retrieve deploy.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_env_var">render_retrieve_env_var</code></td>
+              <td>Retrieve environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_event">render_retrieve_event</code></td>
+              <td>Retrieve event.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_job">render_retrieve_job</code></td>
+              <td>Retrieve job.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_secret_file">render_retrieve_secret_file</code></td>
+              <td>Retrieve secret file.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_service">render_retrieve_service</code></td>
+              <td>Retrieve service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_rollback_deploy">render_rollback_deploy</code></td>
+              <td>Roll back deploy.<p class="usage"><strong>Usage:</strong> `deployId` must be a previously successful deploy of this same service — list candidates with render_list_deploys and pick one whose status is `live`.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_run_cron_job">render_run_cron_job</code></td>
+              <td>Trigger cron job run.<p class="usage"><strong>Usage:</strong> Triggers an immediate, out-of-schedule run. `cronJobId` is the cron job service's own id (`srv-…`, or `crn-…` on older workspaces) — resolve it with render_find_service. This does not change the schedule; use render_update_service for that.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_scale_service">render_scale_service</code></td>
+              <td>Scale instance count.<p class="usage"><strong>Usage:</strong> Sets a fixed instance count and turns off autoscaling. To scale on load instead, use render_autoscale_service.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_suspend_service">render_suspend_service</code></td>
+              <td>Suspend service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_env_var">render_update_env_var</code></td>
+              <td>Add or update environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_env_vars_for_service">render_update_env_vars_for_service</code></td>
+              <td>Update environment variables.<p class="usage"><strong>Usage:</strong> This replaces the service's entire environment variable set: anything absent from `body` is deleted. To change one variable, read the current set with render_get_env_vars_for_service and send it back with your edit applied, or use render_update_env_var for a single key. Applying changes restarts the service.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_update_secret_files_for_service">render_update_secret_files_for_service</code></td>
+              <td>Update secret files.<p class="usage"><strong>Usage:</strong> Replaces the full set of secret files; omitted files are deleted. Read the current set with render_list_secret_files_for_service first.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_update_service">render_update_service</code></td>
+              <td>Update service.<p class="usage"><strong>Usage:</strong> `serviceDetails` branches are the PATCH variants of the same five service types, and the branch must still match the service's existing `type` — a service cannot change type. Send only the fields you are changing; omitted fields keep their current values. Changing a cron job's `schedule` or a service's build settings does not itself deploy — call render_create_deploy afterwards when the change needs a rebuild.</p></td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="metrics">
+          <h2>metrics <span class="count">23</span></h2>
+          <p>CPU, memory, bandwidth, HTTP, disk and connection metrics, plus metrics streams.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_delete_owner_metrics_stream">render_delete_owner_metrics_stream</code></td>
+              <td>Delete metrics stream.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_active_connections">render_get_active_connections</code></td>
+              <td>Get active connection count.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_bandwidth">render_get_bandwidth</code></td>
+              <td>Get bandwidth usage.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_bandwidth_sources">render_get_bandwidth_sources</code></td>
+              <td>Get bandwidth usage breakdown by traffic source.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_cpu">render_get_cpu</code></td>
+              <td>Get CPU usage.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_cpu_limit">render_get_cpu_limit</code></td>
+              <td>Get CPU limit.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_cpu_target">render_get_cpu_target</code></td>
+              <td>Get CPU target.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_disk_capacity">render_get_disk_capacity</code></td>
+              <td>Get disk capacity.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_disk_usage">render_get_disk_usage</code></td>
+              <td>Get disk usage.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_http_latency">render_get_http_latency</code></td>
+              <td>Get HTTP latency.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_http_requests">render_get_http_requests</code></td>
+              <td>Get HTTP request count.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_instance_count">render_get_instance_count</code></td>
+              <td>Get instance count.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_memory">render_get_memory</code></td>
+              <td>Get memory usage.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_memory_limit">render_get_memory_limit</code></td>
+              <td>Get memory limit.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_memory_target">render_get_memory_target</code></td>
+              <td>Get memory target.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_owner_metrics_stream">render_get_owner_metrics_stream</code></td>
+              <td>Retrieve metrics stream.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_replication_lag">render_get_replication_lag</code></td>
+              <td>Get replica lag.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_task_runs_completed">render_get_task_runs_completed</code></td>
+              <td>Get task runs completed count.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_task_runs_queued">render_get_task_runs_queued</code></td>
+              <td>Get task runs queued count.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_application_filter_values">render_list_application_filter_values</code></td>
+              <td>List queryable instance values.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_http_filter_values">render_list_http_filter_values</code></td>
+              <td>List queryable status codes and host values.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_path_filter_values">render_list_path_filter_values</code></td>
+              <td>List queryable paths.</td>
+            </tr>
+            <tr>
+              <td><code id="render_upsert_owner_metrics_stream">render_upsert_owner_metrics_stream</code></td>
+              <td>Create or update metrics stream.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="postgres">
+          <h2>postgres <span class="count">21</span></h2>
+          <p>Postgres instances, users, exports, recovery and query insights.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_postgres">render_create_postgres</code></td>
+              <td>Create Postgres instance.<p class="usage"><strong>Usage:</strong> `version` is a major version as a string (e.g. &quot;16&quot;). Plans and their disk sizes come from render_list_postgres_sizes. The generated password appears only in the creation response; afterwards, read credentials with render_retrieve_postgres_connection_info.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_create_postgres_export">render_create_postgres_export</code></td>
+              <td>Create Postgres export.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_postgres_user">render_create_postgres_user</code></td>
+              <td>Create PostgreSQL User.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_postgres">render_delete_postgres</code></td>
+              <td>Delete Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_postgres_user">render_delete_postgres_user</code></td>
+              <td>Delete PostgreSQL User.</td>
+            </tr>
+            <tr>
+              <td><code id="render_failover_postgres">render_failover_postgres</code></td>
+              <td>Failover Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres">render_list_postgres</code></td>
+              <td>List Postgres instances.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_export">render_list_postgres_export</code></td>
+              <td>List Postgres exports.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_processes">render_list_postgres_processes</code></td>
+              <td>List live queries.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_sizes">render_list_postgres_sizes</code></td>
+              <td>List database, table, and index sizes.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_table_scans">render_list_postgres_table_scans</code></td>
+              <td>List table scans.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_top_queries">render_list_postgres_top_queries</code></td>
+              <td>List top queries.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_postgres_users">render_list_postgres_users</code></td>
+              <td>List PostgreSQL Users.</td>
+            </tr>
+            <tr>
+              <td><code id="render_recover_postgres">render_recover_postgres</code></td>
+              <td>Trigger point-in-time recovery.</td>
+            </tr>
+            <tr>
+              <td><code id="render_restart_postgres">render_restart_postgres</code></td>
+              <td>Restart Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_resume_postgres">render_resume_postgres</code></td>
+              <td>Resume Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_postgres">render_retrieve_postgres</code></td>
+              <td>Retrieve Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_postgres_connection_info">render_retrieve_postgres_connection_info</code></td>
+              <td>Retrieve Postgres connection info.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_postgres_recovery_info">render_retrieve_postgres_recovery_info</code></td>
+              <td>Retrieve point-in-time recovery status.</td>
+            </tr>
+            <tr>
+              <td><code id="render_suspend_postgres">render_suspend_postgres</code></td>
+              <td>Suspend Postgres instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_postgres">render_update_postgres</code></td>
+              <td>Update Postgres instance.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="workflows">
+          <h2>workflows <span class="count">15</span></h2>
+          <p>Render Workflows and workflow tasks (public beta).</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_cancel_task_run">render_cancel_task_run</code></td>
+              <td>Cancel task run.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_task">render_create_task</code></td>
+              <td>Run task.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_workflow">render_create_workflow</code></td>
+              <td>Create a workflow.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_workflow_version">render_create_workflow_version</code></td>
+              <td>Deploy a workflow version.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_workflow">render_delete_workflow</code></td>
+              <td>Delete workflow.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_task">render_get_task</code></td>
+              <td>Retrieve task.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_task_run">render_get_task_run</code></td>
+              <td>Retrieve task run.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_workflow">render_get_workflow</code></td>
+              <td>Retrieve workflow.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_workflow_version">render_get_workflow_version</code></td>
+              <td>Retrieve workflow version.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_task_runs">render_list_task_runs</code></td>
+              <td>List task runs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_tasks">render_list_tasks</code></td>
+              <td>List tasks.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_workflow_versions">render_list_workflow_versions</code></td>
+              <td>List workflow versions.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_workflows">render_list_workflows</code></td>
+              <td>List workflows.</td>
+            </tr>
+            <tr>
+              <td><code id="render_stream_task_runs_events">render_stream_task_runs_events</code></td>
+              <td>Stream realtime events (SSE).</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_workflow">render_update_workflow</code></td>
+              <td>Update workflow.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="env-groups">
+          <h2>env-groups <span class="count">13</span></h2>
+          <p>Environment groups, their variables and secret files.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_env_group">render_create_env_group</code></td>
+              <td>Create environment group.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_env_group">render_delete_env_group</code></td>
+              <td>Delete environment group.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_env_group_env_var">render_delete_env_group_env_var</code></td>
+              <td>Remove environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_env_group_secret_file">render_delete_env_group_secret_file</code></td>
+              <td>Remove secret file.</td>
+            </tr>
+            <tr>
+              <td><code id="render_link_service_to_env_group">render_link_service_to_env_group</code></td>
+              <td>Link service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_env_groups">render_list_env_groups</code></td>
+              <td>List environment groups.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_env_group">render_retrieve_env_group</code></td>
+              <td>Retrieve environment group.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_env_group_env_var">render_retrieve_env_group_env_var</code></td>
+              <td>Retrieve environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_env_group_secret_file">render_retrieve_env_group_secret_file</code></td>
+              <td>Retrieve secret file.</td>
+            </tr>
+            <tr>
+              <td><code id="render_unlink_service_from_env_group">render_unlink_service_from_env_group</code></td>
+              <td>Unlink service.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_env_group">render_update_env_group</code></td>
+              <td>Update environment group.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_env_group_env_var">render_update_env_group_env_var</code></td>
+              <td>Add or update environment variable.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_env_group_secret_file">render_update_env_group_secret_file</code></td>
+              <td>Add or update secret file.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="projects">
+          <h2>projects <span class="count">12</span></h2>
+          <p>Projects and environments.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_add_resources_to_environment">render_add_resources_to_environment</code></td>
+              <td>Add resources to environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_environment">render_create_environment</code></td>
+              <td>Create environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_create_project">render_create_project</code></td>
+              <td>Create project.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_environment">render_delete_environment</code></td>
+              <td>Delete environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_project">render_delete_project</code></td>
+              <td>Delete project.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_environments">render_list_environments</code></td>
+              <td>List environments.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_projects">render_list_projects</code></td>
+              <td>List projects.</td>
+            </tr>
+            <tr>
+              <td><code id="render_remove_resources_from_environment">render_remove_resources_from_environment</code></td>
+              <td>Remove resources from environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_environment">render_retrieve_environment</code></td>
+              <td>Retrieve environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_project">render_retrieve_project</code></td>
+              <td>Retrieve Project.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_environment">render_update_environment</code></td>
+              <td>Update environment.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_project">render_update_project</code></td>
+              <td>Update project.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="webhooks">
+          <h2>webhooks <span class="count">11</span></h2>
+          <p>Webhooks and notification settings/overrides.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_webhook">render_create_webhook</code></td>
+              <td>Create a webhook.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_webhook">render_delete_webhook</code></td>
+              <td>Delete a webhook.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_notification_overrides">render_list_notification_overrides</code></td>
+              <td>List notification overrides.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_webhook_events">render_list_webhook_events</code></td>
+              <td>List webhook events.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_webhooks">render_list_webhooks</code></td>
+              <td>List webhooks.</td>
+            </tr>
+            <tr>
+              <td><code id="render_patch_owner_notification_settings">render_patch_owner_notification_settings</code></td>
+              <td>Update notification settings.</td>
+            </tr>
+            <tr>
+              <td><code id="render_patch_service_notification_overrides">render_patch_service_notification_overrides</code></td>
+              <td>Update notification override.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_owner_notification_settings">render_retrieve_owner_notification_settings</code></td>
+              <td>Retrieve notification settings.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_service_notification_overrides">render_retrieve_service_notification_overrides</code></td>
+              <td>Retrieve notification override.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_webhook">render_retrieve_webhook</code></td>
+              <td>Retrieve a webhook.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_webhook">render_update_webhook</code></td>
+              <td>Update a webhook.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="logs">
+          <h2>logs <span class="count">10</span></h2>
+          <p>Log queries, label discovery and log stream configuration.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_delete_owner_log_stream">render_delete_owner_log_stream</code></td>
+              <td>Delete log stream.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_resource_log_stream">render_delete_resource_log_stream</code></td>
+              <td>Delete log stream override.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_owner_log_stream">render_get_owner_log_stream</code></td>
+              <td>Retrieve log stream.</td>
+            </tr>
+            <tr>
+              <td><code id="render_get_resource_log_stream">render_get_resource_log_stream</code></td>
+              <td>Retrieve log stream override.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_logs">render_list_logs</code></td>
+              <td>List logs.<p class="usage"><strong>Usage:</strong> Requires an `ownerId` and a `resource` array of ids. For the common case — recent logs for one service — render_recent_logs takes a service name and fills both in.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_list_logs_values">render_list_logs_values</code></td>
+              <td>List log label values.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_resource_log_streams">render_list_resource_log_streams</code></td>
+              <td>List log stream overrides.</td>
+            </tr>
+            <tr>
+              <td><code id="render_subscribe_logs">render_subscribe_logs</code></td>
+              <td>Subscribe to new logs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_owner_log_stream">render_update_owner_log_stream</code></td>
+              <td>Update log stream.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_resource_log_stream">render_update_resource_log_stream</code></td>
+              <td>Update log stream override.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="static-sites">
+          <h2>static-sites <span class="count">9</span></h2>
+          <p>Header rules and redirect/rewrite routes for static sites.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_add_headers">render_add_headers</code></td>
+              <td>Add header rule.</td>
+            </tr>
+            <tr>
+              <td><code id="render_add_route">render_add_route</code></td>
+              <td>Add redirect/rewrite rules.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_header">render_delete_header</code></td>
+              <td>Delete header rule.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_route">render_delete_route</code></td>
+              <td>Delete redirect/rewrite rule.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_headers">render_list_headers</code></td>
+              <td>List header rules.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_routes">render_list_routes</code></td>
+              <td>List redirect/rewrite rules.</td>
+            </tr>
+            <tr>
+              <td><code id="render_patch_route">render_patch_route</code></td>
+              <td>Update redirect/rewrite rule priority.</td>
+            </tr>
+            <tr>
+              <td><code id="render_put_routes">render_put_routes</code></td>
+              <td>Update redirect/rewrite rules.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_headers">render_update_headers</code></td>
+              <td>Replace header rules.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="deprecated">
+          <h2>deprecated <span class="count">8</span></h2>
+          <p>Legacy Redis endpoints that Render has superseded by the Key Value API.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_redis">render_create_redis</code></td>
+              <td>[DEPRECATED by Render] Create Redis instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_redis">render_delete_redis</code></td>
+              <td>[DEPRECATED by Render] Delete Redis instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_redis">render_list_redis</code></td>
+              <td>[DEPRECATED by Render] List Redis instances.</td>
+            </tr>
+            <tr>
+              <td><code id="render_resume_redis">render_resume_redis</code></td>
+              <td>[DEPRECATED by Render] Resume Redis instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_redis">render_retrieve_redis</code></td>
+              <td>[DEPRECATED by Render] Retrieve Redis instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_redis_connection_info">render_retrieve_redis_connection_info</code></td>
+              <td>[DEPRECATED by Render] Retrieve Redis connection info.</td>
+            </tr>
+            <tr>
+              <td><code id="render_suspend_redis">render_suspend_redis</code></td>
+              <td>[DEPRECATED by Render] Suspend Redis instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_redis">render_update_redis</code></td>
+              <td>[DEPRECATED by Render] Update Redis instance.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="key-value">
+          <h2>key-value <span class="count">8</span></h2>
+          <p>Key Value (Redis-compatible) instances and connection info.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_key_value">render_create_key_value</code></td>
+              <td>Create Key Value instance.<p class="usage"><strong>Usage:</strong> Key Value is Render's Redis-compatible store and supersedes the `deprecated` toolset's Redis endpoints. Read credentials with render_retrieve_key_value_connection_info; the connection string is not returned by list or retrieve.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_key_value">render_delete_key_value</code></td>
+              <td>Delete Key Value instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_key_value">render_list_key_value</code></td>
+              <td>List Key Value instances.</td>
+            </tr>
+            <tr>
+              <td><code id="render_resume_key_value">render_resume_key_value</code></td>
+              <td>Resume Key Value instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_key_value">render_retrieve_key_value</code></td>
+              <td>Retrieve Key Value instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_key_value_connection_info">render_retrieve_key_value_connection_info</code></td>
+              <td>Retrieve Key Value connection info.</td>
+            </tr>
+            <tr>
+              <td><code id="render_suspend_key_value">render_suspend_key_value</code></td>
+              <td>Suspend Key Value instance.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_key_value">render_update_key_value</code></td>
+              <td>Update Key Value instance.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="workspaces">
+          <h2>workspaces <span class="count">8</span></h2>
+          <p>Workspaces, members, the authenticated user and audit logs.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_get_user">render_get_user</code></td>
+              <td>Get the authenticated user.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_organization_audit_logs">render_list_organization_audit_logs</code></td>
+              <td>List organization audit logs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_owner_audit_logs">render_list_owner_audit_logs</code></td>
+              <td>List workspace audit logs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_owners">render_list_owners</code></td>
+              <td>List workspaces.<p class="usage"><strong>Usage:</strong> Returns the workspaces (`tea-…` ids) your API key can reach. Set RENDER_WORKSPACE_ID to the one you use so every tool needing an `ownerId` stops asking.</p></td>
+            </tr>
+            <tr>
+              <td><code id="render_remove_workspace_member">render_remove_workspace_member</code></td>
+              <td>Remove workspace member.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_owner">render_retrieve_owner</code></td>
+              <td>Retrieve workspace.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_owner_members">render_retrieve_owner_members</code></td>
+              <td>List workspace members.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_workspace_member">render_update_workspace_member</code></td>
+              <td>Update workspace member role.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="disks">
+          <h2>disks <span class="count">7</span></h2>
+          <p>Persistent disks and their snapshots.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_add_disk">render_add_disk</code></td>
+              <td>Add disk.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_disk">render_delete_disk</code></td>
+              <td>Delete disk.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_disks">render_list_disks</code></td>
+              <td>List disks.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_snapshots">render_list_snapshots</code></td>
+              <td>List snapshots.</td>
+            </tr>
+            <tr>
+              <td><code id="render_restore_snapshot">render_restore_snapshot</code></td>
+              <td>Restore snapshot.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_disk">render_retrieve_disk</code></td>
+              <td>Retrieve disk.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_disk">render_update_disk</code></td>
+              <td>Update disk.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="blueprints">
+          <h2>blueprints <span class="count">6</span></h2>
+          <p>Blueprints and Blueprint syncs.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_disconnect_blueprint">render_disconnect_blueprint</code></td>
+              <td>Disconnect Blueprint.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_blueprint_syncs">render_list_blueprint_syncs</code></td>
+              <td>List Blueprint syncs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_blueprints">render_list_blueprints</code></td>
+              <td>List Blueprints.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_blueprint">render_retrieve_blueprint</code></td>
+              <td>Retrieve Blueprint.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_blueprint">render_update_blueprint</code></td>
+              <td>Update Blueprint.</td>
+            </tr>
+            <tr>
+              <td><code id="render_validate_blueprint">render_validate_blueprint</code></td>
+              <td>Validate Blueprint.<p class="usage"><strong>Usage:</strong> Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.</p></td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="network">
+          <h2>network <span class="count">5</span></h2>
+          <p>Dedicated outbound IP sets.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_dedicated_ip">render_create_dedicated_ip</code></td>
+              <td>Create dedicated IP set.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_dedicated_ip">render_delete_dedicated_ip</code></td>
+              <td>Delete dedicated IP set.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_dedicated_ips">render_list_dedicated_ips</code></td>
+              <td>List dedicated IPs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_dedicated_ip">render_retrieve_dedicated_ip</code></td>
+              <td>Retrieve dedicated IP set.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_dedicated_ip">render_update_dedicated_ip</code></td>
+              <td>Update dedicated IP set.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="registry">
+          <h2>registry <span class="count">5</span></h2>
+          <p>Container registry credentials.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_create_registry_credential">render_create_registry_credential</code></td>
+              <td>Create registry credential.</td>
+            </tr>
+            <tr>
+              <td><code id="render_delete_registry_credential">render_delete_registry_credential</code></td>
+              <td>Delete registry credential.</td>
+            </tr>
+            <tr>
+              <td><code id="render_list_registry_credentials">render_list_registry_credentials</code></td>
+              <td>List registry credentials.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_registry_credential">render_retrieve_registry_credential</code></td>
+              <td>Retrieve registry credential.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_registry_credential">render_update_registry_credential</code></td>
+              <td>Update registry credential.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="maintenance">
+          <h2>maintenance <span class="count">4</span></h2>
+          <p>Scheduled maintenance runs.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+            <tr>
+              <td><code id="render_list_maintenance">render_list_maintenance</code></td>
+              <td>List maintenance runs.</td>
+            </tr>
+            <tr>
+              <td><code id="render_retrieve_maintenance">render_retrieve_maintenance</code></td>
+              <td>Retrieve maintenance run.</td>
+            </tr>
+            <tr>
+              <td><code id="render_trigger_maintenance">render_trigger_maintenance</code></td>
+              <td>Trigger maintenance run.</td>
+            </tr>
+            <tr>
+              <td><code id="render_update_maintenance">render_update_maintenance</code></td>
+              <td>Update maintenance run.</td>
+            </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>
+          <a href="./">Overview</a> · <a href="https://github.com/LuSrodri/render-useful-mcp">Source</a> ·
+          <a href="./llms.txt">llms.txt</a> · MIT licensed · Not affiliated with Render.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -16,7 +16,14 @@ import { fileURLToPath } from 'node:url';
 
 import { TOOLSET_BY_TAG, type ToolsetId } from '../src/tools/toolsets.js';
 import { TOOL_NAME_OVERRIDES } from '../src/tools/name-overrides.js';
-import type { BodyMode, JsonSchema, ObjectJsonSchema, OperationCatalogue, OperationDefinition } from '../src/generated/types.js';
+import { OPERATION_HINTS } from '../src/tools/operation-hints.js';
+import type {
+  BodyMode,
+  JsonSchema,
+  ObjectJsonSchema,
+  OperationCatalogue,
+  OperationDefinition,
+} from '../src/generated/types.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SPEC_PATH = resolve(ROOT, 'spec/render-openapi.json');
@@ -142,7 +149,49 @@ function dereference(node: unknown, seen: readonly string[] = []): unknown {
     return { ...(resolved as Record<string, unknown>), ...(dereference(Object.fromEntries(siblings), seen) as object) };
   }
 
-  return Object.fromEntries(Object.entries(record).map(([key, value]) => [key, dereference(value, seen)]));
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [
+      key,
+      // Branch keywords get the naming treatment below; everything else inlines plainly.
+      (key === 'oneOf' || key === 'anyOf') && Array.isArray(value)
+        ? value.map((member) => dereferenceBranch(member, seen))
+        : dereference(value, seen),
+    ]),
+  );
+}
+
+/**
+ * Inlines one member of a `oneOf`/`anyOf`, keeping the name of the schema it came from.
+ *
+ * Inlining otherwise destroys the only thing that tells the branches apart. `serviceDetails`
+ * on `POST /services` is the worst case: five structurally similar objects where the caller
+ * must pick the one matching `type`, with nothing left in the schema to say which is which —
+ * which is precisely why models fail to create a cron job. Carrying the spec's own schema
+ * name across as `title` restores that link (`cronJobDetailsPOST` ⇄ `type: "cron_job"`,
+ * `dockerDetails` ⇄ `runtime: "docker"`) at the cost of one string per branch.
+ *
+ * Scoped to branch members on purpose: titling every inlined `$ref` would bloat all 207
+ * schemas to solve ambiguity that only exists here.
+ */
+function dereferenceBranch(member: unknown, seen: readonly string[]): unknown {
+  const resolved = dereference(member, seen);
+  if (resolved === null || typeof resolved !== 'object' || Array.isArray(resolved)) return resolved;
+
+  const record = resolved as Record<string, unknown>;
+  // A title the spec set itself is more considered than one derived from a pointer.
+  if (typeof record['title'] === 'string') return record;
+
+  const name = referencedSchemaName(member);
+  return name === undefined ? record : { title: name, ...record };
+}
+
+/** The trailing segment of a member's `$ref`, i.e. the schema's name in `components`. */
+function referencedSchemaName(member: unknown): string | undefined {
+  if (member === null || typeof member !== 'object' || Array.isArray(member)) return undefined;
+  const ref = (member as Record<string, unknown>)['$ref'];
+  if (typeof ref !== 'string') return undefined;
+  const name = ref.split('/').pop();
+  return name === undefined || name === '' ? undefined : decodeURIComponent(name);
 }
 
 // ---------------------------------------------------------------------------
@@ -339,6 +388,11 @@ function buildDescription(operation: OpenApiOperation, method: HttpMethod, path:
     parts.push('This endpoint streams server-sent events; the tool returns the events received before its timeout.');
   }
   parts.push(`Calls \`${method.toUpperCase()} ${path}\` on the Render Public API.`);
+
+  // Last, and marked: the model should be able to tell Render's own words from ours.
+  const hint = OPERATION_HINTS[operation.operationId];
+  if (hint !== undefined) parts.push(`Usage: ${hint.trim()}`);
+
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -391,6 +445,17 @@ for (const [path, pathItem] of Object.entries(spec.paths)) {
       inputSchema: schema,
     });
   }
+}
+
+// A hint keyed to an operation Render has renamed or withdrawn would silently stop being
+// applied, and the tool it was written for would quietly get worse. Fail instead.
+const seenOperationIds = new Set(operations.map((operation) => operation.operationId));
+const staleHints = Object.keys(OPERATION_HINTS).filter((id) => !seenOperationIds.has(id));
+if (staleHints.length > 0) {
+  throw new Error(
+    `OPERATION_HINTS has entries for operations that no longer exist: ${staleHints.join(', ')}. ` +
+      `Update or remove them in src/tools/operation-hints.ts.`,
+  );
 }
 
 operations.sort((a, b) => a.name.localeCompare(b.name));

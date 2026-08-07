@@ -29,6 +29,11 @@ jobs:
           npm run generate
           git diff --exit-code src/generated/operations.json
 
+      # The docs quote the catalogue — tool counts, the toolset table, llms.txt. Checking
+      # them here is what stops a spec update from leaving the prose describing the old API.
+      - name: Verify documentation matches the catalogue
+        run: npm run docs:check
+
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

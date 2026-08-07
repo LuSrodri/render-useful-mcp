@@ -1,0 +1,66 @@
+##
+# Publishes docs/ to GitHub Pages.
+#
+# The site is static, but half of it is generated from the tool catalogue, so the workflow
+# regenerates before deploying and fails if the result differs from what is committed. That
+# turns "the site says 212 tools but the server ships 214" into a red run rather than a
+# quietly wrong page — the same guarantee CI enforces on pull requests, applied at the point
+# the content actually reaches readers.
+##
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    # Anything that can change the rendered site. The catalogue is included because the
+    # generated regions read from it.
+    paths:
+      - 'docs/**'
+      - 'src/generated/operations.json'
+      - 'src/tools/**'
+      - 'scripts/generate-docs.ts'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one midway: a half-published site is worse
+# than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify the site matches the tool catalogue
+        run: npm run docs:check
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

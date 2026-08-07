@@ -8,14 +8,29 @@
 #
 # The PR is never merged automatically. New Render endpoints can be breaking (a removed
 # tool, a newly required argument), so a human reviews the summary the diff produces.
+#
+# ## Why this used to look like it never ran
+#
+# It did run — but weekly, and at minute 0, which is the single most contended slot on
+# GitHub's scheduled-workflow queue. Observed delay on the 2026-08-03 run was nearly four
+# hours, and GitHub drops scheduled runs outright under load rather than queueing them
+# forever. A dropped weekly run means a fortnight of going blind, with nothing in the
+# Actions tab to say so. Two changes address that:
+#
+#   1. Daily, at an unremarkable minute. Cost is one cheap job a day, since a run that
+#      finds no catalogue change stops before it opens anything.
+#   2. A heartbeat file, committed at most every 20 days. GitHub disables scheduled
+#      workflows in repositories with 60 days of no activity, and this repository does go
+#      quiet — that alone would eventually stop the sync for good. The commit resets the
+#      clock, and doubles as visible proof in the git log that the routine is alive.
 ##
 name: Spec sync
 
 on:
   schedule:
-    # 06:00 UTC on Mondays. Render ships API changes rarely; daily runs would mostly
-    # produce noise, and a week's delay on a new endpoint costs nothing.
-    - cron: '0 6 * * 1'
+    # Daily at 05:47 UTC. Deliberately not on the hour: scheduled workflows are queued
+    # best-effort and the top of the hour is where they pile up and get dropped.
+    - cron: '47 5 * * *'
   workflow_dispatch:
 
 permissions:
@@ -78,6 +93,13 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # The docs quote the catalogue — tool counts, the toolset table, the site, llms.txt.
+      # Regenerating them here is what makes "the API changed" and "the docs say so" a
+      # single reviewable pull request instead of two, the second of which never happens.
+      - name: Regenerate the documentation
+        if: steps.catalogue.outputs.changed == 'true'
+        run: npm run docs
+
       # Runs before the PR is opened: a catalogue that fails the suite is still worth
       # surfacing, but the reviewer must see that up front rather than discover it in CI.
       - name: Verify the regenerated catalogue
@@ -123,7 +145,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add spec/render-openapi.json src/generated/operations.json
+          git add spec/render-openapi.json src/generated/operations.json README.md plugin/README.md docs
           git commit -m "Sync Render API spec and regenerate tool catalogue"
           # Force-push: the branch is a disposable mirror of the latest upstream spec,
           # not a history worth preserving across runs.
@@ -139,3 +161,71 @@ jobs:
               --title "Sync Render API spec" \
               --body "$BODY"
           fi
+
+      ##
+      # Everything below runs on every outcome, including "nothing changed".
+      ##
+
+      # Without this, a run that finds no change leaves no trace at all, which is what made
+      # a working weekly job look like a broken one.
+      - name: Report to the run summary
+        if: always()
+        run: |
+          {
+            echo "## Spec sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo
+            if [ "${{ steps.detect.outputs.changed }}" = "true" ]; then
+              if [ "${{ steps.catalogue.outputs.changed }}" = "true" ]; then
+                echo "Render's spec changed and the tool catalogue changed with it. A pull request is open on \`spec-sync\`."
+              else
+                echo "Render's spec changed, but only in prose or formatting — the tool catalogue is unaffected. No pull request opened."
+              fi
+            else
+              echo "Render's spec is unchanged. Nothing to do."
+            fi
+            echo
+            echo "Next scheduled check: tomorrow at 05:47 UTC."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # GitHub disables scheduled workflows after 60 days without repository activity, and
+      # a disabled workflow cannot re-enable itself. Committing a timestamp every 20 days
+      # keeps the clock well short of that, at roughly 18 commits a year.
+      - name: Refresh the heartbeat
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATE=".github/spec-sync-heartbeat.json"
+          NOW=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          MAX_AGE_DAYS=20
+
+          # The pull-request step above may have left us on the spec-sync branch.
+          git fetch --quiet origin main
+          git checkout --quiet -B main origin/main
+
+          PREVIOUS=$(jq -r '.lastHeartbeat // empty' "$STATE" 2>/dev/null || true)
+          if [ -n "$PREVIOUS" ]; then
+            AGE=$(( ( $(date -u +%s) - $(date -u -d "$PREVIOUS" +%s) ) / 86400 ))
+            if [ "$AGE" -lt "$MAX_AGE_DAYS" ]; then
+              echo "Heartbeat is $AGE days old; nothing to do until it reaches $MAX_AGE_DAYS."
+              exit 0
+            fi
+          fi
+
+          mkdir -p .github
+          # `\$comment` is escaped so the shell leaves the key alone; $NOW and
+          # $MAX_AGE_DAYS are meant to expand.
+          cat > "$STATE" <<JSON
+          {
+            "\$comment": "Written by .github/workflows/spec-sync.yml. Its only job is to be a commit: GitHub disables scheduled workflows after 60 days of repository inactivity, and a disabled workflow cannot re-enable itself.",
+            "lastHeartbeat": "$NOW",
+            "workflow": "spec-sync",
+            "intervalDays": $MAX_AGE_DAYS
+          }
+          JSON
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$STATE"
+          git commit -m "Refresh spec-sync heartbeat"
+          git push origin main

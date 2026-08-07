@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>render-useful-mcp — a complete MCP server for the Render API</title>
+    <meta
+      name="description"
+      content="An unofficial Model Context Protocol server exposing every endpoint of the Render Public API as an MCP tool, plus workflow tools for deploys, logs and cron jobs. Install globally in Claude Code with one command."
+    />
+    <link rel="canonical" href="https://lusrodri.github.io/render-useful-mcp/" />
+    <meta name="author" content="LuSrodri" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="render-useful-mcp" />
+    <meta property="og:title" content="render-useful-mcp — a complete MCP server for the Render API" />
+    <meta
+      property="og:description"
+      content="Every endpoint of the Render Public API as an MCP tool, generated from Render's own OpenAPI document. Install globally in Claude Code with one command."
+    />
+    <meta property="og:url" content="https://lusrodri.github.io/render-useful-mcp/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="render-useful-mcp" />
+    <meta
+      name="twitter:description"
+      content="Every endpoint of the Render Public API as an MCP tool, plus workflow tools for deploys, logs and cron jobs."
+    />
+
+    <!-- Machine-readable entry points for assistants that prefer text to markup. -->
+    <link rel="alternate" type="text/plain" href="./llms.txt" title="llms.txt" />
+    <link rel="alternate" type="text/plain" href="./llms-full.txt" title="llms-full.txt" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A0%EF%B8%8F%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "render-useful-mcp",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "macOS, Windows, Linux",
+            "description": "An unofficial Model Context Protocol server that exposes every endpoint of the Render Public API as an MCP tool, generated from Render's OpenAPI document, plus higher-level workflow tools for deploys, logs, cron jobs and service triage.",
+            "url": "https://lusrodri.github.io/render-useful-mcp/",
+            "downloadUrl": "https://www.npmjs.com/package/render-useful-mcp",
+            "codeRepository": "https://github.com/LuSrodri/render-useful-mcp",
+            "programmingLanguage": "TypeScript",
+            "license": "https://opensource.org/licenses/MIT",
+            "author": { "@type": "Person", "name": "LuSrodri" },
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "softwareRequirements": "Node.js >= 20.11"
+          },
+          {
+            "@type": "HowTo",
+            "name": "Create a Render cron job that runs a Docker image on a schedule",
+            "description": "A Render cron job is a service. Create it with the render_create_service MCP tool, using the cron_job service type and the Docker runtime.",
+            "step": [
+              {
+                "@type": "HowToStep",
+                "name": "Call render_create_service",
+                "text": "Set type to cron_job and name the service. Supply ownerId, or configure RENDER_WORKSPACE_ID so it is filled in for you."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Choose the source",
+                "text": "Give repo and branch to build from a Dockerfile, or image with an imagePath to run a prebuilt container. Never both."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Fill in serviceDetails",
+                "text": "Use the cronJobDetailsPOST branch: runtime docker, a five-field UTC cron expression in schedule, plus plan and region."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Fill in envSpecificDetails",
+                "text": "Use the dockerDetails branch, because runtime is docker: dockerfilePath, dockerContext and dockerCommand."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Wait for the first deploy",
+                "text": "Creating a service starts a deploy. Call render_wait_for_deploy to block until it is live."
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How do I install an MCP server globally in Claude Code?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Pass --scope user. For this server: claude mcp add render --scope user -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp. Claude Code defaults to local scope, which registers the server for the current directory only, which is why a server added without the flag appears to be missing in other projects."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I create a Render cron job with an AI assistant?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A Render cron job is a service, so it is created with render_create_service using type cron_job. Its serviceDetails must match the cronJobDetailsPOST branch and include schedule, a five-field cron expression in UTC. For a Docker cron job, set runtime to docker and give envSpecificDetails a dockerfilePath, dockerContext and dockerCommand. render_create_job is different: it runs a one-off command on an existing service."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is render-useful-mcp official?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. It is an independent, unofficial open-source project and is not affiliated with Render. Render publishes its own Claude Code plugin, which takes a different approach; the two are complementary."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does render-useful-mcp send my Render API key anywhere?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The server runs on your machine and contacts exactly one host, Render's API. The key is read from the environment, never written to disk, and redacted from log output. There is no telemetry, no analytics and no backend."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does it stay up to date with the Render API?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Every tool is generated from Render's own OpenAPI document. A scheduled GitHub Actions workflow re-fetches that document daily, regenerates the tool catalogue and the documentation, and opens a pull request when the set of tools actually changes."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <p class="eyebrow">Unofficial · MIT · No telemetry</p>
+        <h1>render-useful-mcp</h1>
+        <p class="lede">
+          A Model Context Protocol server that gives an AI assistant the whole
+          <a href="https://render.com">Render</a> Public API — services, deploys, cron jobs, Postgres, Key Value,
+          disks, environment groups, logs and metrics. Every tool is generated from Render's own OpenAPI document,
+          so coverage is complete by construction and stays that way.
+        </p>
+
+        <!-- generated:stats-html -->
+        <ul class="stats">
+          <li><strong>212</strong> MCP tools</li>
+          <li><strong>207</strong> API endpoints</li>
+          <li><strong>5</strong> workflow tools</li>
+          <li><strong>17</strong> toolsets</li>
+        </ul>
+<!-- /generated:stats-html -->
+
+        <div class="actions">
+          <a class="button primary" href="#install">Install</a>
+          <a class="button" href="./tools.html">Tool catalogue</a>
+          <a class="button" href="https://github.com/LuSrodri/render-useful-mcp">GitHub</a>
+          <a class="button" href="https://www.npmjs.com/package/render-useful-mcp">npm</a>
+        </div>
+      </header>
+
+      <main>
+        <h2 id="install">Install</h2>
+
+        <h3>Claude Code — globally</h3>
+        <pre><code>claude mcp add render --scope user \
+  -e RENDER_API_KEY=rnd_your_key \
+  -- npx -y render-useful-mcp</code></pre>
+
+        <div class="note">
+          <p>
+            <strong><code>--scope user</code> is the part that matters.</strong> Claude Code defaults to
+            <code>local</code> scope, which registers the server for the current directory only — so it works where
+            you installed it and is missing everywhere else. That is the usual reason a freshly added MCP server
+            seems to disappear. Confirm with <code>claude mcp list</code> from an unrelated directory.
+          </p>
+        </div>
+
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Scope</th><th>Flag</th><th>Where it lives</th><th>Available in</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>User <em>(global)</em></td>
+                <td><code>--scope user</code></td>
+                <td>your user configuration</td>
+                <td>every project, every directory</td>
+              </tr>
+              <tr>
+                <td>Project</td>
+                <td><code>--scope project</code></td>
+                <td><code>.mcp.json</code>, committed</td>
+                <td>anyone who checks the repo out</td>
+              </tr>
+              <tr>
+                <td>Local</td>
+                <td><em>none (default)</em></td>
+                <td>per-directory user state</td>
+                <td>the directory it was added from</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Claude Code — as a plugin</h3>
+        <p>Wires up the server and its docs in one step. Plugins are installed for your user, so this is global by nature.</p>
+        <pre><code>/plugin marketplace add LuSrodri/render-useful-mcp
+/plugin install render-useful-mcp@lusrodri-render</code></pre>
+        <p>Export <code>RENDER_API_KEY</code> in the shell that launches Claude Code; the plugin reads it from the environment rather than storing it.</p>
+
+        <h3>Claude Desktop, and any client using <code>mcpServers</code></h3>
+        <pre><code>{
+  "mcpServers": {
+    "render": {
+      "command": "npx",
+      "args": ["-y", "render-useful-mcp"],
+      "env": {
+        "RENDER_API_KEY": "rnd_your_key_here",
+        "RENDER_WORKSPACE_ID": "tea_your_workspace_id"
+      }
+    }
+  }
+}</code></pre>
+
+        <h3>Claude for macOS and Windows — desktop extension</h3>
+        <p>
+          Download the <code>.mcpb</code> bundle from the
+          <a href="https://github.com/LuSrodri/render-useful-mcp/releases/latest">latest release</a> and open it.
+          Claude installs it and asks for the API key in a form. The bundle ships its own dependencies, so it needs
+          neither npm nor a Node install.
+        </p>
+
+        <p>
+          Get an API key from <strong>Render Dashboard → Account Settings → API Keys</strong>. Everything except the
+          desktop extension needs Node.js 20.11 or newer. Setting <code>RENDER_WORKSPACE_ID</code> is optional but
+          recommended: many Render endpoints need an <code>ownerId</code> the model cannot guess, and setting it
+          removes a lookup from nearly every session.
+        </p>
+
+        <h2 id="cron">Creating a Docker cron job</h2>
+        <p>
+          The case models most often got wrong, and the one this server works hardest to make obvious. A Render cron
+          job is a <em>service</em>, so it is created with <code>render_create_service</code>:
+        </p>
+        <pre><code>{
+  "type": "cron_job",
+  "name": "nightly-report",
+  "ownerId": "tea-…",
+  "repo": "https://github.com/acme/reports",
+  "branch": "main",
+  "serviceDetails": {              <span class="c">// the cronJobDetailsPOST branch</span>
+    "runtime": "docker",
+    "schedule": "0 3 * * *",       <span class="c">// five-field cron, UTC, required</span>
+    "plan": "starter",
+    "region": "oregon",
+    "envSpecificDetails": {        <span class="c">// dockerDetails, because runtime is docker</span>
+      "dockerfilePath": "./Dockerfile",
+      "dockerContext": ".",
+      "dockerCommand": "python report.py"
+    }
+  }
+}</code></pre>
+        <p>
+          For a prebuilt image instead of a build, drop <code>repo</code>/<code>branch</code>, set <code>image</code>
+          to <code>{"ownerId": "tea-…", "imagePath": "docker.io/acme/reports:latest"}</code>, use
+          <code>"runtime": "image"</code>, and give <code>envSpecificDetails</code> only the
+          <code>dockerCommand</code>. Change the schedule later with <code>render_update_service</code>; trigger an
+          off-schedule run with <code>render_run_cron_job</code>. <code>render_create_job</code> is a different
+          thing — a one-off command on an existing service.
+        </p>
+
+        <h2 id="model">Built to be used by a model</h2>
+        <p>
+          A generated tool is only as good as what the spec says about it, and Render's spec describes shapes rather
+          than usage. Three things close that gap.
+        </p>
+        <div class="grid">
+          <div class="card">
+            <h3><code>oneOf</code> branches keep their names</h3>
+            <p>
+              Inlining a <code>$ref</code> normally discards the schema's name, leaving <code>serviceDetails</code>
+              as five anonymous, structurally similar objects. Each branch now carries its name from Render's spec,
+              so <code>cron_job</code> → <code>cronJobDetailsPOST</code> is a decision a model can actually make.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Hand-written usage notes</h3>
+            <p>
+              A small set of operations carry an appended <code>Usage:</code> paragraph — a full worked example for
+              creating a service, a warning that env-var updates replace the whole set. The build fails if a note
+              names an operation Render has withdrawn.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Server instructions</h3>
+            <p>
+              Id prefixes, resolve-the-name-first, which workflow tool replaces which raw sequence — sent once at
+              <code>initialize</code>, rather than duplicated into every tool description that needs it.
+            </p>
+          </div>
+        </div>
+
+        <h2 id="toolsets">Toolsets</h2>
+        <p>
+          Every toolset is enabled by default — the server exposes everything your API key is allowed to reach.
+          Toolsets exist to <em>narrow</em> the surface on purpose, via <code>RENDER_MCP_TOOLSETS</code>, not to gate
+          it. <code>RENDER_MCP_READ_ONLY=true</code> hides every mutating tool outright.
+        </p>
+
+        <!-- generated:toolset-table-html -->
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Toolset</th><th>Tools</th><th>Covers</th></tr></thead>
+            <tbody>
+              <tr><td><code>services</code></td><td>42</td><td>Services, deploys, custom domains, one-off jobs, cron job runs and events</td></tr>
+              <tr><td><code>metrics</code></td><td>23</td><td>CPU, memory, bandwidth, HTTP, disk and connection metrics, plus metrics streams</td></tr>
+              <tr><td><code>postgres</code></td><td>21</td><td>Postgres instances, users, exports, recovery and query insights</td></tr>
+              <tr><td><code>workflows</code></td><td>15</td><td>Render Workflows and workflow tasks (public beta)</td></tr>
+              <tr><td><code>env-groups</code></td><td>13</td><td>Environment groups, their variables and secret files</td></tr>
+              <tr><td><code>projects</code></td><td>12</td><td>Projects and environments</td></tr>
+              <tr><td><code>webhooks</code></td><td>11</td><td>Webhooks and notification settings/overrides</td></tr>
+              <tr><td><code>logs</code></td><td>10</td><td>Log queries, label discovery and log stream configuration</td></tr>
+              <tr><td><code>static-sites</code></td><td>9</td><td>Header rules and redirect/rewrite routes for static sites</td></tr>
+              <tr><td><code>deprecated</code></td><td>8</td><td>Legacy Redis endpoints that Render has superseded by the Key Value API</td></tr>
+              <tr><td><code>key-value</code></td><td>8</td><td>Key Value (Redis-compatible) instances and connection info</td></tr>
+              <tr><td><code>workspaces</code></td><td>8</td><td>Workspaces, members, the authenticated user and audit logs</td></tr>
+              <tr><td><code>disks</code></td><td>7</td><td>Persistent disks and their snapshots</td></tr>
+              <tr><td><code>blueprints</code></td><td>6</td><td>Blueprints and Blueprint syncs</td></tr>
+              <tr><td><code>network</code></td><td>5</td><td>Dedicated outbound IP sets</td></tr>
+              <tr><td><code>registry</code></td><td>5</td><td>Container registry credentials</td></tr>
+              <tr><td><code>maintenance</code></td><td>4</td><td>Scheduled maintenance runs</td></tr>
+            </tbody>
+          </table>
+        </div>
+<!-- /generated:toolset-table-html -->
+
+        <h2 id="workflow">Workflow tools</h2>
+        <p>
+          Always available, in any toolset configuration. They exist because the equivalent raw sequence is several
+          calls a model usually gets wrong on the first try.
+        </p>
+
+        <!-- generated:workflow-tools-html -->
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><code>render_find_service</code></td><td>Resolves a service name — including a partial or approximate one — to a single Render service, returning its id plus close alternatives.</td></tr>
+              <tr><td><code>render_recent_logs</code></td><td>Fetches recent log lines for a service, resolving the service name and workspace id for you.</td></tr>
+              <tr><td><code>render_service_status</code></td><td>One-call triage for a service: its configuration, latest deploys, running instances and most recent error-level logs.</td></tr>
+              <tr><td><code>render_toolsets</code></td><td>Lists every Render toolset with its tool count and whether it is currently enabled.</td></tr>
+              <tr><td><code>render_wait_for_deploy</code></td><td>Polls a deploy until it reaches a terminal state (live, build_failed, update_failed, canceled, deactivated) or the timeout expires.</td></tr>
+            </tbody>
+          </table>
+        </div>
+<!-- /generated:workflow-tools-html -->
+
+        <h2 id="config">Configuration</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>RENDER_API_KEY</code></td><td>—</td><td><strong>Required.</strong> Your Render API key.</td></tr>
+              <tr><td><code>RENDER_WORKSPACE_ID</code></td><td>—</td><td>Workspace id used wherever an <code>ownerId</code> is needed and none was given.</td></tr>
+              <tr><td><code>RENDER_MCP_TOOLSETS</code></td><td><code>all</code></td><td>Narrow the surface to a comma-separated list of toolsets.</td></tr>
+              <tr><td><code>RENDER_MCP_READ_ONLY</code></td><td><code>false</code></td><td>Expose only non-mutating tools.</td></tr>
+              <tr><td><code>RENDER_MCP_DYNAMIC_TOOLSETS</code></td><td><code>true</code></td><td>Register <code>render_toolsets</code>, which reports the toolsets and their state.</td></tr>
+              <tr><td><code>RENDER_MCP_TIMEOUT_MS</code></td><td><code>60000</code></td><td>Per-request timeout.</td></tr>
+              <tr><td><code>RENDER_MCP_MAX_RETRIES</code></td><td><code>3</code></td><td>Retries for rate limits and transient server errors.</td></tr>
+              <tr><td><code>RENDER_MCP_MAX_RESPONSE_BYTES</code></td><td><code>400000</code></td><td>Larger tool results are truncated with a note.</td></tr>
+              <tr><td><code>RENDER_MCP_LOG_LEVEL</code></td><td><code>info</code></td><td><code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>silent</code>. Logs go to stderr.</td></tr>
+              <tr><td><code>RENDER_API_BASE_URL</code></td><td><code>https://api.render.com/v1</code></td><td>Override for proxies or testing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="faq">Questions</h2>
+
+        <details>
+          <summary>Why did my MCP server disappear after I changed directory?</summary>
+          <p>
+            It was installed in <code>local</code> scope, which is Claude Code's default and is per-directory.
+            Re-run the install with <code>--scope user</code> to register it globally.
+          </p>
+        </details>
+
+        <details>
+          <summary>Is this official?</summary>
+          <p>
+            No. It is an independent open-source project and is not affiliated with Render. Render publishes its own
+            Claude Code plugin at
+            <a href="https://github.com/render-oss/render-plugin-claude-code"><code>render-oss/render-plugin-claude-code</code></a>,
+            which takes a different approach — hand-written skills and agents for common workflows. This one is
+            generated from Render's OpenAPI document and exposes the complete API surface, so the two are
+            complementary rather than alternatives.
+          </p>
+        </details>
+
+        <details>
+          <summary>Where does my API key go?</summary>
+          <p>
+            To Render, and nowhere else. The server runs on your machine and contacts exactly one host. The key is
+            read from the environment, never written to disk, and redacted from log output. No telemetry, no
+            analytics, no backend — see
+            <a href="https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md">PRIVACY.md</a>.
+          </p>
+        </details>
+
+        <details>
+          <summary>How does it keep up with the Render API?</summary>
+          <p>
+            A scheduled GitHub Actions workflow re-fetches Render's published API description daily, regenerates the
+            tool catalogue and this documentation, and opens a pull request when the set of tools actually changes —
+            with a summary of what was added, removed or reshaped. Nothing merges automatically, because a new
+            Render endpoint can be a breaking change.
+          </p>
+        </details>
+
+        <details>
+          <summary>Can I stop an agent from changing anything?</summary>
+          <p>
+            Set <code>RENDER_MCP_READ_ONLY=true</code>. Mutating tools are then not exposed at all, rather than
+            merely discouraged. Short of that, every tool carries MCP <code>readOnlyHint</code>,
+            <code>destructiveHint</code> and <code>idempotentHint</code> annotations derived from real HTTP
+            semantics, so a client can make sensible auto-approval decisions.
+          </p>
+        </details>
+
+        <h2 id="agents">For AI agents</h2>
+        <p>
+          This site publishes <a href="./llms.txt"><code>llms.txt</code></a> and
+          <a href="./llms-full.txt"><code>llms-full.txt</code></a>, and registers
+          <a href="https://github.com/webmachinelearning/webmcp">WebMCP</a> tools in supporting browsers so an agent
+          reading this page can search the tool catalogue, produce an install command, or fetch a worked example
+          directly. All of it is generated from the same catalogue the server ships.
+        </p>
+      </main>
+
+      <footer>
+        <p>
+          <a href="./tools.html">Tool catalogue</a> ·
+          <a href="https://github.com/LuSrodri/render-useful-mcp">Source</a> ·
+          <a href="https://www.npmjs.com/package/render-useful-mcp">npm</a> ·
+          <a href="./llms.txt">llms.txt</a> ·
+          <a href="https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md">Privacy</a>
+        </p>
+        <p>
+          MIT licensed. Not affiliated with Render. <code>spec/render-openapi.json</code> is Render's published API
+          description, vendored so builds are reproducible.
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="./webmcp.js"></script>
+  </body>
+</html>

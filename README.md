@@ -1,8 +1,15 @@
 # render-useful-mcp
 
-A Model Context Protocol server for [Render](https://render.com) that exposes **all 207 endpoints of the official Render Public API**, plus a handful of higher-level tools for the workflows the raw API makes tedious.
+A Model Context Protocol server for [Render](https://render.com) that exposes **every endpoint of the official Render Public API**, plus a handful of higher-level tools for the workflows the raw API makes tedious.
 
 Written in TypeScript. Every API tool is generated from Render's own OpenAPI document, so coverage is complete by construction and stays that way.
+
+<!-- generated:tool-counts -->
+
+**212 tools**: all 207 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
+<!-- /generated:tool-counts -->
+
+📖 **[Documentation site](https://lusrodri.github.io/render-useful-mcp/)** · [tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html) · [llms.txt](https://lusrodri.github.io/render-useful-mcp/llms.txt)
 
 ---
 
@@ -10,9 +17,9 @@ Written in TypeScript. Every API tool is generated from Render's own OpenAPI doc
 
 Most API wrappers stop at a curated subset of endpoints, which drifts out of date and leaves you stuck the moment you need something the author skipped.
 
-- **Complete, by construction.** All 207 operations, generated from Render's own OpenAPI document. Everything the API allows your key to do is reachable out of the box — no opt-in required.
+- **Complete, by construction.** Every operation in Render's own OpenAPI document becomes a tool. Everything the API allows your key to do is reachable out of the box — no opt-in required.
 - **Usable by a model.** Names resolve to ids fuzzily, your workspace id is filled in automatically, deploys can be waited on in one call, and failures come back with a hint instead of a bare status code.
-- **Narrowable when you want it.** The 17 toolsets are all on by default; `RENDER_MCP_TOOLSETS` and `RENDER_MCP_READ_ONLY` exist to restrict the surface deliberately, not to gate it.
+- **Narrowable when you want it.** Every toolset is on by default; `RENDER_MCP_TOOLSETS` and `RENDER_MCP_READ_ONLY` exist to restrict the surface deliberately, not to gate it.
 - **Honest about risk.** MCP destructive/read-only/idempotent annotations are derived from real HTTP semantics, so clients can make sensible auto-approval decisions. Secrets are redacted from logs.
 
 ## Install
@@ -22,7 +29,28 @@ Most API wrappers stop at a curated subset of endpoints, which drifts out of dat
 
 Both buttons prefill the config with a placeholder API key — replace it after install.
 
-**Claude Code**, as a plugin — this wires up the server and its docs in one step:
+**Claude Code** — install it globally, so it is there in every project:
+
+```shell
+claude mcp add render --scope user -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
+```
+
+`--scope user` is the part that matters. Claude Code defaults to `local` scope, which
+registers the server for the current directory only — so it works where you installed it and
+is missing everywhere else, which is the usual reason a freshly added server seems to
+disappear. The three scopes are:
+
+| Scope         | Flag              | Where it lives           | Available in                    |
+| ------------- | ----------------- | ------------------------ | ------------------------------- |
+| User (global) | `--scope user`    | your user configuration  | every project, every directory  |
+| Project       | `--scope project` | `.mcp.json`, committed   | anyone who checks the repo out  |
+| Local         | none (default)    | per-directory user state | the directory it was added from |
+
+Confirm with `claude mcp list`, and re-run the command with `--scope user` if `render` is
+not listed from an unrelated directory.
+
+**Claude Code**, as a plugin — this wires up the server and its docs in one step, and
+plugins are installed globally by nature:
 
 ```shell
 /plugin marketplace add LuSrodri/render-useful-mcp
@@ -37,9 +65,9 @@ the [latest release](https://github.com/LuSrodri/render-useful-mcp/releases/late
 it. Claude installs it and asks for the API key in a form, so nothing is configured by hand.
 The bundle ships its own dependencies; it does not need npm or a global Node install.
 
-Desktop installs default to the `services`, `logs` and `env-groups` toolsets — 70 tools
-rather than all 212 — because every tool definition costs context in every conversation. Set
-the **Toolsets** field to `all`, or to any comma-separated list, to change that.
+Desktop installs default to the `services`, `logs` and `env-groups` toolsets rather than the
+whole catalogue, because every tool definition costs context in every conversation. Set the
+**Toolsets** field to `all`, or to any comma-separated list, to change that.
 
 Requires Node.js ≥ 20.11 for every install route except the desktop extension.
 
@@ -61,10 +89,19 @@ configure it without being pointed at the npm package by hand.
 
 Get an API key from **Render Dashboard → Account Settings → API Keys**.
 
-**Claude Code**
+**Claude Code** — globally, as above:
 
 ```bash
-claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
+claude mcp add render --scope user -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
+```
+
+Add `RENDER_WORKSPACE_ID` the same way if you know it:
+
+```bash
+claude mcp add render --scope user \
+  -e RENDER_API_KEY=rnd_your_key \
+  -e RENDER_WORKSPACE_ID=tea_your_workspace_id \
+  -- npx -y render-useful-mcp
 ```
 
 **Claude Desktop / any client using `mcpServers`** — add to the config file:
@@ -103,32 +140,39 @@ claude mcp add render -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
 
 ## Toolsets
 
-**All 17 toolsets are enabled by default** — the server exposes everything your API key is allowed to reach. Toolsets are a way to _narrow_ the surface on purpose, not a gate you have to unlock.
+<!-- generated:toolset-count -->
 
-| Toolset        | Tools | Covers                                                             |
-| -------------- | ----- | ------------------------------------------------------------------ |
-| `services`     | 42    | Services, deploys, custom domains, one-off jobs, cron runs, events |
-| `metrics`      | 23    | CPU, memory, bandwidth, HTTP, disk, connections, metrics streams   |
-| `postgres`     | 21    | Postgres instances, users, exports, PITR, query insights           |
-| `workflows`    | 15    | Render Workflows and workflow tasks (public beta)                  |
-| `env-groups`   | 13    | Environment groups, their variables and secret files               |
-| `projects`     | 12    | Projects and environments                                          |
-| `webhooks`     | 11    | Webhooks and notification settings                                 |
-| `logs`         | 10    | Log queries, label discovery, log streams                          |
-| `static-sites` | 9     | Header rules, redirects and rewrites                               |
-| `key-value`    | 8     | Key Value (Redis-compatible) instances                             |
-| `workspaces`   | 8     | Workspaces, members, current user, audit logs                      |
-| `deprecated`   | 8     | Legacy Redis endpoints, superseded by Key Value                    |
-| `disks`        | 7     | Persistent disks and snapshots                                     |
-| `blueprints`   | 6     | Blueprints and Blueprint syncs                                     |
-| `network`      | 5     | Dedicated outbound IP sets                                         |
-| `registry`     | 5     | Container registry credentials                                     |
-| `maintenance`  | 4     | Scheduled maintenance runs                                         |
+**All 17 toolsets are enabled by default**
+<!-- /generated:toolset-count --> — the server exposes everything your API key is allowed to reach. Toolsets are a way to _narrow_ the surface on purpose, not a gate you have to unlock.
+
+<!-- generated:toolset-table -->
+
+| Toolset        | Tools | Covers                                                                          |
+| -------------- | ----- | ------------------------------------------------------------------------------- |
+| `services`     | 42    | Services, deploys, custom domains, one-off jobs, cron job runs and events       |
+| `metrics`      | 23    | CPU, memory, bandwidth, HTTP, disk and connection metrics, plus metrics streams |
+| `postgres`     | 21    | Postgres instances, users, exports, recovery and query insights                 |
+| `workflows`    | 15    | Render Workflows and workflow tasks (public beta)                               |
+| `env-groups`   | 13    | Environment groups, their variables and secret files                            |
+| `projects`     | 12    | Projects and environments                                                       |
+| `webhooks`     | 11    | Webhooks and notification settings/overrides                                    |
+| `logs`         | 10    | Log queries, label discovery and log stream configuration                       |
+| `static-sites` | 9     | Header rules and redirect/rewrite routes for static sites                       |
+| `deprecated`   | 8     | Legacy Redis endpoints that Render has superseded by the Key Value API          |
+| `key-value`    | 8     | Key Value (Redis-compatible) instances and connection info                      |
+| `workspaces`   | 8     | Workspaces, members, the authenticated user and audit logs                      |
+| `disks`        | 7     | Persistent disks and their snapshots                                            |
+| `blueprints`   | 6     | Blueprints and Blueprint syncs                                                  |
+| `network`      | 5     | Dedicated outbound IP sets                                                      |
+| `registry`     | 5     | Container registry credentials                                                  |
+| `maintenance`  | 4     | Scheduled maintenance runs                                                      |
+
+<!-- /generated:toolset-table -->
 
 Reasons you might narrow it anyway:
 
 ```jsonc
-// A client that struggles with 212 tools, or a session scoped to one job.
+// A client that struggles with the full catalogue, or a session scoped to one job.
 "env": { "RENDER_MCP_TOOLSETS": "services,logs,metrics" }
 
 // An agent that should be able to look but not touch.
@@ -143,17 +187,61 @@ If you do narrow it, the model can still call `render_toolsets` to see everythin
 
 These are always available, in any toolset configuration. They exist because the equivalent raw sequence is several calls the model usually gets wrong on the first try.
 
-| Tool                     | What it does                                                                                                                                                            |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `render_find_service`    | Resolves a service name — partial or approximate — to a single service and its id, with close alternatives. Handles "the api service" correctly.                        |
-| `render_wait_for_deploy` | Polls a deploy to a terminal state (`live`, `build_failed`, …) with a timeout, instead of the model looping on `render_retrieve_deploy`. Defaults to the latest deploy. |
-| `render_service_status`  | One-call triage: configuration, recent deploys, running instances and recent error logs, fetched concurrently. Answers "why is X broken?".                              |
-| `render_recent_logs`     | Recent logs for a service, resolving the name and workspace id for you, with level/text filters.                                                                        |
-| `render_toolsets`        | Lists every toolset with its tool count and whether it is enabled, and names the setting to change when one is not.                                                     |
+<!-- generated:workflow-tools -->
+
+| Tool                     | What it does                                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `render_find_service`    | Resolves a service name — including a partial or approximate one — to a single Render service, returning its id plus close alternatives. |
+| `render_recent_logs`     | Fetches recent log lines for a service, resolving the service name and workspace id for you.                                             |
+| `render_service_status`  | One-call triage for a service: its configuration, latest deploys, running instances and most recent error-level logs.                    |
+| `render_toolsets`        | Lists every Render toolset with its tool count and whether it is currently enabled.                                                      |
+| `render_wait_for_deploy` | Polls a deploy until it reaches a terminal state (live, build_failed, update_failed, canceled, deactivated) or the timeout expires.      |
+
+<!-- /generated:workflow-tools -->
 
 ### API tools
 
-One per Render endpoint, named `render_<operation_id>` — `render_list_services`, `render_create_deploy`, `render_update_postgres`, and so on. Each carries the summary, description, parameter docs, enums and constraints straight from Render's spec.
+One per Render endpoint, named `render_<operation_id>` — `render_list_services`, `render_create_deploy`, `render_update_postgres`, and so on. Each carries the summary, description, parameter docs, enums and constraints straight from Render's spec. The full list is on the [tool catalogue page](https://lusrodri.github.io/render-useful-mcp/tools.html).
+
+### Making the tools usable by a model
+
+A generated tool is only as good as what the spec says about it, and Render's spec describes shapes rather than usage. Three things close that gap:
+
+**`oneOf` branches keep their names.** Dereferencing a `$ref` normally throws away the schema's name, which leaves `serviceDetails` on `render_create_service` as five structurally similar anonymous objects with nothing to say which one goes with which `type`. Each branch now carries its name from Render's spec as a `title`, so `cron_job` → `cronJobDetailsPOST` and `runtime: docker` → `dockerDetails` are decisions a model can actually make. A catalogue invariant fails the build if any two sibling branches become indistinguishable.
+
+**A few tools carry hand-written usage notes.** [`src/tools/operation-hints.ts`](src/tools/operation-hints.ts) appends a `Usage:` paragraph to the operations models demonstrably get wrong — `create-service` gets a complete worked example of a Docker cron job, `update-env-vars-for-service` warns that it replaces the whole set, `post-job` says it is _not_ how you create a cron job. The generator throws if a hint names an operation Render has withdrawn, so the file cannot rot silently.
+
+**The server sends `instructions`.** [`src/instructions.ts`](src/instructions.ts) is delivered once at `initialize`: id prefixes, resolve-the-name-first, which workflow tool replaces which raw sequence, and the `oneOf` convention. Cross-tool advice belongs there rather than duplicated into every tool description that needs it.
+
+#### Creating a cron job that runs a Docker image
+
+The case that motivated all three. A cron job is a service, so:
+
+```jsonc
+// render_create_service
+{
+  "type": "cron_job",
+  "name": "nightly-report",
+  "ownerId": "tea-…",
+  "repo": "https://github.com/acme/reports",
+  "branch": "main",
+  "serviceDetails": {
+    // the cronJobDetailsPOST branch
+    "runtime": "docker",
+    "schedule": "0 3 * * *", // five-field cron, UTC, required for cron jobs
+    "plan": "starter",
+    "region": "oregon",
+    "envSpecificDetails": {
+      // the dockerDetails branch, because runtime is docker
+      "dockerfilePath": "./Dockerfile",
+      "dockerContext": ".",
+      "dockerCommand": "python report.py",
+    },
+  },
+}
+```
+
+For a prebuilt image instead of a build, drop `repo`/`branch`, set `image` to `{"ownerId": "tea-…", "imagePath": "docker.io/acme/reports:latest"}`, use `"runtime": "image"`, and give `envSpecificDetails` only the `dockerCommand`. Change the schedule later with `render_update_service`; trigger an off-schedule run with `render_run_cron_job`. `render_create_job` is a different thing — a one-off command on an existing service.
 
 ## Design notes
 
@@ -174,10 +262,25 @@ One per Render endpoint, named `render_<operation_id>` — `render_list_services
 ```bash
 npm install
 npm run generate    # rebuild the tool catalogue from the OpenAPI spec
+npm run docs        # re-render every doc that quotes the catalogue
 npm run build
 npm test
-npm run check       # generate + lint + typecheck + test
+npm run check       # generate + docs + lint + typecheck + test
 ```
+
+### Documentation is generated too
+
+Tool counts, the toolset table, the workflow-tool list, the whole
+[docs site](https://lusrodri.github.io/render-useful-mcp/), `llms.txt` and `llms-full.txt`
+are all rendered from `src/generated/operations.json` by `scripts/generate-docs.ts`. Regions
+between `<!-- generated:key -->` markers in this file and `plugin/README.md` are rewritten in
+place; the site's files are written whole.
+
+`npm run docs:check` re-renders everything and fails if it differs from what is committed.
+CI runs it on every pull request, the Pages workflow runs it before deploying, and the spec
+sync runs `npm run docs` so an API change and the prose describing it arrive in one
+reviewable pull request. Numbers in the docs cannot silently drift from the catalogue —
+which they had, before this existed.
 
 The test suite covers catalogue invariants (all 207 operations, no dangling `$ref`, path params required, annotations match HTTP semantics), request mapping, retry and pagination behaviour, the composite tools, and a full in-memory MCP client/server round trip.
 
@@ -202,10 +305,29 @@ npx mcpb unpack build/render-useful-mcp-<version>.mcpb /tmp/check
 
 ### Updating to a new Render API version
 
-This is automated. `.github/workflows/spec-sync.yml` runs weekly, fetches Render's current
-API description, regenerates the catalogue, and opens a pull request when the set of tools
-actually changes — with a summary of which tools were added, removed or changed shape, and
-a warning when the change is breaking. Nothing merges automatically.
+This is automated. `.github/workflows/spec-sync.yml` runs daily, fetches Render's current
+API description, regenerates the catalogue **and the documentation**, and opens a pull
+request when the set of tools actually changes — with a summary of which tools were added,
+removed or changed shape, and a warning when the change is breaking. Nothing merges
+automatically.
+
+Every run writes to its job summary, including the runs that find nothing, so "did it check
+today?" is answerable from the Actions tab rather than inferred from the absence of a pull
+request.
+
+Two details of the schedule are deliberate, and both come from the job appearing dead while
+it was in fact working:
+
+- **`47 5 * * *`, not `0 6 * * 1`.** GitHub queues scheduled workflows best-effort and drops
+  them under load; the top of the hour is the most contended slot there is. The one
+  observed scheduled run started nearly four hours late. Daily, at an unremarkable minute,
+  makes a dropped run cost a day rather than a fortnight — and a run that finds no catalogue
+  change exits early, so the cost of daily is a few seconds of CI.
+- **`.github/spec-sync-heartbeat.json`.** GitHub disables scheduled workflows in
+  repositories that go 60 days without activity, and a disabled workflow cannot re-enable
+  itself. The workflow commits a timestamp to that file whenever the recorded one is more
+  than 20 days old — roughly 18 commits a year, which keeps the clock well clear of the
+  limit and leaves a visible record in the git log that the routine is alive.
 
 To do it by hand, or to check right now:
 

@@ -32,29 +32,39 @@ rather than failing later on the first API call.
 
 ## What you get
 
-212 tools: every Render Public API endpoint, plus five workflow tools for the sequences the
-raw API makes tedious.
+<!-- generated:tool-counts -->
 
-| Tool | What it does |
-| --- | --- |
-| `render_find_service` | Resolves a service name — partial or approximate — to a single service and its id |
-| `render_wait_for_deploy` | Polls a deploy to a terminal state instead of the model looping |
-| `render_service_status` | One-call triage: config, recent deploys, instances and error logs |
-| `render_recent_logs` | Recent logs for a service, resolving the name and workspace for you |
-| `render_toolsets` | Reports which toolsets exist and which are enabled |
+**212 tools**: all 207 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
+<!-- /generated:tool-counts -->
 
-Ask things like *"why is my api service down?"*, *"deploy the latest commit to staging and
-tell me when it's live"*, or *"show me the error logs for the worker in the last hour"*.
+<!-- generated:workflow-tools -->
+
+| Tool                     | What it does                                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `render_find_service`    | Resolves a service name — including a partial or approximate one — to a single Render service, returning its id plus close alternatives. |
+| `render_recent_logs`     | Fetches recent log lines for a service, resolving the service name and workspace id for you.                                             |
+| `render_service_status`  | One-call triage for a service: its configuration, latest deploys, running instances and most recent error-level logs.                    |
+| `render_toolsets`        | Lists every Render toolset with its tool count and whether it is currently enabled.                                                      |
+| `render_wait_for_deploy` | Polls a deploy until it reaches a terminal state (live, build_failed, update_failed, canceled, deactivated) or the timeout expires.      |
+
+<!-- /generated:workflow-tools -->
+
+Ask things like _"why is my api service down?"_, _"deploy the latest commit to staging and
+tell me when it's live"_, _"show me the error logs for the worker in the last hour"_, or
+_"create a cron job that runs my Dockerfile every night at 3am"_.
+
+Plugins are installed for your user, so this is available in every project — unlike
+`claude mcp add` without `--scope user`, which registers a server for one directory only.
 
 ## Optional configuration
 
 All optional, set the same way as `RENDER_API_KEY`:
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `RENDER_WORKSPACE_ID` | — | Applied wherever a tool needs an `ownerId` and none was given |
-| `RENDER_MCP_TOOLSETS` | `all` | Narrow the surface to a comma-separated list of toolsets |
-| `RENDER_MCP_READ_ONLY` | `false` | Expose only non-mutating tools — look but do not touch |
+| Variable               | Default | Effect                                                        |
+| ---------------------- | ------- | ------------------------------------------------------------- |
+| `RENDER_WORKSPACE_ID`  | —       | Applied wherever a tool needs an `ownerId` and none was given |
+| `RENDER_MCP_TOOLSETS`  | `all`   | Narrow the surface to a comma-separated list of toolsets      |
+| `RENDER_MCP_READ_ONLY` | `false` | Expose only non-mutating tools — look but do not touch        |
 
 Leave a variable unset rather than setting it to an empty string; the server validates its
 configuration at startup and rejects blank values.
