@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { loadCatalogue, loadOperations } from '../src/generated/catalogue.js';
 import { TOOLSET_IDS } from '../src/tools/toolsets.js';
+import { OPERATION_HINTS } from '../src/tools/operation-hints.js';
 
 const catalogue = loadCatalogue();
 const operations = loadOperations();
@@ -123,5 +124,80 @@ describe('generated catalogue', () => {
       expect(operation.toolset).toBe('deprecated');
       expect(operation.description).toContain('[DEPRECATED by Render]');
     }
+  });
+
+  it('leaves no oneOf branch a caller cannot tell apart from its siblings', () => {
+    // Inlining a `$ref` discards the only thing distinguishing structurally similar
+    // branches, which is how picking the cron-job shape out of five service shapes became
+    // guesswork. Titling restores it for named schemas; the handful of branches the spec
+    // writes inline carry no name, so they must at least differ in what they require.
+    const ambiguous: string[] = [];
+
+    const walk = (schema: unknown, path: string): void => {
+      if (Array.isArray(schema)) {
+        schema.forEach((item, index) => walk(item, `${path}[${index}]`));
+        return;
+      }
+      if (schema === null || typeof schema !== 'object') return;
+
+      for (const [keyword, value] of Object.entries(schema as Record<string, unknown>)) {
+        if ((keyword === 'oneOf' || keyword === 'anyOf') && Array.isArray(value)) {
+          const fingerprints = new Set<string>();
+          value.forEach((branch, index) => {
+            const record = (branch ?? {}) as Record<string, unknown>;
+            // Whatever a caller could read to choose this branch over its siblings: the
+            // schema name we carried across, else prose, else its bare shape.
+            const fingerprint =
+              (record['title'] as string | undefined) ??
+              (record['description'] as string | undefined) ??
+              `${String(record['type'])}:${JSON.stringify(record['required'] ?? null)}`;
+            if (fingerprints.has(fingerprint)) ambiguous.push(`${path}.${keyword}[${index}]`);
+            fingerprints.add(fingerprint);
+          });
+        }
+        walk(value, `${path}.${keyword}`);
+      }
+    };
+
+    for (const operation of operations) {
+      walk(operation.inputSchema, operation.name);
+    }
+    expect(ambiguous).toEqual([]);
+  });
+
+  it('makes the Docker cron job path decidable from render_create_service alone', () => {
+    // Pins a failure seen in practice: nothing linked `type: cron_job` to its branch, or
+    // `runtime: docker` to its own, so models assembled an invalid request or gave up.
+    const create = operations.find((operation) => operation.name === 'render_create_service')!;
+    const properties = create.inputSchema['properties'] as Record<string, Record<string, unknown>>;
+
+    const serviceDetails = properties['serviceDetails']!['oneOf'] as Array<Record<string, unknown>>;
+    expect(serviceDetails.map((branch) => branch['title'])).toEqual([
+      'staticSiteDetailsPOST',
+      'webServiceDetailsPOST',
+      'privateServiceDetailsPOST',
+      'backgroundWorkerDetailsPOST',
+      'cronJobDetailsPOST',
+    ]);
+
+    const cronJob = serviceDetails.find((branch) => branch['title'] === 'cronJobDetailsPOST')!;
+    expect(cronJob['required']).toContain('schedule');
+
+    const runtimes = (cronJob['properties'] as Record<string, Record<string, unknown>>)['envSpecificDetails']![
+      'oneOf'
+    ] as Array<Record<string, unknown>>;
+    expect(runtimes.map((branch) => branch['title'])).toEqual(['dockerDetails', 'nativeEnvironmentDetails']);
+
+    // The description has to carry the type→branch mapping; the schema cannot express it.
+    expect(create.description).toContain('cronJobDetailsPOST');
+    expect(create.description).toContain('dockerDetails');
+  });
+
+  it('appends a usage hint to exactly the operations that have one', () => {
+    const hinted = operations
+      .filter((operation) => operation.description.includes('Usage:'))
+      .map((operation) => operation.operationId)
+      .sort();
+    expect(hinted).toEqual(Object.keys(OPERATION_HINTS).sort());
   });
 });

@@ -72,6 +72,16 @@ describe('MCP server', () => {
     ({ client } = await connect({ body: [] }));
   });
 
+  it('sends usage instructions in the initialize result', () => {
+    // These are the only guidance a client sees before it has listed a single tool, so a
+    // silent regression here is invisible until a model picks the wrong tool.
+    const instructions = client.getInstructions();
+
+    expect(instructions).toBeTruthy();
+    expect(instructions).toContain('render_find_service');
+    expect(instructions).toContain('cron_job');
+  });
+
   it('advertises tools with well-formed schemas', async () => {
     const result = await client.listTools();
 
@@ -100,20 +110,20 @@ describe('MCP server', () => {
 
   it('executes a tool call and returns the API payload', async () => {
     const { client: connected } = await connect({ body: [{ service: { id: 'srv-1', name: 'api' }, cursor: 'c' }] });
-    const result = (await connected.callTool({
+    const result = await connected.callTool({
       name: 'render_list_services',
       arguments: { limit: 5 },
-    }));
+    });
 
     expect(result.isError).toBeFalsy();
     expect((result.content[0] as { text: string }).text).toContain('srv-1');
   });
 
   it('returns validation failures as readable error results, not protocol errors', async () => {
-    const result = (await client.callTool({
+    const result = await client.callTool({
       name: 'render_retrieve_service',
       arguments: {},
-    }));
+    });
 
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('serviceId');
@@ -121,10 +131,10 @@ describe('MCP server', () => {
 
   it('reports Render API failures with status and hint', async () => {
     const { client: connected } = await connect({ status: 404, body: { message: 'service not found' } });
-    const result = (await connected.callTool({
+    const result = await connected.callTool({
       name: 'render_retrieve_service',
       arguments: { serviceId: 'srv-missing' },
-    }));
+    });
 
     expect(result.isError).toBe(true);
     const text = (result.content[0] as { text: string }).text;
@@ -134,7 +144,7 @@ describe('MCP server', () => {
   });
 
   it('refuses an unknown tool with a recoverable message', async () => {
-    const result = (await client.callTool({ name: 'render_nope', arguments: {} }));
+    const result = await client.callTool({ name: 'render_nope', arguments: {} });
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('Unknown tool');
   });
@@ -149,7 +159,7 @@ describe('MCP server', () => {
     const { client: narrow } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) });
     const before = (await narrow.listTools()).tools.map((tool) => tool.name);
 
-    const result = (await narrow.callTool({ name: 'render_toolsets', arguments: {} }));
+    const result = await narrow.callTool({ name: 'render_toolsets', arguments: {} });
     expect(result.isError).toBeFalsy();
 
     const after = (await narrow.listTools()).tools.map((tool) => tool.name);
@@ -160,7 +170,7 @@ describe('MCP server', () => {
   it('reports disabled toolsets and how to enable them, without enabling anything', async () => {
     const { client: narrow } = await connect({ body: [] }, { toolsets: new Set(['services' as const]) });
 
-    const result = (await narrow.callTool({ name: 'render_toolsets', arguments: {} }));
+    const result = await narrow.callTool({ name: 'render_toolsets', arguments: {} });
     const payload = JSON.parse((result.content[0] as { text: string }).text) as {
       toolsets: { toolset: string; enabled: boolean }[];
       howToEnable?: string;
@@ -172,10 +182,10 @@ describe('MCP server', () => {
   });
 
   it('rejects an attempt to enable a toolset through the meta-tool', async () => {
-    const result = (await client.callTool({
+    const result = await client.callTool({
       name: 'render_toolsets',
       arguments: { enable: 'metrics' },
-    }));
+    });
 
     expect(result.isError).toBe(true);
   });
@@ -186,10 +196,10 @@ describe('MCP server', () => {
     const { tools } = await readOnly.listTools();
     expect(tools.map((tool) => tool.name)).not.toContain('render_delete_service');
 
-    const result = (await readOnly.callTool({
+    const result = await readOnly.callTool({
       name: 'render_delete_service',
       arguments: { serviceId: 'srv-1' },
-    }));
+    });
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain('read-only');
   });
@@ -222,10 +232,10 @@ describe('protocol revision 2026-07-28', () => {
 
   it('executes tool calls on the new era', async () => {
     const { client } = await connect({ body: [{ service: { id: 'srv-9', name: 'api' } }] }, {}, 'modern');
-    const result = (await client.callTool({
+    const result = await client.callTool({
       name: 'render_list_services',
       arguments: { limit: 1 },
-    }));
+    });
 
     expect(result.isError).toBeFalsy();
     expect((result.content[0] as { text: string }).text).toContain('srv-9');

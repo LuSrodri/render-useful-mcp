@@ -634,7 +634,7 @@
       "method": "POST",
       "path": "/services/{serviceId}/deploys",
       "title": "Trigger deploy",
-      "description": "Trigger deploy. Trigger a deploy for the service with the provided ID. Calls `POST /services/{serviceId}/deploys` on the Render Public API.",
+      "description": "Trigger deploy. Trigger a deploy for the service with the provided ID. Calls `POST /services/{serviceId}/deploys` on the Render Public API. Usage: Omit `commitId`/`imageUrl` to deploy the branch tip or the current image. `clearCache`: `clear` forces a rebuild from scratch and is the first thing to try when a build fails for no visible reason. Returns as soon as the deploy is queued, so follow with render_wait_for_deploy rather than polling render_retrieve_deploy.",
       "tag": "Deploys",
       "toolset": "services",
       "deprecated": false,
@@ -884,7 +884,7 @@
       "method": "POST",
       "path": "/services/{serviceId}/jobs",
       "title": "Create job",
-      "description": "Create job. Create a one-off job using the provided service. For details, see [One-Off Jobs](https://render.com/docs/one-off-jobs). Calls `POST /services/{serviceId}/jobs` on the Render Public API.",
+      "description": "Create job. Create a one-off job using the provided service. For details, see [One-Off Jobs](https://render.com/docs/one-off-jobs). Calls `POST /services/{serviceId}/jobs` on the Render Public API. Usage: Starts a one-off job on an existing service, reusing its image and environment. This is not how you create a cron job — a cron job is a service (render_create_service with `type`:`cron_job`), and render_run_cron_job triggers one off-schedule.",
       "tag": "One-Off Jobs",
       "toolset": "services",
       "deprecated": false,
@@ -929,7 +929,7 @@
       "method": "POST",
       "path": "/key-value",
       "title": "Create Key Value instance",
-      "description": "Create Key Value instance. Create a new Key Value instance. Calls `POST /key-value` on the Render Public API.",
+      "description": "Create Key Value instance. Create a new Key Value instance. Calls `POST /key-value` on the Render Public API. Usage: Key Value is Render's Redis-compatible store and supersedes the `deprecated` toolset's Redis endpoints. Read credentials with render_retrieve_key_value_connection_info; the connection string is not returned by list or retrieve.",
       "tag": "Key Value",
       "toolset": "key-value",
       "deprecated": false,
@@ -1045,7 +1045,7 @@
       "method": "POST",
       "path": "/postgres",
       "title": "Create Postgres instance",
-      "description": "Create Postgres instance. Create a new Postgres instance. Calls `POST /postgres` on the Render Public API.",
+      "description": "Create Postgres instance. Create a new Postgres instance. Calls `POST /postgres` on the Render Public API. Usage: `version` is a major version as a string (e.g. \"16\"). Plans and their disk sizes come from render_list_postgres_sizes. The generated password appears only in the creation response; afterwards, read credentials with render_retrieve_postgres_connection_info.",
       "tag": "Postgres",
       "toolset": "postgres",
       "deprecated": false,
@@ -1595,7 +1595,7 @@
       "method": "POST",
       "path": "/services",
       "title": "Create service",
-      "description": "Create service. Creates a new Render service in the specified workspace with the specified configuration. Calls `POST /services` on the Render Public API.",
+      "description": "Create service. Creates a new Render service in the specified workspace with the specified configuration. Calls `POST /services` on the Render Public API. Usage: Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-…\", \"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\", \"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\", \"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}}. For a cron job running a prebuilt image, drop `repo`/`branch`, set `image` to {\"ownerId\":\"tea-…\",\"imagePath\":\"docker.io/acme/reports:latest\"}, keep `runtime`:`image`, and give `envSpecificDetails` only the `dockerCommand` to run. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -1768,6 +1768,7 @@
           "serviceDetails": {
             "oneOf": [
               {
+                "title": "staticSiteDetailsPOST",
                 "type": "object",
                 "properties": {
                   "buildCommand": {
@@ -1892,6 +1893,7 @@
                 }
               },
               {
+                "title": "webServiceDetailsPOST",
                 "type": "object",
                 "required": [
                   "runtime"
@@ -2015,6 +2017,7 @@
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPOST",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -2033,6 +2036,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPOST",
                         "type": "object",
                         "required": [
                           "buildCommand",
@@ -2174,6 +2178,7 @@
                 }
               },
               {
+                "title": "privateServiceDetailsPOST",
                 "type": "object",
                 "required": [
                   "runtime"
@@ -2297,6 +2302,7 @@
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPOST",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -2315,6 +2321,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPOST",
                         "type": "object",
                         "required": [
                           "buildCommand",
@@ -2401,6 +2408,7 @@
                 }
               },
               {
+                "title": "backgroundWorkerDetailsPOST",
                 "type": "object",
                 "required": [
                   "runtime"
@@ -2524,6 +2532,7 @@
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPOST",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -2542,6 +2551,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPOST",
                         "type": "object",
                         "required": [
                           "buildCommand",
@@ -2628,6 +2638,7 @@
                 }
               },
               {
+                "title": "cronJobDetailsPOST",
                 "type": "object",
                 "required": [
                   "runtime",
@@ -2666,6 +2677,7 @@
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetails",
                         "type": "object",
                         "required": [
                           "dockerCommand",
@@ -2728,6 +2740,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetails",
                         "type": "object",
                         "required": [
                           "buildCommand",
@@ -6751,7 +6764,7 @@
       "method": "GET",
       "path": "/logs",
       "title": "List logs",
-      "description": "List logs. List logs matching the provided filters. Logs are paginated by start and end timestamps. There are more logs to fetch if `hasMore` is true in the response. Provide the `nextStartTime` and `nextEndTime` timestamps as the `startTime` and `endTime` query parameters to fetch the next page of logs. You can query for logs across multiple resources, but all resources must be in the same region and belong to the same owner. Calls `GET /logs` on the Render Public API.",
+      "description": "List logs. List logs matching the provided filters. Logs are paginated by start and end timestamps. There are more logs to fetch if `hasMore` is true in the response. Provide the `nextStartTime` and `nextEndTime` timestamps as the `startTime` and `endTime` query parameters to fetch the next page of logs. You can query for logs across multiple resources, but all resources must be in the same region and belong to the same owner. Calls `GET /logs` on the Render Public API. Usage: Requires an `ownerId` and a `resource` array of ids. For the common case — recent logs for one service — render_recent_logs takes a service name and fills both in.",
       "tag": "Logs",
       "toolset": "logs",
       "deprecated": false,
@@ -7337,7 +7350,7 @@
       "method": "GET",
       "path": "/owners",
       "title": "List workspaces",
-      "description": "List workspaces. List the workspaces that your API key has access to, optionally filtered by name or owner email address. Calls `GET /owners` on the Render Public API.",
+      "description": "List workspaces. List the workspaces that your API key has access to, optionally filtered by name or owner email address. Calls `GET /owners` on the Render Public API. Usage: Returns the workspaces (`tea-…` ids) your API key can reach. Set RENDER_WORKSPACE_ID to the one you use so every tool needing an `ownerId` stops asking.",
       "tag": "Workspaces",
       "toolset": "workspaces",
       "deprecated": false,
@@ -8291,7 +8304,7 @@
       "method": "GET",
       "path": "/services",
       "title": "List services",
-      "description": "List services. List services matching the provided filters. If no filters are provided, returns all services you have permissions to view. Calls `GET /services` on the Render Public API.",
+      "description": "List services. List services matching the provided filters. If no filters are provided, returns all services you have permissions to view. Calls `GET /services` on the Render Public API. Usage: Filters are ANDed, and `name` matches as a substring rather than exactly. When the user named one service, render_find_service resolves it in a single call and handles approximate names; reach for this tool to enumerate or filter in bulk.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -10717,7 +10730,7 @@
       "method": "POST",
       "path": "/services/{serviceId}/rollback",
       "title": "Roll back deploy",
-      "description": "Roll back deploy. Trigger a rollback to a previous deploy of the specified service. Triggering a rollback with this endpoint does not disable autodeploys for the service. This means an autodeploy might restore changes you had intentionally rolled back. You can toggle autodeploys for your service with the [Update service](https://api-docs.render.com/reference/update-service) endpoint or in the Render Dashboard. Calls `POST /services/{serviceId}/rollback` on the Render Public API.",
+      "description": "Roll back deploy. Trigger a rollback to a previous deploy of the specified service. Triggering a rollback with this endpoint does not disable autodeploys for the service. This means an autodeploy might restore changes you had intentionally rolled back. You can toggle autodeploys for your service with the [Update service](https://api-docs.render.com/reference/update-service) endpoint or in the Render Dashboard. Calls `POST /services/{serviceId}/rollback` on the Render Public API. Usage: `deployId` must be a previously successful deploy of this same service — list candidates with render_list_deploys and pick one whose status is `live`.",
       "tag": "Deploys",
       "toolset": "services",
       "deprecated": false,
@@ -10759,7 +10772,7 @@
       "method": "POST",
       "path": "/cron-jobs/{cronJobId}/runs",
       "title": "Trigger cron job run",
-      "description": "Trigger cron job run. Trigger a run for a cron job and cancel any active runs. Calls `POST /cron-jobs/{cronJobId}/runs` on the Render Public API.",
+      "description": "Trigger cron job run. Trigger a run for a cron job and cancel any active runs. Calls `POST /cron-jobs/{cronJobId}/runs` on the Render Public API. Usage: Triggers an immediate, out-of-schedule run. `cronJobId` is the cron job service's own id (`srv-…`, or `crn-…` on older workspaces) — resolve it with render_find_service. This does not change the schedule; use render_update_service for that.",
       "tag": "Services - Cron Jobs",
       "toolset": "services",
       "deprecated": false,
@@ -10794,7 +10807,7 @@
       "method": "POST",
       "path": "/services/{serviceId}/scale",
       "title": "Scale instance count",
-      "description": "Scale instance count. [Scale](https://render.com/docs/scaling#manual-scaling) the service with the provided ID to a fixed number of instances. Render ignores this value as long as autoscaling is enabled for the service. Calls `POST /services/{serviceId}/scale` on the Render Public API.",
+      "description": "Scale instance count. [Scale](https://render.com/docs/scaling#manual-scaling) the service with the provided ID to a fixed number of instances. Render ignores this value as long as autoscaling is enabled for the service. Calls `POST /services/{serviceId}/scale` on the Render Public API. Usage: Sets a fixed instance count and turns off autoscaling. To scale on load instead, use render_autoscale_service.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -11470,6 +11483,7 @@
             "type": "object",
             "oneOf": [
               {
+                "title": "envVarValue",
                 "type": "object",
                 "required": [
                   "value"
@@ -11481,6 +11495,7 @@
                 }
               },
               {
+                "title": "envVarGenerateValue",
                 "type": "object",
                 "required": [
                   "generateValue"
@@ -11584,6 +11599,7 @@
             "type": "object",
             "oneOf": [
               {
+                "title": "envVarValue",
                 "type": "object",
                 "required": [
                   "value"
@@ -11595,6 +11611,7 @@
                 }
               },
               {
+                "title": "envVarGenerateValue",
                 "type": "object",
                 "required": [
                   "generateValue"
@@ -11624,7 +11641,7 @@
       "method": "PUT",
       "path": "/services/{serviceId}/env-vars",
       "title": "Update environment variables",
-      "description": "Update environment variables. Replace all environment variables for a service with the provided list of environment variables. Calls `PUT /services/{serviceId}/env-vars` on the Render Public API.",
+      "description": "Update environment variables. Replace all environment variables for a service with the provided list of environment variables. Calls `PUT /services/{serviceId}/env-vars` on the Render Public API. Usage: This replaces the service's entire environment variable set: anything absent from `body` is deleted. To change one variable, read the current set with render_get_env_vars_for_service and send it back with your edit applied, or use render_update_env_var for a single key. Applying changes restarts the service.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -12450,7 +12467,7 @@
       "method": "PUT",
       "path": "/services/{serviceId}/secret-files",
       "title": "Update secret files",
-      "description": "Update secret files. Replace all secret files for a service with the provided list of secret files. **Any of the service's existing secret files not included in this request will be deleted.** This only applies to secret files set directly on the service, not to secret files in a linked environment group. Calls `PUT /services/{serviceId}/secret-files` on the Render Public API.",
+      "description": "Update secret files. Replace all secret files for a service with the provided list of secret files. **Any of the service's existing secret files not included in this request will be deleted.** This only applies to secret files set directly on the service, not to secret files in a linked environment group. Calls `PUT /services/{serviceId}/secret-files` on the Render Public API. Usage: Replaces the full set of secret files; omitted files are deleted. Read the current set with render_list_secret_files_for_service first.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -12505,7 +12522,7 @@
       "method": "PATCH",
       "path": "/services/{serviceId}",
       "title": "Update service",
-      "description": "Update service. Update the service with the provided ID. Calls `PATCH /services/{serviceId}` on the Render Public API.",
+      "description": "Update service. Update the service with the provided ID. Calls `PATCH /services/{serviceId}` on the Render Public API. Usage: `serviceDetails` branches are the PATCH variants of the same five service types, and the branch must still match the service's existing `type` — a service cannot change type. Send only the fields you are changing; omitted fields keep their current values. Changing a cron job's `schedule` or a service's build settings does not itself deploy — call render_create_deploy afterwards when the change needs a rebuild.",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -12600,6 +12617,7 @@
           "serviceDetails": {
             "oneOf": [
               {
+                "title": "staticSiteDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "buildCommand": {
@@ -12663,11 +12681,13 @@
                 }
               },
               {
+                "title": "webServiceDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -12685,6 +12705,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "buildCommand": {
@@ -12834,11 +12855,13 @@
                 }
               },
               {
+                "title": "privateServiceDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -12856,6 +12879,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "buildCommand": {
@@ -12933,11 +12957,13 @@
                 }
               },
               {
+                "title": "backgroundWorkerDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -12955,6 +12981,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "buildCommand": {
@@ -13032,11 +13059,13 @@
                 }
               },
               {
+                "title": "cronJobDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
                     "oneOf": [
                       {
+                        "title": "dockerDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "dockerCommand": {
@@ -13054,6 +13083,7 @@
                         }
                       },
                       {
+                        "title": "nativeEnvironmentDetailsPATCH",
                         "type": "object",
                         "properties": {
                           "buildCommand": {
@@ -13455,7 +13485,7 @@
       "method": "POST",
       "path": "/blueprints/validate",
       "title": "Validate Blueprint",
-      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The provided Blueprint file cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API.",
+      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The provided Blueprint file cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API. Usage: Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.",
       "tag": "Blueprints",
       "toolset": "blueprints",
       "deprecated": false,
