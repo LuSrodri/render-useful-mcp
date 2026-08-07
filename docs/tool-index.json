@@ -1,0 +1,1506 @@
+{
+  "$comment": "GENERATED FILE — run `npm run docs` to rebuild from src/generated/operations.json.",
+  "specVersion": "1.0.0",
+  "totalTools": 212,
+  "tools": [
+    {
+      "name": "render_add_disk",
+      "toolset": "disks",
+      "summary": "Add disk.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_add_headers",
+      "toolset": "static-sites",
+      "summary": "Add header rule.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_add_or_update_secret_file",
+      "toolset": "services",
+      "summary": "Add or update secret file.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_add_resources_to_environment",
+      "toolset": "projects",
+      "summary": "Add resources to environment.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_add_route",
+      "toolset": "static-sites",
+      "summary": "Add redirect/rewrite rules.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_autoscale_service",
+      "toolset": "services",
+      "summary": "Update autoscaling config.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_cancel_cron_job_run",
+      "toolset": "services",
+      "summary": "Cancel running cron job.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_cancel_deploy",
+      "toolset": "services",
+      "summary": "Cancel deploy.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_cancel_job",
+      "toolset": "services",
+      "summary": "Cancel running job.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_cancel_task_run",
+      "toolset": "workflows",
+      "summary": "Cancel task run.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_create_custom_domain",
+      "toolset": "services",
+      "summary": "Add custom domain.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_dedicated_ip",
+      "toolset": "network",
+      "summary": "Create dedicated IP set.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_deploy",
+      "toolset": "services",
+      "summary": "Trigger deploy.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Omit `commitId`/`imageUrl` to deploy the branch tip or the current image. `clearCache`: `clear` forces a rebuild from scratch and is the first thing to try when a build fails for no visible reason. Returns as soon as the deploy is queued, so follow with render_wait_for_deploy rather than polling render_retrieve_deploy."
+    },
+    {
+      "name": "render_create_env_group",
+      "toolset": "env-groups",
+      "summary": "Create environment group.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_environment",
+      "toolset": "projects",
+      "summary": "Create environment.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_job",
+      "toolset": "services",
+      "summary": "Create job.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Starts a one-off job on an existing service, reusing its image and environment. This is not how you create a cron job — a cron job is a service (render_create_service with `type`:`cron_job`), and render_run_cron_job triggers one off-schedule."
+    },
+    {
+      "name": "render_create_key_value",
+      "toolset": "key-value",
+      "summary": "Create Key Value instance.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Key Value is Render's Redis-compatible store and supersedes the `deprecated` toolset's Redis endpoints. Read credentials with render_retrieve_key_value_connection_info; the connection string is not returned by list or retrieve."
+    },
+    {
+      "name": "render_create_postgres",
+      "toolset": "postgres",
+      "summary": "Create Postgres instance.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "`version` is a major version as a string (e.g. \"16\"). Plans and their disk sizes come from render_list_postgres_sizes. The generated password appears only in the creation response; afterwards, read credentials with render_retrieve_postgres_connection_info."
+    },
+    {
+      "name": "render_create_postgres_export",
+      "toolset": "postgres",
+      "summary": "Create Postgres export.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_postgres_user",
+      "toolset": "postgres",
+      "summary": "Create PostgreSQL User.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_project",
+      "toolset": "projects",
+      "summary": "Create project.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Create Redis instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_registry_credential",
+      "toolset": "registry",
+      "summary": "Create registry credential.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_service",
+      "toolset": "services",
+      "summary": "Create service.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-…\", \"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\", \"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\", \"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}}. For a cron job running a prebuilt image, drop `repo`/`branch`, set `image` to {\"ownerId\":\"tea-…\",\"imagePath\":\"docker.io/acme/reports:latest\"}, keep `runtime`:`image`, and give `envSpecificDetails` only the `dockerCommand` to run. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy."
+    },
+    {
+      "name": "render_create_task",
+      "toolset": "workflows",
+      "summary": "Run task.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_webhook",
+      "toolset": "webhooks",
+      "summary": "Create a webhook.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_workflow",
+      "toolset": "workflows",
+      "summary": "Create a workflow.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_create_workflow_version",
+      "toolset": "workflows",
+      "summary": "Deploy a workflow version.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_delete_autoscaling_config",
+      "toolset": "services",
+      "summary": "Delete autoscaling config.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_custom_domain",
+      "toolset": "services",
+      "summary": "Delete custom domain.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_dedicated_ip",
+      "toolset": "network",
+      "summary": "Delete dedicated IP set.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_disk",
+      "toolset": "disks",
+      "summary": "Delete disk.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_env_group",
+      "toolset": "env-groups",
+      "summary": "Delete environment group.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_env_group_env_var",
+      "toolset": "env-groups",
+      "summary": "Remove environment variable.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_env_group_secret_file",
+      "toolset": "env-groups",
+      "summary": "Remove secret file.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_env_var",
+      "toolset": "services",
+      "summary": "Delete environment variable.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_environment",
+      "toolset": "projects",
+      "summary": "Delete environment.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_header",
+      "toolset": "static-sites",
+      "summary": "Delete header rule.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_key_value",
+      "toolset": "key-value",
+      "summary": "Delete Key Value instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_owner_log_stream",
+      "toolset": "logs",
+      "summary": "Delete log stream.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_owner_metrics_stream",
+      "toolset": "metrics",
+      "summary": "Delete metrics stream.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_postgres",
+      "toolset": "postgres",
+      "summary": "Delete Postgres instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_postgres_user",
+      "toolset": "postgres",
+      "summary": "Delete PostgreSQL User.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_project",
+      "toolset": "projects",
+      "summary": "Delete project.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Delete Redis instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_registry_credential",
+      "toolset": "registry",
+      "summary": "Delete registry credential.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_resource_log_stream",
+      "toolset": "logs",
+      "summary": "Delete log stream override.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_route",
+      "toolset": "static-sites",
+      "summary": "Delete redirect/rewrite rule.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_secret_file",
+      "toolset": "services",
+      "summary": "Delete secret file.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_service",
+      "toolset": "services",
+      "summary": "Delete service.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_webhook",
+      "toolset": "webhooks",
+      "summary": "Delete a webhook.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_delete_workflow",
+      "toolset": "workflows",
+      "summary": "Delete workflow.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_disconnect_blueprint",
+      "toolset": "blueprints",
+      "summary": "Disconnect Blueprint.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_failover_postgres",
+      "toolset": "postgres",
+      "summary": "Failover Postgres instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_find_service",
+      "toolset": "core",
+      "summary": "Resolves a service name — including a partial or approximate one — to a single Render service, returning its id plus close alternatives.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_active_connections",
+      "toolset": "metrics",
+      "summary": "Get active connection count.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_bandwidth",
+      "toolset": "metrics",
+      "summary": "Get bandwidth usage.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_bandwidth_sources",
+      "toolset": "metrics",
+      "summary": "Get bandwidth usage breakdown by traffic source.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_cpu",
+      "toolset": "metrics",
+      "summary": "Get CPU usage.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_cpu_limit",
+      "toolset": "metrics",
+      "summary": "Get CPU limit.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_cpu_target",
+      "toolset": "metrics",
+      "summary": "Get CPU target.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_disk_capacity",
+      "toolset": "metrics",
+      "summary": "Get disk capacity.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_disk_usage",
+      "toolset": "metrics",
+      "summary": "Get disk usage.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_env_vars_for_service",
+      "toolset": "services",
+      "summary": "List environment variables.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_http_latency",
+      "toolset": "metrics",
+      "summary": "Get HTTP latency.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_http_requests",
+      "toolset": "metrics",
+      "summary": "Get HTTP request count.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_instance_count",
+      "toolset": "metrics",
+      "summary": "Get instance count.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_memory",
+      "toolset": "metrics",
+      "summary": "Get memory usage.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_memory_limit",
+      "toolset": "metrics",
+      "summary": "Get memory limit.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_memory_target",
+      "toolset": "metrics",
+      "summary": "Get memory target.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_owner_log_stream",
+      "toolset": "logs",
+      "summary": "Retrieve log stream.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_owner_metrics_stream",
+      "toolset": "metrics",
+      "summary": "Retrieve metrics stream.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_replication_lag",
+      "toolset": "metrics",
+      "summary": "Get replica lag.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_resource_log_stream",
+      "toolset": "logs",
+      "summary": "Retrieve log stream override.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_task",
+      "toolset": "workflows",
+      "summary": "Retrieve task.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_task_run",
+      "toolset": "workflows",
+      "summary": "Retrieve task run.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_task_runs_completed",
+      "toolset": "metrics",
+      "summary": "Get task runs completed count.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_task_runs_queued",
+      "toolset": "metrics",
+      "summary": "Get task runs queued count.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_user",
+      "toolset": "workspaces",
+      "summary": "Get the authenticated user.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_workflow",
+      "toolset": "workflows",
+      "summary": "Retrieve workflow.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_get_workflow_version",
+      "toolset": "workflows",
+      "summary": "Retrieve workflow version.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_link_service_to_env_group",
+      "toolset": "env-groups",
+      "summary": "Link service.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_list_application_filter_values",
+      "toolset": "metrics",
+      "summary": "List queryable instance values.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_blueprint_syncs",
+      "toolset": "blueprints",
+      "summary": "List Blueprint syncs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_blueprints",
+      "toolset": "blueprints",
+      "summary": "List Blueprints.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_custom_domains",
+      "toolset": "services",
+      "summary": "List custom domains.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_dedicated_ips",
+      "toolset": "network",
+      "summary": "List dedicated IPs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_deploys",
+      "toolset": "services",
+      "summary": "List deploys.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_disks",
+      "toolset": "disks",
+      "summary": "List disks.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_env_groups",
+      "toolset": "env-groups",
+      "summary": "List environment groups.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_environments",
+      "toolset": "projects",
+      "summary": "List environments.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_events",
+      "toolset": "services",
+      "summary": "List events.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_headers",
+      "toolset": "static-sites",
+      "summary": "List header rules.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_http_filter_values",
+      "toolset": "metrics",
+      "summary": "List queryable status codes and host values.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_instances",
+      "toolset": "services",
+      "summary": "List instances.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_jobs",
+      "toolset": "services",
+      "summary": "List jobs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_key_value",
+      "toolset": "key-value",
+      "summary": "List Key Value instances.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_logs",
+      "toolset": "logs",
+      "summary": "List logs.",
+      "readOnly": true,
+      "destructive": false,
+      "usage": "Requires an `ownerId` and a `resource` array of ids. For the common case — recent logs for one service — render_recent_logs takes a service name and fills both in."
+    },
+    {
+      "name": "render_list_logs_values",
+      "toolset": "logs",
+      "summary": "List log label values.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_maintenance",
+      "toolset": "maintenance",
+      "summary": "List maintenance runs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_notification_overrides",
+      "toolset": "webhooks",
+      "summary": "List notification overrides.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_organization_audit_logs",
+      "toolset": "workspaces",
+      "summary": "List organization audit logs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_owner_audit_logs",
+      "toolset": "workspaces",
+      "summary": "List workspace audit logs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_owners",
+      "toolset": "workspaces",
+      "summary": "List workspaces.",
+      "readOnly": true,
+      "destructive": false,
+      "usage": "Returns the workspaces (`tea-…` ids) your API key can reach. Set RENDER_WORKSPACE_ID to the one you use so every tool needing an `ownerId` stops asking."
+    },
+    {
+      "name": "render_list_path_filter_values",
+      "toolset": "metrics",
+      "summary": "List queryable paths.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres",
+      "toolset": "postgres",
+      "summary": "List Postgres instances.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_export",
+      "toolset": "postgres",
+      "summary": "List Postgres exports.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_processes",
+      "toolset": "postgres",
+      "summary": "List live queries.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_sizes",
+      "toolset": "postgres",
+      "summary": "List database, table, and index sizes.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_table_scans",
+      "toolset": "postgres",
+      "summary": "List table scans.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_top_queries",
+      "toolset": "postgres",
+      "summary": "List top queries.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_postgres_users",
+      "toolset": "postgres",
+      "summary": "List PostgreSQL Users.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_projects",
+      "toolset": "projects",
+      "summary": "List projects.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] List Redis instances.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_registry_credentials",
+      "toolset": "registry",
+      "summary": "List registry credentials.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_resource_log_streams",
+      "toolset": "logs",
+      "summary": "List log stream overrides.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_routes",
+      "toolset": "static-sites",
+      "summary": "List redirect/rewrite rules.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_secret_files_for_service",
+      "toolset": "services",
+      "summary": "List secret files.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_services",
+      "toolset": "services",
+      "summary": "List services.",
+      "readOnly": true,
+      "destructive": false,
+      "usage": "Filters are ANDed, and `name` matches as a substring rather than exactly. When the user named one service, render_find_service resolves it in a single call and handles approximate names; reach for this tool to enumerate or filter in bulk."
+    },
+    {
+      "name": "render_list_snapshots",
+      "toolset": "disks",
+      "summary": "List snapshots.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_task_runs",
+      "toolset": "workflows",
+      "summary": "List task runs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_tasks",
+      "toolset": "workflows",
+      "summary": "List tasks.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_webhook_events",
+      "toolset": "webhooks",
+      "summary": "List webhook events.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_webhooks",
+      "toolset": "webhooks",
+      "summary": "List webhooks.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_workflow_versions",
+      "toolset": "workflows",
+      "summary": "List workflow versions.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_list_workflows",
+      "toolset": "workflows",
+      "summary": "List workflows.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_patch_owner_notification_settings",
+      "toolset": "webhooks",
+      "summary": "Update notification settings.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_patch_route",
+      "toolset": "static-sites",
+      "summary": "Update redirect/rewrite rule priority.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_patch_service_notification_overrides",
+      "toolset": "webhooks",
+      "summary": "Update notification override.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_preview_service",
+      "toolset": "services",
+      "summary": "Create service preview (image-backed).",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_purge_cache",
+      "toolset": "services",
+      "summary": "Purge Web Service Cache.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_put_routes",
+      "toolset": "static-sites",
+      "summary": "Update redirect/rewrite rules.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_recent_logs",
+      "toolset": "core",
+      "summary": "Fetches recent log lines for a service, resolving the service name and workspace id for you.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_recover_postgres",
+      "toolset": "postgres",
+      "summary": "Trigger point-in-time recovery.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_refresh_custom_domain",
+      "toolset": "services",
+      "summary": "Verify DNS configuration.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_remove_resources_from_environment",
+      "toolset": "projects",
+      "summary": "Remove resources from environment.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_remove_workspace_member",
+      "toolset": "workspaces",
+      "summary": "Remove workspace member.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_restart_postgres",
+      "toolset": "postgres",
+      "summary": "Restart Postgres instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_restart_service",
+      "toolset": "services",
+      "summary": "Restart service.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_restore_snapshot",
+      "toolset": "disks",
+      "summary": "Restore snapshot.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_resume_key_value",
+      "toolset": "key-value",
+      "summary": "Resume Key Value instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_resume_postgres",
+      "toolset": "postgres",
+      "summary": "Resume Postgres instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_resume_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Resume Redis instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_resume_service",
+      "toolset": "services",
+      "summary": "Resume service.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_blueprint",
+      "toolset": "blueprints",
+      "summary": "Retrieve Blueprint.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_custom_domain",
+      "toolset": "services",
+      "summary": "Retrieve custom domain.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_dedicated_ip",
+      "toolset": "network",
+      "summary": "Retrieve dedicated IP set.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_deploy",
+      "toolset": "services",
+      "summary": "Retrieve deploy.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_disk",
+      "toolset": "disks",
+      "summary": "Retrieve disk.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_env_group",
+      "toolset": "env-groups",
+      "summary": "Retrieve environment group.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_env_group_env_var",
+      "toolset": "env-groups",
+      "summary": "Retrieve environment variable.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_env_group_secret_file",
+      "toolset": "env-groups",
+      "summary": "Retrieve secret file.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_env_var",
+      "toolset": "services",
+      "summary": "Retrieve environment variable.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_environment",
+      "toolset": "projects",
+      "summary": "Retrieve environment.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_event",
+      "toolset": "services",
+      "summary": "Retrieve event.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_job",
+      "toolset": "services",
+      "summary": "Retrieve job.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_key_value",
+      "toolset": "key-value",
+      "summary": "Retrieve Key Value instance.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_key_value_connection_info",
+      "toolset": "key-value",
+      "summary": "Retrieve Key Value connection info.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_maintenance",
+      "toolset": "maintenance",
+      "summary": "Retrieve maintenance run.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_owner",
+      "toolset": "workspaces",
+      "summary": "Retrieve workspace.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_owner_members",
+      "toolset": "workspaces",
+      "summary": "List workspace members.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_owner_notification_settings",
+      "toolset": "webhooks",
+      "summary": "Retrieve notification settings.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_postgres",
+      "toolset": "postgres",
+      "summary": "Retrieve Postgres instance.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_postgres_connection_info",
+      "toolset": "postgres",
+      "summary": "Retrieve Postgres connection info.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_postgres_recovery_info",
+      "toolset": "postgres",
+      "summary": "Retrieve point-in-time recovery status.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_project",
+      "toolset": "projects",
+      "summary": "Retrieve Project.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Retrieve Redis instance.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_redis_connection_info",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Retrieve Redis connection info.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_registry_credential",
+      "toolset": "registry",
+      "summary": "Retrieve registry credential.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_secret_file",
+      "toolset": "services",
+      "summary": "Retrieve secret file.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_service",
+      "toolset": "services",
+      "summary": "Retrieve service.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_service_notification_overrides",
+      "toolset": "webhooks",
+      "summary": "Retrieve notification override.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_webhook",
+      "toolset": "webhooks",
+      "summary": "Retrieve a webhook.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_rollback_deploy",
+      "toolset": "services",
+      "summary": "Roll back deploy.",
+      "readOnly": false,
+      "destructive": true,
+      "usage": "`deployId` must be a previously successful deploy of this same service — list candidates with render_list_deploys and pick one whose status is `live`."
+    },
+    {
+      "name": "render_run_cron_job",
+      "toolset": "services",
+      "summary": "Trigger cron job run.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Triggers an immediate, out-of-schedule run. `cronJobId` is the cron job service's own id (`srv-…`, or `crn-…` on older workspaces) — resolve it with render_find_service. This does not change the schedule; use render_update_service for that."
+    },
+    {
+      "name": "render_scale_service",
+      "toolset": "services",
+      "summary": "Scale instance count.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Sets a fixed instance count and turns off autoscaling. To scale on load instead, use render_autoscale_service."
+    },
+    {
+      "name": "render_service_status",
+      "toolset": "core",
+      "summary": "One-call triage for a service: its configuration, latest deploys, running instances and most recent error-level logs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_stream_task_runs_events",
+      "toolset": "workflows",
+      "summary": "Stream realtime events (SSE).",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_subscribe_logs",
+      "toolset": "logs",
+      "summary": "Subscribe to new logs.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_suspend_key_value",
+      "toolset": "key-value",
+      "summary": "Suspend Key Value instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_suspend_postgres",
+      "toolset": "postgres",
+      "summary": "Suspend Postgres instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_suspend_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Suspend Redis instance.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_suspend_service",
+      "toolset": "services",
+      "summary": "Suspend service.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_toolsets",
+      "toolset": "core",
+      "summary": "Lists every Render toolset with its tool count and whether it is currently enabled.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_trigger_maintenance",
+      "toolset": "maintenance",
+      "summary": "Trigger maintenance run.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_unlink_service_from_env_group",
+      "toolset": "env-groups",
+      "summary": "Unlink service.",
+      "readOnly": false,
+      "destructive": true
+    },
+    {
+      "name": "render_update_blueprint",
+      "toolset": "blueprints",
+      "summary": "Update Blueprint.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_dedicated_ip",
+      "toolset": "network",
+      "summary": "Update dedicated IP set.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_disk",
+      "toolset": "disks",
+      "summary": "Update disk.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_env_group",
+      "toolset": "env-groups",
+      "summary": "Update environment group.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_env_group_env_var",
+      "toolset": "env-groups",
+      "summary": "Add or update environment variable.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_env_group_secret_file",
+      "toolset": "env-groups",
+      "summary": "Add or update secret file.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_env_var",
+      "toolset": "services",
+      "summary": "Add or update environment variable.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_env_vars_for_service",
+      "toolset": "services",
+      "summary": "Update environment variables.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "This replaces the service's entire environment variable set: anything absent from `body` is deleted. To change one variable, read the current set with render_get_env_vars_for_service and send it back with your edit applied, or use render_update_env_var for a single key. Applying changes restarts the service."
+    },
+    {
+      "name": "render_update_environment",
+      "toolset": "projects",
+      "summary": "Update environment.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_headers",
+      "toolset": "static-sites",
+      "summary": "Replace header rules.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_key_value",
+      "toolset": "key-value",
+      "summary": "Update Key Value instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_maintenance",
+      "toolset": "maintenance",
+      "summary": "Update maintenance run.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_owner_log_stream",
+      "toolset": "logs",
+      "summary": "Update log stream.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_postgres",
+      "toolset": "postgres",
+      "summary": "Update Postgres instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_project",
+      "toolset": "projects",
+      "summary": "Update project.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_redis",
+      "toolset": "deprecated",
+      "summary": "[DEPRECATED by Render] Update Redis instance.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_registry_credential",
+      "toolset": "registry",
+      "summary": "Update registry credential.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_resource_log_stream",
+      "toolset": "logs",
+      "summary": "Update log stream override.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_secret_files_for_service",
+      "toolset": "services",
+      "summary": "Update secret files.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Replaces the full set of secret files; omitted files are deleted. Read the current set with render_list_secret_files_for_service first."
+    },
+    {
+      "name": "render_update_service",
+      "toolset": "services",
+      "summary": "Update service.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "`serviceDetails` branches are the PATCH variants of the same five service types, and the branch must still match the service's existing `type` — a service cannot change type. Send only the fields you are changing; omitted fields keep their current values. Changing a cron job's `schedule` or a service's build settings does not itself deploy — call render_create_deploy afterwards when the change needs a rebuild."
+    },
+    {
+      "name": "render_update_webhook",
+      "toolset": "webhooks",
+      "summary": "Update a webhook.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_workflow",
+      "toolset": "workflows",
+      "summary": "Update workflow.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_update_workspace_member",
+      "toolset": "workspaces",
+      "summary": "Update workspace member role.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_upsert_owner_metrics_stream",
+      "toolset": "metrics",
+      "summary": "Create or update metrics stream.",
+      "readOnly": false,
+      "destructive": false
+    },
+    {
+      "name": "render_validate_blueprint",
+      "toolset": "blueprints",
+      "summary": "Validate Blueprint.",
+      "readOnly": false,
+      "destructive": false,
+      "usage": "Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository."
+    },
+    {
+      "name": "render_wait_for_deploy",
+      "toolset": "core",
+      "summary": "Polls a deploy until it reaches a terminal state (live, build_failed, update_failed, canceled, deactivated) or the timeout expires.",
+      "readOnly": true,
+      "destructive": false
+    }
+  ]
+}

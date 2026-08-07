@@ -1,0 +1,31 @@
+# render-useful-mcp
+
+> An unofficial, complete Model Context Protocol (MCP) server for the Render Public API. It exposes all 207 Render endpoints as MCP tools, generated from Render's own OpenAPI document, plus 5 higher-level workflow tools. Runs locally over stdio; MIT licensed; not affiliated with Render.
+
+Use it to let an AI assistant manage Render services, deploys, cron jobs, Postgres, Key Value, disks, environment groups, logs and metrics.
+
+## Install
+
+Claude Code, globally (available in every project):
+
+```
+claude mcp add render --scope user -e RENDER_API_KEY=rnd_your_key -- npx -y render-useful-mcp
+```
+
+Without `--scope user` the server is registered for the current directory only. Any client that reads an `mcpServers` object works too — command `npx`, args `["-y","render-useful-mcp"]`, env `RENDER_API_KEY`.
+
+Requires Node.js 20.11 or newer. Get an API key from Render Dashboard → Account Settings → API Keys. Setting `RENDER_WORKSPACE_ID` is optional but removes a lookup from most sessions.
+
+## Docs
+
+- [Overview and install](https://lusrodri.github.io/render-useful-mcp/): what it is, every install route, configuration variables
+- [Tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html): all 212 tools with descriptions, grouped by toolset
+- [Full text for LLMs](https://lusrodri.github.io/render-useful-mcp/llms-full.txt): everything above in one file
+- [README](https://github.com/LuSrodri/render-useful-mcp#readme): design notes and development
+- [Privacy](https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md): no telemetry, no backend, key never written to disk
+
+## Optional
+
+- [npm package](https://www.npmjs.com/package/render-useful-mcp)
+- [Source](https://github.com/LuSrodri/render-useful-mcp)
+- [Render Public API](https://api-docs.render.com/reference/introduction)

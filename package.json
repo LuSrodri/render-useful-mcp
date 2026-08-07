@@ -46,6 +46,8 @@
   ],
   "scripts": {
     "generate": "tsx scripts/generate-operations.ts",
+    "docs": "tsx scripts/generate-docs.ts",
+    "docs:check": "tsx scripts/generate-docs.ts --check",
     "build": "npm run generate && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
     "build:mcpb": "npm run build && tsx scripts/build-mcpb.ts",
     "dev": "tsx watch src/index.ts",
@@ -58,7 +60,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "check": "npm run generate && npm run lint && npm run typecheck && npm run test",
+    "check": "npm run generate && npm run docs && npm run lint && npm run typecheck && npm run test",
     "prepublishOnly": "npm run build",
     "version": "tsx scripts/sync-server-version.ts && git add server.json manifest.json plugin/.claude-plugin/plugin.json",
     "sync-spec": "tsx scripts/fetch-spec.ts",
