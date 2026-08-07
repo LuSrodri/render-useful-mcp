@@ -366,10 +366,14 @@ git push --follow-tags
 ```
 
 Pushing a `v*` tag runs `.github/workflows/publish.yml`, which verifies the tag matches
-`package.json` and that the generated catalogue is current, works out which of the two
-targets still need this version, then lints, type-checks, tests, builds and publishes. It
-also builds the `.mcpb` bundle and attaches it to the GitHub Release, which is the only
-place the desktop extension is distributed from.
+`package.json` and that the generated catalogue **and documentation** are current, works out
+which of the two targets still need this version, then lints, type-checks, tests, builds and
+publishes. It also builds the `.mcpb` bundle and attaches it to the GitHub Release, which is
+the only place the desktop extension is distributed from.
+
+The documentation check is repeated here rather than left to CI because `README.md` ships
+inside the npm tarball and a tag can be cut from any commit. npm versions are immutable, so
+a package whose README contradicts the catalogue beside it cannot be taken back.
 
 The order is fixed: npm first, then the registry. The registry proves you own the package
 by fetching the published tarball and looking for `mcpName` in its `package.json`, so it

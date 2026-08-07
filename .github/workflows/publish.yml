@@ -159,6 +159,14 @@ jobs:
           npm run generate
           git diff --exit-code src/generated/operations.json
 
+      # `README.md` ships inside the npm tarball, and its tool counts and toolset table are
+      # rendered from the catalogue. CI already enforces this on pull requests, but a tag can
+      # be cut from any commit — so without this check it is possible to publish a package
+      # whose README contradicts the catalogue beside it. npm versions are immutable, which
+      # makes that the one place the check is worth repeating.
+      - name: Verify documentation matches the catalogue
+        run: npm run docs:check
+
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
