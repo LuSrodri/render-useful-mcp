@@ -13509,7 +13509,7 @@
       "method": "POST",
       "path": "/blueprints/validate",
       "title": "Validate Blueprint",
-      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The provided Blueprint file cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API. Usage: Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.",
+      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The request body (including the Blueprint file) cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API. Usage: Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.",
       "tag": "Blueprints",
       "toolset": "blueprints",
       "deprecated": false,
