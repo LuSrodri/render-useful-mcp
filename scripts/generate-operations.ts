@@ -391,7 +391,14 @@ function buildDescription(operation: OpenApiOperation, method: HttpMethod, path:
 
   // Last, and marked: the model should be able to tell Render's own words from ours.
   const hint = OPERATION_HINTS[operation.operationId];
-  if (hint !== undefined) parts.push(`Usage: ${hint.trim()}`);
+  if (hint !== undefined) {
+    parts.push(`Usage: ${hint.usage.trim()}`);
+    // Rendered from the same objects the test suite validates, so a description can never
+    // again show a payload the server would reject.
+    for (const example of hint.examples ?? []) {
+      parts.push(`Example — ${example.summary}: ${JSON.stringify(example.args)}`);
+    }
+  }
 
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
