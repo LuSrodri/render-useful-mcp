@@ -29,7 +29,13 @@ const ajv = new Ajv({
   // Coercion is what makes tool calls forgiving: models routinely send "10" for an integer
   // or "true" for a boolean, and rejecting those helps nobody.
   coerceTypes: true,
-  useDefaults: true,
+  // Off, deliberately. A `default` in Render's spec documents what the API does with a field
+  // the caller omits — it is not a value a client should send. Filling it in turns "not
+  // mentioned" into "explicitly set to this", which on a PATCH is a write the caller never
+  // asked for: renaming a service also re-enabled `autoDeploy`, and renaming a Postgres
+  // instance also set `connectionPool` to `none`, tearing down an existing pool. Render
+  // applies its own defaults server-side, where they belong.
+  useDefaults: false,
   removeAdditional: false,
 });
 addFormats(ajv);
@@ -67,9 +73,22 @@ export function validateArgs(
 
   throw new ValidationError(
     `Invalid arguments for "${toolName}":`,
-    (validate.errors ?? []).map(formatError),
+    significantErrors(validate.errors ?? []).map(formatError),
     "Re-read the tool's inputSchema and resend the call with corrected arguments.",
   );
+}
+
+/**
+ * Drops the bookkeeping Ajv reports alongside a real failure.
+ *
+ * Schemas that select a shape from a discriminator report the failed branch as a bare
+ * `must match "then" schema` next to the error that actually caused it. Repeating the
+ * consequence after the cause tells a caller nothing and hides the useful line among
+ * duplicates, so it is kept only when nothing more specific was reported.
+ */
+function significantErrors(errors: readonly ErrorObject[]): readonly ErrorObject[] {
+  const specific = errors.filter((error) => error.keyword !== 'if');
+  return specific.length > 0 ? specific : errors;
 }
 
 function formatError(error: ErrorObject): string {
