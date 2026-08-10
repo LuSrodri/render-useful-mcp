@@ -9,6 +9,17 @@
 # The PR is never merged automatically. New Render endpoints can be breaking (a removed
 # tool, a newly required argument), so a human reviews the summary the diff produces.
 #
+# ## When the generator refuses
+#
+# There are two ways a spec change can go wrong, and they need different endings. Tests
+# that fail against a regenerated catalogue still get a pull request, marked, because the
+# diff is the thing worth reading. A generator that refuses to produce a catalogue at all
+# gets no pull request — there would be nothing in it — so the run goes red and says why,
+# with the generator's own error quoted in the summary. Getting that second case right
+# matters more than it looks: the run summary is written unconditionally, so a hard failure
+# mid-job used to leave it reporting a prose-only change, which is the one outcome that
+# would let a real upstream change pass unnoticed.
+#
 # ## Why this used to look like it never ran
 #
 # It did run — but weekly, and at minute 0, which is the single most contended slot on
@@ -76,14 +87,25 @@ jobs:
             echo "Spec changed."
           fi
 
+      # `continue-on-error` so the run can explain itself before going red. The generator
+      # refuses to emit a catalogue it cannot fully model — an unmapped tag, a name
+      # collision, a `oneOf` whose branches nothing discriminates — and a new service type
+      # in Render's spec is an ordinary reason for that to happen. Left as a hard failure,
+      # the job died here and the summary below, which runs `always()`, read the unset
+      # `catalogue.changed` as false and reported a prose-only change. Precisely the
+      # "quietly blind" outcome this workflow exists to avoid.
       - name: Regenerate the tool catalogue
         if: steps.detect.outputs.changed == 'true'
-        run: npm run generate
+        id: regenerate
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm run generate 2>&1 | tee "$RUNNER_TEMP/generate.log"
 
       # A spec change that does not alter the catalogue is formatting or prose only.
       # Opening a PR for that is pure noise, so stop here.
       - name: Check whether the catalogue actually changed
-        if: steps.detect.outputs.changed == 'true'
+        if: steps.detect.outputs.changed == 'true' && steps.regenerate.outcome == 'success'
         id: catalogue
         run: |
           if git diff --quiet src/generated/operations.json; then
@@ -174,14 +196,26 @@ jobs:
           {
             echo "## Spec sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
             echo
-            if [ "${{ steps.detect.outputs.changed }}" = "true" ]; then
-              if [ "${{ steps.catalogue.outputs.changed }}" = "true" ]; then
-                echo "Render's spec changed and the tool catalogue changed with it. A pull request is open on \`spec-sync\`."
-              else
-                echo "Render's spec changed, but only in prose or formatting — the tool catalogue is unaffected. No pull request opened."
-              fi
-            else
+            if [ "${{ steps.detect.outputs.changed }}" != "true" ]; then
               echo "Render's spec is unchanged. Nothing to do."
+            elif [ "${{ steps.regenerate.outcome }}" = "failure" ]; then
+              echo '> [!CAUTION]'
+              echo "> Render's spec changed and **the generator refused to build a catalogue from it**."
+              echo
+              echo "The generator fails rather than emit a tool it cannot fully model. Usually that means"
+              echo "Render introduced a shape it needs to learn — a new tag, a renamed operation, or a"
+              echo "\`oneOf\` whose branches nothing in the payload discriminates. No pull request was opened:"
+              echo "a catalogue that was never regenerated is not worth reviewing."
+              echo
+              echo '```'
+              tail -n 25 "$RUNNER_TEMP/generate.log" 2>/dev/null || echo '(no generator output captured)'
+              echo '```'
+              echo
+              echo "Teach the generator on a branch, then re-run this workflow from the Actions tab."
+            elif [ "${{ steps.catalogue.outputs.changed }}" = "true" ]; then
+              echo "Render's spec changed and the tool catalogue changed with it. A pull request is open on \`spec-sync\`."
+            else
+              echo "Render's spec changed, but only in prose or formatting — the tool catalogue is unaffected. No pull request opened."
             fi
             echo
             echo "Next scheduled check: tomorrow at 05:47 UTC."
@@ -229,3 +263,12 @@ jobs:
           git add "$STATE"
           git commit -m "Refresh spec-sync heartbeat"
           git push origin main
+
+      # Last on purpose. The summary has to be written before the job goes red, and the
+      # heartbeat has to run even on a bad day: a run that fails here is exactly the kind
+      # that sits unattended long enough for GitHub to disable the schedule.
+      - name: Fail if the catalogue could not be regenerated
+        if: always() && steps.regenerate.outcome == 'failure'
+        run: |
+          echo "::error::The generator refused to build a catalogue from the new spec. See the run summary."
+          exit 1
