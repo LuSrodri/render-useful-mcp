@@ -217,6 +217,73 @@ describe('nothing is added to a payload', () => {
   });
 });
 
+describe('unfillable request fields', () => {
+  it('offers no field that can only be filled with invented values', () => {
+    // Render's spec reuses response schemas inside request bodies, which drags in fields the
+    // server generates. A caller creating a service does not know a credential record's `id`
+    // or the timestamp of its last change, so a required `updatedAt` in a POST body is an
+    // invitation to fabricate one.
+    const serverGenerated = new Set(['id', 'createdAt', 'updatedAt']);
+    const offenders: string[] = [];
+
+    const walk = (node: unknown, path: string): void => {
+      if (Array.isArray(node)) {
+        node.forEach((item, index) => walk(item, `${path}[${index}]`));
+        return;
+      }
+      if (node === null || typeof node !== 'object') return;
+      const schema = node as Record<string, unknown>;
+
+      const required = schema['required'];
+      if (Array.isArray(required) && schema['properties'] !== undefined) {
+        const bad = required.filter((name) => serverGenerated.has(String(name)));
+        if (bad.length > 0) offenders.push(`${path}: requires ${bad.join(', ')}`);
+      }
+      for (const [keyword, value] of Object.entries(schema)) {
+        if (keyword === 'properties' && value !== null && typeof value === 'object') {
+          for (const [name, sub] of Object.entries(value as Record<string, unknown>)) walk(sub, `${path}.${name}`);
+        } else {
+          walk(value, `${path}.${keyword}`);
+        }
+      }
+    };
+
+    for (const op of operations) {
+      if (op.method === 'GET') continue;
+      walk(op.inputSchema, op.name);
+    }
+
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('destructive annotations', () => {
+  // `destructiveHint: false` is what a client reads to decide it need not ask before
+  // calling. Every tool below discards state the caller did not mention: a `PUT` to a
+  // collection deletes every member missing from the payload, and the values it removes —
+  // environment variables, secret file contents — are gone from the API afterwards.
+  const mustWarn = [
+    'render_update_env_vars_for_service',
+    'render_update_secret_files_for_service',
+    'render_put_routes',
+    'render_update_headers',
+    'render_autoscale_service',
+    'render_scale_service',
+  ];
+
+  it.each(mustWarn)('%s is marked destructive', (name) => {
+    expect(operation(name).destructive).toBe(true);
+  });
+
+  it('leaves single-member upserts alone', () => {
+    // `PUT /env-vars/{envVarKey}` writes one variable and touches nothing else. Marking it
+    // destructive would train a user to click through the prompts that matter.
+    for (const name of ['render_update_env_var', 'render_add_or_update_secret_file']) {
+      expect(operation(name).destructive, name).toBe(false);
+    }
+  });
+});
+
 describe('schema satisfiability', () => {
   it('leaves no oneOf branch a caller cannot select', () => {
     // A `oneOf` demands exactly one match. When a minimal valid instance of one branch also

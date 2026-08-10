@@ -42,7 +42,10 @@ export const OPERATION_HINTS: Readonly<Record<string, OperationHint>> = {
       '`envSpecificDetails` follows `runtime`: use the dockerDetails branch',
       '(`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the',
       'nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime.',
-      '`schedule` is a standard five-field cron expression in UTC and is required for cron jobs.',
+      'A private registry is referenced by `registryCredentialId` inside the top-level `image`,',
+      'not inside `serviceDetails` — create the credential first with',
+      'render_create_registry_credential. `schedule` is a standard five-field cron expression',
+      'in UTC and is required for cron jobs.',
       'Creating a service starts a first deploy; follow with render_wait_for_deploy.',
     ].join(' '),
     examples: [

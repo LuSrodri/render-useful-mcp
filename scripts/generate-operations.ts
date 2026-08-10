@@ -18,6 +18,7 @@ import { TOOLSET_BY_TAG, type ToolsetId } from '../src/tools/toolsets.js';
 import { TOOL_NAME_OVERRIDES } from '../src/tools/name-overrides.js';
 import { OPERATION_HINTS } from '../src/tools/operation-hints.js';
 import { auditUnions, discriminateUnions } from '../src/tools/schema-unions.js';
+import { removeUnusableProperties, UNUSABLE_PROPERTIES } from '../src/tools/schema-repairs.js';
 import type {
   BodyMode,
   JsonSchema,
@@ -32,6 +33,17 @@ const OUT_PATH = resolve(ROOT, 'src/generated/operations.json');
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
 type HttpMethod = (typeof HTTP_METHODS)[number];
+
+/**
+ * Operations that discard state the caller did not mention, and that no rule below catches.
+ *
+ * `destructiveHint: false` is what a client reads to decide it need not confirm, so the cost
+ * of a wrong `false` is a destructive call made silently. `scale-service` sets a fixed
+ * instance count *and* turns off autoscaling — a configuration the caller never referred to,
+ * gone in one call — which is the same hazard as a collection replacement without the shape
+ * that identifies one.
+ */
+const DESTRUCTIVE_OPERATIONS = new Set(['scale-service']);
 
 /** Verbs whose side effects a caller cannot undo by repeating the call with different input. */
 const DESTRUCTIVE_HINTS = [
@@ -261,6 +273,7 @@ interface BuiltInput {
   bodyMode: BodyMode;
   bodyProps: string[];
   rewrittenUnions: string[];
+  removedProperties: string[];
 }
 
 function buildInput(path: string, operation: OpenApiOperation, pathItem: PathItem): BuiltInput {
@@ -359,12 +372,13 @@ function buildInput(path: string, operation: OpenApiOperation, pathItem: PathIte
     $schema: 'http://json-schema.org/draft-07/schema#',
   };
 
-  // Render's unions carry no discriminator, which leaves several of them impossible to
-  // satisfy. Rewriting them here, on the assembled schema, keeps the fix in one place
-  // regardless of whether the body was flattened or wrapped.
+  // Both repairs run on the assembled schema, so they apply whether the body was flattened
+  // or wrapped. Order matters: removal addresses branches by title, which discrimination
+  // then moves into `if`/`then` rules where that title no longer describes a property.
+  const removedProperties = removeUnusableProperties(schema, operation.operationId);
   const rewrittenUnions = discriminateUnions(schema, operation.operationId);
 
-  return { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions };
+  return { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions, removedProperties };
 }
 
 // ---------------------------------------------------------------------------
@@ -382,6 +396,16 @@ function toolsetFor(tag: string, operationId: string): ToolsetId {
 function isDestructive(method: HttpMethod, operationId: string, path: string): boolean {
   if (method === 'delete') return true;
   if (method === 'get') return false;
+  if (DESTRUCTIVE_OPERATIONS.has(operationId)) return true;
+
+  // A `PUT` to a path ending in a literal segment addresses the collection or the whole
+  // configuration, not one member of it, so it replaces everything there: anything the
+  // caller omits is deleted. `PUT /services/{id}/env-vars` wipes every variable missing from
+  // the payload, and the values of the ones it removes are not recoverable from the API
+  // afterwards. A `PUT` ending in a parameter — `/env-vars/{envVarKey}` — is an upsert of a
+  // single member and carries no such risk.
+  if (method === 'put' && !path.endsWith('}')) return true;
+
   const haystack = `${operationId} ${path}`.toLowerCase();
   return DESTRUCTIVE_HINTS.some((hint) => haystack.includes(hint));
 }
@@ -413,6 +437,7 @@ function buildDescription(operation: OpenApiOperation, method: HttpMethod, path:
 const operations: OperationDefinition[] = [];
 const seenNames = new Set<string>();
 const unionRewrites: string[] = [];
+const propertyRemovals: string[] = [];
 
 for (const [path, pathItem] of Object.entries(spec.paths)) {
   for (const method of HTTP_METHODS) {
@@ -437,12 +462,13 @@ for (const [path, pathItem] of Object.entries(spec.paths)) {
       (response) => response.content !== undefined && 'text/event-stream' in response.content,
     );
 
-    const { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions } = buildInput(
+    const { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions, removedProperties } = buildInput(
       path,
       operation,
       pathItem,
     );
     for (const rewrite of rewrittenUnions) unionRewrites.push(`${name}: ${rewrite}`);
+    propertyRemovals.push(...removedProperties);
 
     operations.push({
       name,
@@ -478,6 +504,28 @@ if (staleHints.length > 0) {
   );
 }
 
+// Both hand-written lists below describe things Render's spec does today. If Render fixes
+// one of them, the entry stops applying and the reason for it is gone — which should be
+// visible as a build failure, not as a line nobody revisits.
+const unusedRemovals = Object.entries(UNUSABLE_PROPERTIES).flatMap(([title, names]) =>
+  names
+    .filter((name) => !propertyRemovals.some((entry) => entry.endsWith(`${title}.${name}`)))
+    .map((name) => `${title}.${name}`),
+);
+if (unusedRemovals.length > 0) {
+  throw new Error(
+    `UNUSABLE_PROPERTIES lists properties that no longer appear in any request schema: ` +
+      `${unusedRemovals.join(', ')}. Remove them from src/tools/schema-repairs.ts.`,
+  );
+}
+
+const staleDestructive = [...DESTRUCTIVE_OPERATIONS].filter(
+  (id) => !operations.some((operation) => operation.operationId === id),
+);
+if (staleDestructive.length > 0) {
+  throw new Error(`DESTRUCTIVE_OPERATIONS names operations that no longer exist: ${staleDestructive.join(', ')}.`);
+}
+
 // A `oneOf` branch that a sibling also accepts can never be selected, so every payload a
 // caller writes for it is rejected — which is how creating a cron job became impossible
 // while every test passed. Catch it here, at the only point where the catalogue is built.
@@ -509,6 +557,7 @@ for (const operation of operations) {
 
 console.log(`Generated ${operations.length} operations from ${spec.info.title} v${spec.info.version}`);
 for (const rewrite of unionRewrites) console.log(`  discriminated ${rewrite}`);
+for (const removal of propertyRemovals) console.log(`  removed unfillable ${removal}`);
 for (const [toolset, count] of [...byToolset].sort((a, b) => b[1] - a[1])) {
   console.log(`  ${toolset.padEnd(16)} ${count}`);
 }

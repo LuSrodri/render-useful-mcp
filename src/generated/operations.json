@@ -277,7 +277,7 @@
       "toolset": "services",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": true,
       "streaming": false,
       "pathParams": [
@@ -1595,7 +1595,7 @@
       "method": "POST",
       "path": "/services",
       "title": "Create service",
-      "description": "Create service. Creates a new Render service in the specified workspace with the specified configuration. Calls `POST /services` on the Render Public API. Usage: Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}} Example — the same cron job from a prebuilt image, with no repo to build: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"image\":{\"ownerId\":\"tea-abc123\",\"imagePath\":\"docker.io/acme/reports:latest\"},\"serviceDetails\":{\"runtime\":\"image\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerCommand\":\"python report.py\"}}} Example — a Node web service built from a repo: {\"type\":\"web_service\",\"name\":\"api\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/api\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"node\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"buildCommand\":\"npm ci\",\"startCommand\":\"node server.js\"}}}",
+      "description": "Create service. Creates a new Render service in the specified workspace with the specified configuration. Calls `POST /services` on the Render Public API. Usage: Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. A private registry is referenced by `registryCredentialId` inside the top-level `image`, not inside `serviceDetails` — create the credential first with render_create_registry_credential. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}} Example — the same cron job from a prebuilt image, with no repo to build: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"image\":{\"ownerId\":\"tea-abc123\",\"imagePath\":\"docker.io/acme/reports:latest\"},\"serviceDetails\":{\"runtime\":\"image\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerCommand\":\"python report.py\"}}} Example — a Node web service built from a repo: {\"type\":\"web_service\",\"name\":\"api\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/api\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"node\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"buildCommand\":\"npm ci\",\"startCommand\":\"node server.js\"}}}",
       "tag": "Services",
       "toolset": "services",
       "deprecated": false,
@@ -2980,46 +2980,6 @@
                               },
                               "preDeployCommand": {
                                 "type": "string"
-                              },
-                              "registryCredential": {
-                                "type": "object",
-                                "required": [
-                                  "id",
-                                  "name",
-                                  "username",
-                                  "registry",
-                                  "updatedAt"
-                                ],
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Unique identifier for this credential"
-                                  },
-                                  "name": {
-                                    "type": "string",
-                                    "description": "Descriptive name for this credential"
-                                  },
-                                  "registry": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GITHUB",
-                                      "GITLAB",
-                                      "DOCKER",
-                                      "GOOGLE_ARTIFACT",
-                                      "AWS_ECR"
-                                    ],
-                                    "description": "The registry to use this credential with"
-                                  },
-                                  "username": {
-                                    "type": "string",
-                                    "description": "The username associated with the credential"
-                                  },
-                                  "updatedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "description": "Last updated time for the credential"
-                                  }
-                                }
                               }
                             },
                             "additionalProperties": false
@@ -9457,7 +9417,7 @@
       "toolset": "static-sites",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": true,
       "streaming": false,
       "pathParams": [
@@ -11105,7 +11065,7 @@
       "toolset": "services",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": false,
       "streaming": false,
       "pathParams": [
@@ -11947,7 +11907,7 @@
       "toolset": "services",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": true,
       "streaming": false,
       "pathParams": [
@@ -12096,7 +12056,7 @@
       "toolset": "static-sites",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": true,
       "streaming": false,
       "pathParams": [
@@ -12773,7 +12733,7 @@
       "toolset": "services",
       "deprecated": false,
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "idempotent": true,
       "streaming": false,
       "pathParams": [

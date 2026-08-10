@@ -43,7 +43,7 @@
       "toolset": "services",
       "summary": "Update autoscaling config.",
       "readOnly": false,
-      "destructive": false
+      "destructive": true
     },
     {
       "name": "render_cancel_cron_job_run",
@@ -174,7 +174,7 @@
       "summary": "Create service.",
       "readOnly": false,
       "destructive": false,
-      "usage": "Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}} Example — the same cron job from a prebuilt image, with no repo to build: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"image\":{\"ownerId\":\"tea-abc123\",\"imagePath\":\"docker.io/acme/reports:latest\"},\"serviceDetails\":{\"runtime\":\"image\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerCommand\":\"python report.py\"}}} Example — a Node web service built from a repo: {\"type\":\"web_service\",\"name\":\"api\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/api\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"node\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"buildCommand\":\"npm ci\",\"startCommand\":\"node server.js\"}}}"
+      "usage": "Pick the `serviceDetails` branch whose title matches `type`: `static_site`→staticSiteDetailsPOST, `web_service`→webServiceDetailsPOST, `private_service`→privateServiceDetailsPOST, `background_worker`→backgroundWorkerDetailsPOST, `cron_job`→cronJobDetailsPOST. Source comes from either `repo` (+`branch`) for a build, or `image` for a prebuilt container — never both. Inside `serviceDetails`, `envSpecificDetails` follows `runtime`: use the dockerDetails branch (`dockerfilePath`, `dockerContext`, `dockerCommand`) when `runtime` is `docker`, and the nativeEnvironmentDetails branch (`buildCommand`, `startCommand`) for every language runtime. A private registry is referenced by `registryCredentialId` inside the top-level `image`, not inside `serviceDetails` — create the credential first with render_create_registry_credential. `schedule` is a standard five-field cron expression in UTC and is required for cron jobs. Creating a service starts a first deploy; follow with render_wait_for_deploy. Example — a cron job that builds from a Dockerfile and runs every day at 03:00 UTC: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/reports\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"docker\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerfilePath\":\"./Dockerfile\",\"dockerContext\":\".\",\"dockerCommand\":\"python report.py\"}}} Example — the same cron job from a prebuilt image, with no repo to build: {\"type\":\"cron_job\",\"name\":\"nightly-report\",\"ownerId\":\"tea-abc123\",\"image\":{\"ownerId\":\"tea-abc123\",\"imagePath\":\"docker.io/acme/reports:latest\"},\"serviceDetails\":{\"runtime\":\"image\",\"schedule\":\"0 3 * * *\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"dockerCommand\":\"python report.py\"}}} Example — a Node web service built from a repo: {\"type\":\"web_service\",\"name\":\"api\",\"ownerId\":\"tea-abc123\",\"repo\":\"https://github.com/acme/api\",\"branch\":\"main\",\"serviceDetails\":{\"runtime\":\"node\",\"plan\":\"starter\",\"region\":\"oregon\",\"envSpecificDetails\":{\"buildCommand\":\"npm ci\",\"startCommand\":\"node server.js\"}}}"
     },
     {
       "name": "render_create_task",
@@ -933,7 +933,7 @@
       "toolset": "static-sites",
       "summary": "Update redirect/rewrite rules.",
       "readOnly": false,
-      "destructive": false
+      "destructive": true
     },
     {
       "name": "render_recent_logs",
@@ -1243,7 +1243,7 @@
       "toolset": "services",
       "summary": "Scale instance count.",
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "usage": "Sets a fixed instance count and turns off autoscaling. To scale on load instead, use render_autoscale_service."
     },
     {
@@ -1370,7 +1370,7 @@
       "toolset": "services",
       "summary": "Update environment variables.",
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "usage": "This replaces the service's entire environment variable set: anything absent from `body` is deleted. To change one variable, read the current set with render_get_env_vars_for_service and send it back with your edit applied, or use render_update_env_var for a single key. Applying changes restarts the service."
     },
     {
@@ -1385,7 +1385,7 @@
       "toolset": "static-sites",
       "summary": "Replace header rules.",
       "readOnly": false,
-      "destructive": false
+      "destructive": true
     },
     {
       "name": "render_update_key_value",
@@ -1448,7 +1448,7 @@
       "toolset": "services",
       "summary": "Update secret files.",
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "usage": "Replaces the full set of secret files; omitted files are deleted. Read the current set with render_list_secret_files_for_service first."
     },
     {
