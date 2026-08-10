@@ -190,6 +190,33 @@ describe('render_update_service', () => {
   });
 });
 
+describe('nothing is added to a payload', () => {
+  // Validation must not author part of the request. Ajv's `useDefaults` did: every
+  // `render_update_service` call carried `autoDeploy: "yes"` whether or not the caller
+  // mentioned it, and every `render_update_postgres` call carried `connectionPool: "none"`,
+  // which tears down a pool the user had configured. Both are PATCHes, so the injected
+  // value is a write.
+  const untouched: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
+    ['render_update_service', { serviceId: 'srv-abc123', name: 'renamed' }],
+    ['render_update_postgres', { postgresId: 'dpg-abc123', name: 'renamed' }],
+    ['render_update_workflow', { workflowId: 'wkf-abc123', name: 'renamed' }],
+    ['render_create_deploy', { serviceId: 'srv-abc123' }],
+  ];
+
+  it.each(untouched)('%s sends only what the caller wrote', (toolName, args) => {
+    const validated = validateArgs(toolName, operation(toolName).inputSchema, args);
+    expect(Object.keys(validated).sort()).toEqual(Object.keys(args).sort());
+  });
+
+  it('leaves nested objects alone too', () => {
+    const validated = validateArgs('render_update_service', operation('render_update_service').inputSchema, {
+      serviceId: 'srv-abc123',
+      serviceDetails: { schedule: '30 4 * * *' },
+    });
+    expect(validated['serviceDetails']).toEqual({ schedule: '30 4 * * *' });
+  });
+});
+
 describe('schema satisfiability', () => {
   it('leaves no oneOf branch a caller cannot select', () => {
     // A `oneOf` demands exactly one match. When a minimal valid instance of one branch also

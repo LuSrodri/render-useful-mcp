@@ -29,7 +29,13 @@ const ajv = new Ajv({
   // Coercion is what makes tool calls forgiving: models routinely send "10" for an integer
   // or "true" for a boolean, and rejecting those helps nobody.
   coerceTypes: true,
-  useDefaults: true,
+  // Off, deliberately. A `default` in Render's spec documents what the API does with a field
+  // the caller omits — it is not a value a client should send. Filling it in turns "not
+  // mentioned" into "explicitly set to this", which on a PATCH is a write the caller never
+  // asked for: renaming a service also re-enabled `autoDeploy`, and renaming a Postgres
+  // instance also set `connectionPool` to `none`, tearing down an existing pool. Render
+  // applies its own defaults server-side, where they belong.
+  useDefaults: false,
   removeAdditional: false,
 });
 addFormats(ajv);
