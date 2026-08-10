@@ -1766,1031 +1766,8 @@
             "description": "The ID of the environment the service belongs to, if any. Obtain an environment's ID from its Settings page in the Render Dashboard."
           },
           "serviceDetails": {
-            "oneOf": [
-              {
-                "title": "staticSiteDetailsPOST",
-                "type": "object",
-                "properties": {
-                  "buildCommand": {
-                    "type": "string"
-                  },
-                  "headers": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "path",
-                        "name",
-                        "value"
-                      ],
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "The request path to add the header to. Wildcards will cause headers to be applied to all matching paths.",
-                          "example": "/static/*"
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Header name",
-                          "example": "Cache-Control"
-                        },
-                        "value": {
-                          "type": "string",
-                          "description": "Header value",
-                          "example": "public, max-age=604800"
-                        }
-                      }
-                    }
-                  },
-                  "publishPath": {
-                    "type": "string",
-                    "description": "Defaults to \"public\""
-                  },
-                  "pullRequestPreviewsEnabled": {
-                    "type": "string",
-                    "enum": [
-                      "yes",
-                      "no"
-                    ],
-                    "default": "no",
-                    "deprecated": true,
-                    "description": "This field has been deprecated. previews.generation should be used in its place."
-                  },
-                  "previews": {
-                    "type": "object",
-                    "properties": {
-                      "generation": {
-                        "type": "string",
-                        "enum": [
-                          "off",
-                          "manual",
-                          "automatic"
-                        ],
-                        "default": "off",
-                        "description": "Defaults to \"off\""
-                      }
-                    }
-                  },
-                  "routes": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "type",
-                        "source",
-                        "destination"
-                      ],
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "redirect",
-                            "rewrite"
-                          ]
-                        },
-                        "source": {
-                          "type": "string",
-                          "example": "/:bar/foo"
-                        },
-                        "destination": {
-                          "type": "string",
-                          "example": "/foo/:bar"
-                        },
-                        "priority": {
-                          "type": "integer",
-                          "description": "Redirect and Rewrite Rules are applied in priority order starting at 0. Defaults to last in the priority list."
-                        }
-                      }
-                    }
-                  },
-                  "renderSubdomainPolicy": {
-                    "type": "string",
-                    "enum": [
-                      "enabled",
-                      "disabled"
-                    ],
-                    "description": "Controls whether render.com subdomains are available for the service"
-                  },
-                  "ipAllowList": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "cidrBlock",
-                        "description"
-                      ],
-                      "properties": {
-                        "cidrBlock": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "description": "User-provided description of the CIDR block",
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "title": "webServiceDetailsPOST",
-                "type": "object",
-                "required": [
-                  "runtime"
-                ],
-                "properties": {
-                  "autoscaling": {
-                    "type": "object",
-                    "required": [
-                      "enabled",
-                      "min",
-                      "max",
-                      "criteria"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "min": {
-                        "type": "integer",
-                        "description": "The minimum number of instances for the service"
-                      },
-                      "max": {
-                        "type": "integer",
-                        "description": "The maximum number of instances for the service"
-                      },
-                      "criteria": {
-                        "type": "object",
-                        "required": [
-                          "cpu",
-                          "memory"
-                        ],
-                        "properties": {
-                          "cpu": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          },
-                          "memory": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "disk": {
-                    "type": "object",
-                    "required": [
-                      "name",
-                      "mountPath"
-                    ],
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "sizeGB": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "Defaults to 1"
-                      }
-                    }
-                  },
-                  "env": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "deprecated": true,
-                    "description": "This field has been deprecated, runtime should be used in its place."
-                  },
-                  "runtime": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "description": "Runtime"
-                  },
-                  "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPOST",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string",
-                            "description": "Defaults to \"./Dockerfile\""
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPOST",
-                        "type": "object",
-                        "required": [
-                          "buildCommand",
-                          "startCommand"
-                        ],
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        },
-                        "description": "Fields for native environment (runtime) services"
-                      }
-                    ]
-                  },
-                  "healthCheckPath": {
-                    "type": "string"
-                  },
-                  "maintenanceMode": {
-                    "type": "object",
-                    "required": [
-                      "enabled",
-                      "uri"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean"
-                      },
-                      "uri": {
-                        "type": "string",
-                        "description": "The page to be served when [maintenance mode](https://render.com/docs/maintenance-mode) is enabled. When empty, the default maintenance mode page is served."
-                      }
-                    }
-                  },
-                  "numInstances": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Defaults to 1"
-                  },
-                  "plan": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "starter_plus",
-                      "standard",
-                      "standard_plus",
-                      "pro",
-                      "pro_plus",
-                      "pro_max",
-                      "pro_ultra",
-                      "free",
-                      "custom",
-                      "starter_legacy",
-                      "standard_legacy",
-                      "standard_plus_legacy",
-                      "pro_legacy",
-                      "pro_plus_legacy"
-                    ],
-                    "example": "starter",
-                    "description": "The instance type to use. If omitted, defaults to `starter` when creating a new service.",
-                    "default": "starter"
-                  },
-                  "preDeployCommand": {
-                    "type": "string"
-                  },
-                  "pullRequestPreviewsEnabled": {
-                    "type": "string",
-                    "enum": [
-                      "yes",
-                      "no"
-                    ],
-                    "default": "no",
-                    "deprecated": true,
-                    "description": "This field has been deprecated. previews.generation should be used in its place."
-                  },
-                  "previews": {
-                    "type": "object",
-                    "properties": {
-                      "generation": {
-                        "type": "string",
-                        "enum": [
-                          "off",
-                          "manual",
-                          "automatic"
-                        ],
-                        "default": "off",
-                        "description": "Defaults to \"off\""
-                      }
-                    }
-                  },
-                  "region": {
-                    "type": "string",
-                    "enum": [
-                      "frankfurt",
-                      "oregon",
-                      "ohio",
-                      "singapore",
-                      "virginia"
-                    ],
-                    "default": "oregon",
-                    "description": "Defaults to \"oregon\""
-                  },
-                  "maxShutdownDelaySeconds": {
-                    "type": "integer",
-                    "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
-                    "minimum": 1,
-                    "maximum": 300,
-                    "default": 30
-                  },
-                  "renderSubdomainPolicy": {
-                    "type": "string",
-                    "enum": [
-                      "enabled",
-                      "disabled"
-                    ],
-                    "description": "Controls whether render.com subdomains are available for the service"
-                  },
-                  "ipAllowList": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "cidrBlock",
-                        "description"
-                      ],
-                      "properties": {
-                        "cidrBlock": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "description": "User-provided description of the CIDR block",
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "title": "privateServiceDetailsPOST",
-                "type": "object",
-                "required": [
-                  "runtime"
-                ],
-                "properties": {
-                  "autoscaling": {
-                    "type": "object",
-                    "required": [
-                      "enabled",
-                      "min",
-                      "max",
-                      "criteria"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "min": {
-                        "type": "integer",
-                        "description": "The minimum number of instances for the service"
-                      },
-                      "max": {
-                        "type": "integer",
-                        "description": "The maximum number of instances for the service"
-                      },
-                      "criteria": {
-                        "type": "object",
-                        "required": [
-                          "cpu",
-                          "memory"
-                        ],
-                        "properties": {
-                          "cpu": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          },
-                          "memory": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "disk": {
-                    "type": "object",
-                    "required": [
-                      "name",
-                      "mountPath"
-                    ],
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "sizeGB": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "Defaults to 1"
-                      }
-                    }
-                  },
-                  "env": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "deprecated": true,
-                    "description": "This field has been deprecated, runtime should be used in its place."
-                  },
-                  "runtime": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "description": "Runtime"
-                  },
-                  "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPOST",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string",
-                            "description": "Defaults to \"./Dockerfile\""
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPOST",
-                        "type": "object",
-                        "required": [
-                          "buildCommand",
-                          "startCommand"
-                        ],
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        },
-                        "description": "Fields for native environment (runtime) services"
-                      }
-                    ]
-                  },
-                  "numInstances": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "default": 1,
-                    "description": "Defaults to 1"
-                  },
-                  "plan": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "standard",
-                      "pro",
-                      "pro_plus",
-                      "pro_max",
-                      "pro_ultra"
-                    ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
-                  },
-                  "preDeployCommand": {
-                    "type": "string"
-                  },
-                  "pullRequestPreviewsEnabled": {
-                    "type": "string",
-                    "enum": [
-                      "yes",
-                      "no"
-                    ],
-                    "default": "no",
-                    "deprecated": true,
-                    "description": "This field has been deprecated. previews.generation should be used in its place."
-                  },
-                  "previews": {
-                    "type": "object",
-                    "properties": {
-                      "generation": {
-                        "type": "string",
-                        "enum": [
-                          "off",
-                          "manual",
-                          "automatic"
-                        ],
-                        "default": "off",
-                        "description": "Defaults to \"off\""
-                      }
-                    }
-                  },
-                  "region": {
-                    "type": "string",
-                    "enum": [
-                      "frankfurt",
-                      "oregon",
-                      "ohio",
-                      "singapore",
-                      "virginia"
-                    ],
-                    "default": "oregon",
-                    "description": "Defaults to \"oregon\""
-                  },
-                  "maxShutdownDelaySeconds": {
-                    "type": "integer",
-                    "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
-                    "minimum": 1,
-                    "maximum": 300,
-                    "default": 30
-                  }
-                }
-              },
-              {
-                "title": "backgroundWorkerDetailsPOST",
-                "type": "object",
-                "required": [
-                  "runtime"
-                ],
-                "properties": {
-                  "autoscaling": {
-                    "type": "object",
-                    "required": [
-                      "enabled",
-                      "min",
-                      "max",
-                      "criteria"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "min": {
-                        "type": "integer",
-                        "description": "The minimum number of instances for the service"
-                      },
-                      "max": {
-                        "type": "integer",
-                        "description": "The maximum number of instances for the service"
-                      },
-                      "criteria": {
-                        "type": "object",
-                        "required": [
-                          "cpu",
-                          "memory"
-                        ],
-                        "properties": {
-                          "cpu": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          },
-                          "memory": {
-                            "type": "object",
-                            "required": [
-                              "enabled",
-                              "percentage"
-                            ],
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "default": false
-                              },
-                              "percentage": {
-                                "type": "integer",
-                                "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "disk": {
-                    "type": "object",
-                    "required": [
-                      "name",
-                      "mountPath"
-                    ],
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "sizeGB": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "Defaults to 1"
-                      }
-                    }
-                  },
-                  "env": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "deprecated": true,
-                    "description": "This field has been deprecated, runtime should be used in its place."
-                  },
-                  "runtime": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "description": "Runtime"
-                  },
-                  "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPOST",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string",
-                            "description": "Defaults to \"./Dockerfile\""
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPOST",
-                        "type": "object",
-                        "required": [
-                          "buildCommand",
-                          "startCommand"
-                        ],
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        },
-                        "description": "Fields for native environment (runtime) services"
-                      }
-                    ]
-                  },
-                  "numInstances": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "default": 1,
-                    "description": "Defaults to 1"
-                  },
-                  "plan": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "standard",
-                      "pro",
-                      "pro_plus",
-                      "pro_max",
-                      "pro_ultra"
-                    ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
-                  },
-                  "preDeployCommand": {
-                    "type": "string"
-                  },
-                  "pullRequestPreviewsEnabled": {
-                    "type": "string",
-                    "enum": [
-                      "yes",
-                      "no"
-                    ],
-                    "default": "no",
-                    "deprecated": true,
-                    "description": "This field has been deprecated. previews.generation should be used in its place."
-                  },
-                  "previews": {
-                    "type": "object",
-                    "properties": {
-                      "generation": {
-                        "type": "string",
-                        "enum": [
-                          "off",
-                          "manual",
-                          "automatic"
-                        ],
-                        "default": "off",
-                        "description": "Defaults to \"off\""
-                      }
-                    }
-                  },
-                  "region": {
-                    "type": "string",
-                    "enum": [
-                      "frankfurt",
-                      "oregon",
-                      "ohio",
-                      "singapore",
-                      "virginia"
-                    ],
-                    "default": "oregon",
-                    "description": "Defaults to \"oregon\""
-                  },
-                  "maxShutdownDelaySeconds": {
-                    "type": "integer",
-                    "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
-                    "minimum": 1,
-                    "maximum": 300,
-                    "default": 30
-                  }
-                }
-              },
-              {
-                "title": "cronJobDetailsPOST",
-                "type": "object",
-                "required": [
-                  "runtime",
-                  "schedule"
-                ],
-                "properties": {
-                  "env": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "deprecated": true,
-                    "description": "This field has been deprecated, runtime should be used in its place."
-                  },
-                  "runtime": {
-                    "type": "string",
-                    "enum": [
-                      "docker",
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby",
-                      "rust",
-                      "image"
-                    ],
-                    "description": "Runtime"
-                  },
-                  "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetails",
-                        "type": "object",
-                        "required": [
-                          "dockerCommand",
-                          "dockerContext",
-                          "dockerfilePath"
-                        ],
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string"
-                          },
-                          "preDeployCommand": {
-                            "type": "string"
-                          },
-                          "registryCredential": {
-                            "type": "object",
-                            "required": [
-                              "id",
-                              "name",
-                              "username",
-                              "registry",
-                              "updatedAt"
-                            ],
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "description": "Unique identifier for this credential"
-                              },
-                              "name": {
-                                "type": "string",
-                                "description": "Descriptive name for this credential"
-                              },
-                              "registry": {
-                                "type": "string",
-                                "enum": [
-                                  "GITHUB",
-                                  "GITLAB",
-                                  "DOCKER",
-                                  "GOOGLE_ARTIFACT",
-                                  "AWS_ECR"
-                                ],
-                                "description": "The registry to use this credential with"
-                              },
-                              "username": {
-                                "type": "string",
-                                "description": "The username associated with the credential"
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "Last updated time for the credential"
-                              }
-                            }
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetails",
-                        "type": "object",
-                        "required": [
-                          "buildCommand",
-                          "startCommand"
-                        ],
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          },
-                          "preDeployCommand": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  "plan": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "standard",
-                      "pro",
-                      "pro_plus",
-                      "pro_max",
-                      "pro_ultra"
-                    ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
-                  },
-                  "region": {
-                    "type": "string",
-                    "enum": [
-                      "frankfurt",
-                      "oregon",
-                      "ohio",
-                      "singapore",
-                      "virginia"
-                    ],
-                    "default": "oregon",
-                    "description": "Defaults to \"oregon\""
-                  },
-                  "schedule": {
-                    "type": "string"
-                  }
-                }
-              }
-            ]
+            "type": "object",
+            "description": "Selected by `type`: `static_site` → staticSiteDetailsPOST, `web_service` → webServiceDetailsPOST, `private_service` → privateServiceDetailsPOST, `background_worker` → backgroundWorkerDetailsPOST, `cron_job` → cronJobDetailsPOST. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
           }
         },
         "required": [
@@ -2799,7 +1776,1307 @@
           "type"
         ],
         "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "static_site"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "serviceDetails": {
+                  "title": "staticSiteDetailsPOST",
+                  "type": "object",
+                  "properties": {
+                    "buildCommand": {
+                      "type": "string"
+                    },
+                    "headers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "path",
+                          "name",
+                          "value"
+                        ],
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "description": "The request path to add the header to. Wildcards will cause headers to be applied to all matching paths.",
+                            "example": "/static/*"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Header name",
+                            "example": "Cache-Control"
+                          },
+                          "value": {
+                            "type": "string",
+                            "description": "Header value",
+                            "example": "public, max-age=604800"
+                          }
+                        }
+                      }
+                    },
+                    "publishPath": {
+                      "type": "string",
+                      "description": "Defaults to \"public\""
+                    },
+                    "pullRequestPreviewsEnabled": {
+                      "type": "string",
+                      "enum": [
+                        "yes",
+                        "no"
+                      ],
+                      "default": "no",
+                      "deprecated": true,
+                      "description": "This field has been deprecated. previews.generation should be used in its place."
+                    },
+                    "previews": {
+                      "type": "object",
+                      "properties": {
+                        "generation": {
+                          "type": "string",
+                          "enum": [
+                            "off",
+                            "manual",
+                            "automatic"
+                          ],
+                          "default": "off",
+                          "description": "Defaults to \"off\""
+                        }
+                      }
+                    },
+                    "routes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "source",
+                          "destination"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "redirect",
+                              "rewrite"
+                            ]
+                          },
+                          "source": {
+                            "type": "string",
+                            "example": "/:bar/foo"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "example": "/foo/:bar"
+                          },
+                          "priority": {
+                            "type": "integer",
+                            "description": "Redirect and Rewrite Rules are applied in priority order starting at 0. Defaults to last in the priority list."
+                          }
+                        }
+                      }
+                    },
+                    "renderSubdomainPolicy": {
+                      "type": "string",
+                      "enum": [
+                        "enabled",
+                        "disabled"
+                      ],
+                      "description": "Controls whether render.com subdomains are available for the service"
+                    },
+                    "ipAllowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "cidrBlock",
+                          "description"
+                        ],
+                        "properties": {
+                          "cidrBlock": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "description": "User-provided description of the CIDR block",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "web_service"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "serviceDetails": {
+                  "title": "webServiceDetailsPOST",
+                  "type": "object",
+                  "required": [
+                    "runtime"
+                  ],
+                  "properties": {
+                    "autoscaling": {
+                      "type": "object",
+                      "required": [
+                        "enabled",
+                        "min",
+                        "max",
+                        "criteria"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "min": {
+                          "type": "integer",
+                          "description": "The minimum number of instances for the service"
+                        },
+                        "max": {
+                          "type": "integer",
+                          "description": "The maximum number of instances for the service"
+                        },
+                        "criteria": {
+                          "type": "object",
+                          "required": [
+                            "cpu",
+                            "memory"
+                          ],
+                          "properties": {
+                            "cpu": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            },
+                            "memory": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "disk": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "mountPath"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "mountPath": {
+                          "type": "string"
+                        },
+                        "sizeGB": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Defaults to 1"
+                        }
+                      }
+                    },
+                    "env": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "deprecated": true,
+                      "description": "This field has been deprecated, runtime should be used in its place."
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "description": "Runtime"
+                    },
+                    "envSpecificDetails": {
+                      "type": "object",
+                      "description": "Selected by `runtime`: `docker` → dockerDetailsPOST, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPOST. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
+                    },
+                    "healthCheckPath": {
+                      "type": "string"
+                    },
+                    "maintenanceMode": {
+                      "type": "object",
+                      "required": [
+                        "enabled",
+                        "uri"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "uri": {
+                          "type": "string",
+                          "description": "The page to be served when [maintenance mode](https://render.com/docs/maintenance-mode) is enabled. When empty, the default maintenance mode page is served."
+                        }
+                      }
+                    },
+                    "numInstances": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Defaults to 1"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "starter",
+                        "starter_plus",
+                        "standard",
+                        "standard_plus",
+                        "pro",
+                        "pro_plus",
+                        "pro_max",
+                        "pro_ultra",
+                        "free",
+                        "custom",
+                        "starter_legacy",
+                        "standard_legacy",
+                        "standard_plus_legacy",
+                        "pro_legacy",
+                        "pro_plus_legacy"
+                      ],
+                      "example": "starter",
+                      "description": "The instance type to use. If omitted, defaults to `starter` when creating a new service.",
+                      "default": "starter"
+                    },
+                    "preDeployCommand": {
+                      "type": "string"
+                    },
+                    "pullRequestPreviewsEnabled": {
+                      "type": "string",
+                      "enum": [
+                        "yes",
+                        "no"
+                      ],
+                      "default": "no",
+                      "deprecated": true,
+                      "description": "This field has been deprecated. previews.generation should be used in its place."
+                    },
+                    "previews": {
+                      "type": "object",
+                      "properties": {
+                        "generation": {
+                          "type": "string",
+                          "enum": [
+                            "off",
+                            "manual",
+                            "automatic"
+                          ],
+                          "default": "off",
+                          "description": "Defaults to \"off\""
+                        }
+                      }
+                    },
+                    "region": {
+                      "type": "string",
+                      "enum": [
+                        "frankfurt",
+                        "oregon",
+                        "ohio",
+                        "singapore",
+                        "virginia"
+                      ],
+                      "default": "oregon",
+                      "description": "Defaults to \"oregon\""
+                    },
+                    "maxShutdownDelaySeconds": {
+                      "type": "integer",
+                      "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
+                      "minimum": 1,
+                      "maximum": 300,
+                      "default": 30
+                    },
+                    "renderSubdomainPolicy": {
+                      "type": "string",
+                      "enum": [
+                        "enabled",
+                        "disabled"
+                      ],
+                      "description": "Controls whether render.com subdomains are available for the service"
+                    },
+                    "ipAllowList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "cidrBlock",
+                          "description"
+                        ],
+                        "properties": {
+                          "cidrBlock": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "description": "User-provided description of the CIDR block",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "docker"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "dockerDetailsPOST",
+                            "type": "object",
+                            "properties": {
+                              "dockerCommand": {
+                                "type": "string"
+                              },
+                              "dockerContext": {
+                                "type": "string"
+                              },
+                              "dockerfilePath": {
+                                "type": "string",
+                                "description": "Defaults to \"./Dockerfile\""
+                              },
+                              "registryCredentialId": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "elixir",
+                              "go",
+                              "node",
+                              "python",
+                              "ruby",
+                              "rust"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "nativeEnvironmentDetailsPOST",
+                            "type": "object",
+                            "required": [
+                              "buildCommand",
+                              "startCommand"
+                            ],
+                            "properties": {
+                              "buildCommand": {
+                                "type": "string"
+                              },
+                              "startCommand": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "Fields for native environment (runtime) services",
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "private_service"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "serviceDetails": {
+                  "title": "privateServiceDetailsPOST",
+                  "type": "object",
+                  "required": [
+                    "runtime"
+                  ],
+                  "properties": {
+                    "autoscaling": {
+                      "type": "object",
+                      "required": [
+                        "enabled",
+                        "min",
+                        "max",
+                        "criteria"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "min": {
+                          "type": "integer",
+                          "description": "The minimum number of instances for the service"
+                        },
+                        "max": {
+                          "type": "integer",
+                          "description": "The maximum number of instances for the service"
+                        },
+                        "criteria": {
+                          "type": "object",
+                          "required": [
+                            "cpu",
+                            "memory"
+                          ],
+                          "properties": {
+                            "cpu": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            },
+                            "memory": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "disk": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "mountPath"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "mountPath": {
+                          "type": "string"
+                        },
+                        "sizeGB": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Defaults to 1"
+                        }
+                      }
+                    },
+                    "env": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "deprecated": true,
+                      "description": "This field has been deprecated, runtime should be used in its place."
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "description": "Runtime"
+                    },
+                    "envSpecificDetails": {
+                      "type": "object",
+                      "description": "Selected by `runtime`: `docker` → dockerDetailsPOST, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPOST. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
+                    },
+                    "numInstances": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "default": 1,
+                      "description": "Defaults to 1"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "starter",
+                        "standard",
+                        "pro",
+                        "pro_plus",
+                        "pro_max",
+                        "pro_ultra"
+                      ],
+                      "default": "starter",
+                      "description": "Defaults to `starter` when creating a new database."
+                    },
+                    "preDeployCommand": {
+                      "type": "string"
+                    },
+                    "pullRequestPreviewsEnabled": {
+                      "type": "string",
+                      "enum": [
+                        "yes",
+                        "no"
+                      ],
+                      "default": "no",
+                      "deprecated": true,
+                      "description": "This field has been deprecated. previews.generation should be used in its place."
+                    },
+                    "previews": {
+                      "type": "object",
+                      "properties": {
+                        "generation": {
+                          "type": "string",
+                          "enum": [
+                            "off",
+                            "manual",
+                            "automatic"
+                          ],
+                          "default": "off",
+                          "description": "Defaults to \"off\""
+                        }
+                      }
+                    },
+                    "region": {
+                      "type": "string",
+                      "enum": [
+                        "frankfurt",
+                        "oregon",
+                        "ohio",
+                        "singapore",
+                        "virginia"
+                      ],
+                      "default": "oregon",
+                      "description": "Defaults to \"oregon\""
+                    },
+                    "maxShutdownDelaySeconds": {
+                      "type": "integer",
+                      "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
+                      "minimum": 1,
+                      "maximum": 300,
+                      "default": 30
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "docker"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "dockerDetailsPOST",
+                            "type": "object",
+                            "properties": {
+                              "dockerCommand": {
+                                "type": "string"
+                              },
+                              "dockerContext": {
+                                "type": "string"
+                              },
+                              "dockerfilePath": {
+                                "type": "string",
+                                "description": "Defaults to \"./Dockerfile\""
+                              },
+                              "registryCredentialId": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "elixir",
+                              "go",
+                              "node",
+                              "python",
+                              "ruby",
+                              "rust"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "nativeEnvironmentDetailsPOST",
+                            "type": "object",
+                            "required": [
+                              "buildCommand",
+                              "startCommand"
+                            ],
+                            "properties": {
+                              "buildCommand": {
+                                "type": "string"
+                              },
+                              "startCommand": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "Fields for native environment (runtime) services",
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "background_worker"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "serviceDetails": {
+                  "title": "backgroundWorkerDetailsPOST",
+                  "type": "object",
+                  "required": [
+                    "runtime"
+                  ],
+                  "properties": {
+                    "autoscaling": {
+                      "type": "object",
+                      "required": [
+                        "enabled",
+                        "min",
+                        "max",
+                        "criteria"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "min": {
+                          "type": "integer",
+                          "description": "The minimum number of instances for the service"
+                        },
+                        "max": {
+                          "type": "integer",
+                          "description": "The maximum number of instances for the service"
+                        },
+                        "criteria": {
+                          "type": "object",
+                          "required": [
+                            "cpu",
+                            "memory"
+                          ],
+                          "properties": {
+                            "cpu": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            },
+                            "memory": {
+                              "type": "object",
+                              "required": [
+                                "enabled",
+                                "percentage"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "default": false
+                                },
+                                "percentage": {
+                                  "type": "integer",
+                                  "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "disk": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "mountPath"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "mountPath": {
+                          "type": "string"
+                        },
+                        "sizeGB": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Defaults to 1"
+                        }
+                      }
+                    },
+                    "env": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "deprecated": true,
+                      "description": "This field has been deprecated, runtime should be used in its place."
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "description": "Runtime"
+                    },
+                    "envSpecificDetails": {
+                      "type": "object",
+                      "description": "Selected by `runtime`: `docker` → dockerDetailsPOST, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPOST. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
+                    },
+                    "numInstances": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "default": 1,
+                      "description": "Defaults to 1"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "starter",
+                        "standard",
+                        "pro",
+                        "pro_plus",
+                        "pro_max",
+                        "pro_ultra"
+                      ],
+                      "default": "starter",
+                      "description": "Defaults to `starter` when creating a new database."
+                    },
+                    "preDeployCommand": {
+                      "type": "string"
+                    },
+                    "pullRequestPreviewsEnabled": {
+                      "type": "string",
+                      "enum": [
+                        "yes",
+                        "no"
+                      ],
+                      "default": "no",
+                      "deprecated": true,
+                      "description": "This field has been deprecated. previews.generation should be used in its place."
+                    },
+                    "previews": {
+                      "type": "object",
+                      "properties": {
+                        "generation": {
+                          "type": "string",
+                          "enum": [
+                            "off",
+                            "manual",
+                            "automatic"
+                          ],
+                          "default": "off",
+                          "description": "Defaults to \"off\""
+                        }
+                      }
+                    },
+                    "region": {
+                      "type": "string",
+                      "enum": [
+                        "frankfurt",
+                        "oregon",
+                        "ohio",
+                        "singapore",
+                        "virginia"
+                      ],
+                      "default": "oregon",
+                      "description": "Defaults to \"oregon\""
+                    },
+                    "maxShutdownDelaySeconds": {
+                      "type": "integer",
+                      "description": "The maximum amount of time (in seconds) that Render waits for your application process to exit gracefully after sending it a SIGTERM signal.",
+                      "minimum": 1,
+                      "maximum": 300,
+                      "default": 30
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "docker"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "dockerDetailsPOST",
+                            "type": "object",
+                            "properties": {
+                              "dockerCommand": {
+                                "type": "string"
+                              },
+                              "dockerContext": {
+                                "type": "string"
+                              },
+                              "dockerfilePath": {
+                                "type": "string",
+                                "description": "Defaults to \"./Dockerfile\""
+                              },
+                              "registryCredentialId": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "elixir",
+                              "go",
+                              "node",
+                              "python",
+                              "ruby",
+                              "rust"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "nativeEnvironmentDetailsPOST",
+                            "type": "object",
+                            "required": [
+                              "buildCommand",
+                              "startCommand"
+                            ],
+                            "properties": {
+                              "buildCommand": {
+                                "type": "string"
+                              },
+                              "startCommand": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "Fields for native environment (runtime) services",
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "cron_job"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "serviceDetails": {
+                  "title": "cronJobDetailsPOST",
+                  "type": "object",
+                  "required": [
+                    "runtime",
+                    "schedule"
+                  ],
+                  "properties": {
+                    "env": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "deprecated": true,
+                      "description": "This field has been deprecated, runtime should be used in its place."
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "enum": [
+                        "docker",
+                        "elixir",
+                        "go",
+                        "node",
+                        "python",
+                        "ruby",
+                        "rust",
+                        "image"
+                      ],
+                      "description": "Runtime"
+                    },
+                    "envSpecificDetails": {
+                      "type": "object",
+                      "description": "Selected by `runtime`: `docker` → dockerDetails, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetails. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
+                    },
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "starter",
+                        "standard",
+                        "pro",
+                        "pro_plus",
+                        "pro_max",
+                        "pro_ultra"
+                      ],
+                      "default": "starter",
+                      "description": "Defaults to `starter` when creating a new database."
+                    },
+                    "region": {
+                      "type": "string",
+                      "enum": [
+                        "frankfurt",
+                        "oregon",
+                        "ohio",
+                        "singapore",
+                        "virginia"
+                      ],
+                      "default": "oregon",
+                      "description": "Defaults to \"oregon\""
+                    },
+                    "schedule": {
+                      "type": "string"
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "docker"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "dockerDetails",
+                            "type": "object",
+                            "required": [
+                              "dockerCommand",
+                              "dockerContext",
+                              "dockerfilePath"
+                            ],
+                            "properties": {
+                              "dockerCommand": {
+                                "type": "string"
+                              },
+                              "dockerContext": {
+                                "type": "string"
+                              },
+                              "dockerfilePath": {
+                                "type": "string"
+                              },
+                              "preDeployCommand": {
+                                "type": "string"
+                              },
+                              "registryCredential": {
+                                "type": "object",
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "username",
+                                  "registry",
+                                  "updatedAt"
+                                ],
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Unique identifier for this credential"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "description": "Descriptive name for this credential"
+                                  },
+                                  "registry": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GITHUB",
+                                      "GITLAB",
+                                      "DOCKER",
+                                      "GOOGLE_ARTIFACT",
+                                      "AWS_ECR"
+                                    ],
+                                    "description": "The registry to use this credential with"
+                                  },
+                                  "username": {
+                                    "type": "string",
+                                    "description": "The username associated with the credential"
+                                  },
+                                  "updatedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "Last updated time for the credential"
+                                  }
+                                }
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "runtime": {
+                            "enum": [
+                              "elixir",
+                              "go",
+                              "node",
+                              "python",
+                              "ruby",
+                              "rust"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "runtime"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "envSpecificDetails": {
+                            "title": "nativeEnvironmentDetails",
+                            "type": "object",
+                            "required": [
+                              "buildCommand",
+                              "startCommand"
+                            ],
+                            "properties": {
+                              "buildCommand": {
+                                "type": "string"
+                              },
+                              "startCommand": {
+                                "type": "string"
+                              },
+                              "preDeployCommand": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -12639,7 +12916,7 @@
             "type": "string"
           },
           "serviceDetails": {
-            "oneOf": [
+            "anyOf": [
               {
                 "title": "staticSiteDetailsPATCH",
                 "type": "object",
@@ -12709,38 +12986,8 @@
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string"
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ]
+                    "type": "object",
+                    "description": "Selected by `runtime`: `docker` → dockerDetailsPATCH, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPATCH. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
                   },
                   "healthCheckPath": {
                     "type": "string"
@@ -12876,45 +13123,90 @@
                       }
                     }
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "docker"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "dockerDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "dockerCommand": {
+                              "type": "string"
+                            },
+                            "dockerContext": {
+                              "type": "string"
+                            },
+                            "dockerfilePath": {
+                              "type": "string"
+                            },
+                            "registryCredentialId": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "elixir",
+                            "go",
+                            "node",
+                            "python",
+                            "ruby",
+                            "rust"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "nativeEnvironmentDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "buildCommand": {
+                              "type": "string"
+                            },
+                            "startCommand": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
               },
               {
                 "title": "privateServiceDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string"
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ]
+                    "type": "object",
+                    "description": "Selected by `runtime`: `docker` → dockerDetailsPATCH, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPATCH. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
                   },
                   "plan": {
                     "type": "string",
@@ -12978,45 +13270,90 @@
                     "maximum": 300,
                     "default": 30
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "docker"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "dockerDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "dockerCommand": {
+                              "type": "string"
+                            },
+                            "dockerContext": {
+                              "type": "string"
+                            },
+                            "dockerfilePath": {
+                              "type": "string"
+                            },
+                            "registryCredentialId": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "elixir",
+                            "go",
+                            "node",
+                            "python",
+                            "ruby",
+                            "rust"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "nativeEnvironmentDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "buildCommand": {
+                              "type": "string"
+                            },
+                            "startCommand": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
               },
               {
                 "title": "backgroundWorkerDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string"
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ]
+                    "type": "object",
+                    "description": "Selected by `runtime`: `docker` → dockerDetailsPATCH, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPATCH. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
                   },
                   "plan": {
                     "type": "string",
@@ -13080,45 +13417,90 @@
                     "maximum": 300,
                     "default": 30
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "docker"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "dockerDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "dockerCommand": {
+                              "type": "string"
+                            },
+                            "dockerContext": {
+                              "type": "string"
+                            },
+                            "dockerfilePath": {
+                              "type": "string"
+                            },
+                            "registryCredentialId": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "elixir",
+                            "go",
+                            "node",
+                            "python",
+                            "ruby",
+                            "rust"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "nativeEnvironmentDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "buildCommand": {
+                              "type": "string"
+                            },
+                            "startCommand": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
               },
               {
                 "title": "cronJobDetailsPATCH",
                 "type": "object",
                 "properties": {
                   "envSpecificDetails": {
-                    "oneOf": [
-                      {
-                        "title": "dockerDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "dockerCommand": {
-                            "type": "string"
-                          },
-                          "dockerContext": {
-                            "type": "string"
-                          },
-                          "dockerfilePath": {
-                            "type": "string"
-                          },
-                          "registryCredentialId": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "title": "nativeEnvironmentDetailsPATCH",
-                        "type": "object",
-                        "properties": {
-                          "buildCommand": {
-                            "type": "string"
-                          },
-                          "startCommand": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ]
+                    "type": "object",
+                    "description": "Selected by `runtime`: `docker` → dockerDetailsPATCH, `elixir`/`go`/`node`/`python`/`ruby`/`rust` → nativeEnvironmentDetailsPATCH. The matching schema is applied by this object's `allOf` rules, where each branch's fields are listed; sending a field from another branch is rejected."
                   },
                   "plan": {
                     "type": "string",
@@ -13150,7 +13532,82 @@
                     ],
                     "description": "Runtime"
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "docker"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "dockerDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "dockerCommand": {
+                              "type": "string"
+                            },
+                            "dockerContext": {
+                              "type": "string"
+                            },
+                            "dockerfilePath": {
+                              "type": "string"
+                            },
+                            "registryCredentialId": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "runtime": {
+                          "enum": [
+                            "elixir",
+                            "go",
+                            "node",
+                            "python",
+                            "ruby",
+                            "rust"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "runtime"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "envSpecificDetails": {
+                          "title": "nativeEnvironmentDetailsPATCH",
+                          "type": "object",
+                          "properties": {
+                            "buildCommand": {
+                              "type": "string"
+                            },
+                            "startCommand": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
               }
             ]
           }

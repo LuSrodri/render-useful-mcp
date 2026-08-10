@@ -10,6 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { RenderMcpError } from '../src/errors.js';
 import { loadOperations } from '../src/generated/catalogue.js';
 import { OPERATION_HINTS } from '../src/tools/operation-hints.js';
 import { validateArgs } from '../src/tools/validate.js';
@@ -23,12 +24,18 @@ function operation(name: string): OperationDefinition {
   return found;
 }
 
-/** Collects the validation failure for a payload, or `undefined` when it is accepted. */
+/**
+ * The rejection a caller would see for a payload, or `undefined` when it is accepted.
+ *
+ * Reports `toToolMessage()` rather than `message`, because the itemised issues are what
+ * reaches the model and are the only part that says which field is wrong.
+ */
 function rejection(toolName: string, args: Record<string, unknown>): string | undefined {
   try {
     validateArgs(toolName, operation(toolName).inputSchema, args);
     return undefined;
   } catch (error) {
+    if (error instanceof RenderMcpError) return error.toToolMessage();
     return error instanceof Error ? error.message : String(error);
   }
 }

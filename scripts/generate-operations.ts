@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { TOOLSET_BY_TAG, type ToolsetId } from '../src/tools/toolsets.js';
 import { TOOL_NAME_OVERRIDES } from '../src/tools/name-overrides.js';
 import { OPERATION_HINTS } from '../src/tools/operation-hints.js';
+import { auditUnions, discriminateUnions } from '../src/tools/schema-unions.js';
 import type {
   BodyMode,
   JsonSchema,
@@ -259,6 +260,7 @@ interface BuiltInput {
   queryParams: string[];
   bodyMode: BodyMode;
   bodyProps: string[];
+  rewrittenUnions: string[];
 }
 
 function buildInput(path: string, operation: OpenApiOperation, pathItem: PathItem): BuiltInput {
@@ -357,7 +359,12 @@ function buildInput(path: string, operation: OpenApiOperation, pathItem: PathIte
     $schema: 'http://json-schema.org/draft-07/schema#',
   };
 
-  return { schema, pathParams, queryParams, bodyMode, bodyProps };
+  // Render's unions carry no discriminator, which leaves several of them impossible to
+  // satisfy. Rewriting them here, on the assembled schema, keeps the fix in one place
+  // regardless of whether the body was flattened or wrapped.
+  const rewrittenUnions = discriminateUnions(schema, operation.operationId);
+
+  return { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions };
 }
 
 // ---------------------------------------------------------------------------
@@ -405,6 +412,7 @@ function buildDescription(operation: OpenApiOperation, method: HttpMethod, path:
 
 const operations: OperationDefinition[] = [];
 const seenNames = new Set<string>();
+const unionRewrites: string[] = [];
 
 for (const [path, pathItem] of Object.entries(spec.paths)) {
   for (const method of HTTP_METHODS) {
@@ -429,7 +437,12 @@ for (const [path, pathItem] of Object.entries(spec.paths)) {
       (response) => response.content !== undefined && 'text/event-stream' in response.content,
     );
 
-    const { schema, pathParams, queryParams, bodyMode, bodyProps } = buildInput(path, operation, pathItem);
+    const { schema, pathParams, queryParams, bodyMode, bodyProps, rewrittenUnions } = buildInput(
+      path,
+      operation,
+      pathItem,
+    );
+    for (const rewrite of rewrittenUnions) unionRewrites.push(`${name}: ${rewrite}`);
 
     operations.push({
       name,
@@ -465,6 +478,17 @@ if (staleHints.length > 0) {
   );
 }
 
+// A `oneOf` branch that a sibling also accepts can never be selected, so every payload a
+// caller writes for it is rejected — which is how creating a cron job became impossible
+// while every test passed. Catch it here, at the only point where the catalogue is built.
+const unreachable = operations.flatMap((operation) => auditUnions(operation.inputSchema, operation.name));
+if (unreachable.length > 0) {
+  throw new Error(
+    `The catalogue contains \`oneOf\` branches no caller can select:\n  ${unreachable.join('\n  ')}\n` +
+      `Discriminate them in src/tools/schema-unions.ts.`,
+  );
+}
+
 operations.sort((a, b) => a.name.localeCompare(b.name));
 
 const catalogue: OperationCatalogue = {
@@ -484,6 +508,7 @@ for (const operation of operations) {
 }
 
 console.log(`Generated ${operations.length} operations from ${spec.info.title} v${spec.info.version}`);
+for (const rewrite of unionRewrites) console.log(`  discriminated ${rewrite}`);
 for (const [toolset, count] of [...byToolset].sort((a, b) => b[1] - a[1])) {
   console.log(`  ${toolset.padEnd(16)} ${count}`);
 }

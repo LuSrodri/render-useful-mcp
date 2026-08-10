@@ -67,9 +67,22 @@ export function validateArgs(
 
   throw new ValidationError(
     `Invalid arguments for "${toolName}":`,
-    (validate.errors ?? []).map(formatError),
+    significantErrors(validate.errors ?? []).map(formatError),
     "Re-read the tool's inputSchema and resend the call with corrected arguments.",
   );
+}
+
+/**
+ * Drops the bookkeeping Ajv reports alongside a real failure.
+ *
+ * Schemas that select a shape from a discriminator report the failed branch as a bare
+ * `must match "then" schema` next to the error that actually caused it. Repeating the
+ * consequence after the cause tells a caller nothing and hides the useful line among
+ * duplicates, so it is kept only when nothing more specific was reported.
+ */
+function significantErrors(errors: readonly ErrorObject[]): readonly ErrorObject[] {
+  const specific = errors.filter((error) => error.keyword !== 'if');
+  return specific.length > 0 ? specific : errors;
 }
 
 function formatError(error: ErrorObject): string {

@@ -165,30 +165,40 @@ describe('generated catalogue', () => {
     expect(ambiguous).toEqual([]);
   });
 
-  it('makes the Docker cron job path decidable from render_create_service alone', () => {
+  it('states the type→shape mapping of render_create_service in the schema itself', () => {
     // Pins a failure seen in practice: nothing linked `type: cron_job` to its branch, or
     // `runtime: docker` to its own, so models assembled an invalid request or gave up.
+    // Titling the branches made the mapping readable; only the `if`/`then` rules below make
+    // it checkable, which is what `test/payloads.test.ts` exercises against real payloads.
     const create = operations.find((operation) => operation.name === 'render_create_service')!;
-    const properties = create.inputSchema['properties'] as Record<string, Record<string, unknown>>;
+    const rules = create.inputSchema['allOf'] as Array<Record<string, Record<string, never>>>;
 
-    const serviceDetails = properties['serviceDetails']!['oneOf'] as Array<Record<string, unknown>>;
-    expect(serviceDetails.map((branch) => branch['title'])).toEqual([
-      'staticSiteDetailsPOST',
-      'webServiceDetailsPOST',
-      'privateServiceDetailsPOST',
-      'backgroundWorkerDetailsPOST',
-      'cronJobDetailsPOST',
-    ]);
+    const shapeFor = (type: string): Record<string, unknown> | undefined => {
+      const rule = rules.find(
+        (candidate) => (candidate['if']?.['properties'] as never)?.['type']?.['enum']?.[0] === type,
+      );
+      return (rule?.['then']?.['properties'] as never)?.['serviceDetails'];
+    };
 
-    const cronJob = serviceDetails.find((branch) => branch['title'] === 'cronJobDetailsPOST')!;
-    expect(cronJob['required']).toContain('schedule');
+    expect(shapeFor('cron_job')?.['title']).toBe('cronJobDetailsPOST');
+    expect(shapeFor('web_service')?.['title']).toBe('webServiceDetailsPOST');
+    expect(shapeFor('static_site')?.['title']).toBe('staticSiteDetailsPOST');
+    expect(shapeFor('cron_job')?.['required']).toContain('schedule');
 
-    const runtimes = (cronJob['properties'] as Record<string, Record<string, unknown>>)['envSpecificDetails']![
-      'oneOf'
-    ] as Array<Record<string, unknown>>;
-    expect(runtimes.map((branch) => branch['title'])).toEqual(['dockerDetails', 'nativeEnvironmentDetails']);
+    // A branch that accepts a neighbour's fields is how the union became unsatisfiable.
+    expect(shapeFor('cron_job')?.['additionalProperties']).toBe(false);
 
-    // The description has to carry the type→branch mapping; the schema cannot express it.
+    const cronRuntimes = (shapeFor('cron_job')?.['allOf'] ?? []) as Array<Record<string, Record<string, never>>>;
+    const envShapeFor = (runtime: string): Record<string, unknown> | undefined => {
+      const rule = cronRuntimes.find((candidate) =>
+        ((candidate['if']?.['properties'] as never)?.['runtime']?.['enum'] as string[] | undefined)?.includes(runtime),
+      );
+      return (rule?.['then']?.['properties'] as never)?.['envSpecificDetails'];
+    };
+    expect(envShapeFor('docker')?.['title']).toBe('dockerDetails');
+    expect(envShapeFor('node')?.['title']).toBe('nativeEnvironmentDetails');
+
+    // The description still spells it out, for a model that reads prose before schemas.
     expect(create.description).toContain('cronJobDetailsPOST');
     expect(create.description).toContain('dockerDetails');
   });
