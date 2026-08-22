@@ -197,7 +197,7 @@
     "/blueprints/validate": {
       "post": {
         "summary": "Validate Blueprint",
-        "description": "Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created.\n\nRequests to this endpoint use `Content-Type: multipart/form-data`. The provided Blueprint file cannot exceed 10MB in size.\n",
+        "description": "Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created.\n\nRequests to this endpoint use `Content-Type: multipart/form-data`. The request body (including the Blueprint file) cannot exceed 10MB in size.\n",
         "operationId": "validate-blueprint",
         "tags": [
           "Blueprints"
@@ -322,6 +322,9 @@
           },
           "403": {
             "$ref": "#/components/responses/403Forbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/413RequestEntityTooLarge"
           },
           "429": {
             "$ref": "#/components/responses/429RateLimit"
@@ -489,16 +492,23 @@
                   ],
                   "properties": {
                     "id": {
-                      "$ref": "#/paths/~1blueprints~1%7BblueprintId%7D/parameters/0/schema"
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/parameters/0/schema"
                     },
                     "name": {
                       "type": "string"
                     },
                     "status": {
-                      "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint/properties/status"
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "paused",
+                        "in_sync",
+                        "syncing",
+                        "error"
+                      ]
                     },
                     "autoSync": {
-                      "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint/properties/autoSync"
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/patch/requestBody/content/application~1json/schema/properties/autoSync"
                     },
                     "repo": {
                       "type": "string"
@@ -507,7 +517,7 @@
                       "type": "string"
                     },
                     "path": {
-                      "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint/properties/path"
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/patch/requestBody/content/application~1json/schema/properties/path"
                     },
                     "lastSync": {
                       "type": "string",
@@ -597,10 +607,13 @@
                     "type": "string"
                   },
                   "autoSync": {
-                    "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint/properties/autoSync"
+                    "type": "boolean",
+                    "description": "Automatically sync changes to render.yaml"
                   },
                   "path": {
-                    "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint/properties/path"
+                    "type": "string",
+                    "description": "Path to the Blueprint file in the repository",
+                    "example": "render.yaml"
                   }
                 }
               }
@@ -613,7 +626,43 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/blueprintWithCursor/properties/blueprint"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "status",
+                    "autoSync",
+                    "repo",
+                    "branch",
+                    "path"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/parameters/0/schema"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/get/responses/200/content/application~1json/schema/properties/status"
+                    },
+                    "autoSync": {
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/patch/requestBody/content/application~1json/schema/properties/autoSync"
+                    },
+                    "repo": {
+                      "type": "string"
+                    },
+                    "branch": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "$ref": "#/paths/~1blueprints~1{blueprintId}/patch/requestBody/content/application~1json/schema/properties/path"
+                    },
+                    "lastSync": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
                 }
               }
             }
@@ -685,7 +734,7 @@
     "/blueprints/{blueprintId}/syncs": {
       "parameters": [
         {
-          "$ref": "#/paths/~1blueprints~1%7BblueprintId%7D/parameters/0"
+          "$ref": "#/paths/~1blueprints~1{blueprintId}/parameters/0"
         },
         {
           "$ref": "#/components/parameters/cursorParam"
@@ -756,6 +805,15 @@
             "in": "query",
             "required": true,
             "description": "The ID of the workspace to list dedicated IP sets for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environmentId",
+            "in": "query",
+            "required": false,
+            "description": "Filter dedicated IP sets limited to this environment. Excludes workspace-scoped dedicated IP sets.\n\nThe environment must belong to the workspace named by `ownerId`.\n",
             "schema": {
               "type": "string"
             }
@@ -1025,7 +1083,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
+                "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
               }
             }
           },
@@ -1141,7 +1199,40 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/diskWithCursor/properties/disk"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "sizeGB",
+                    "mountPath",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "sizeGB": {
+                      "type": "integer"
+                    },
+                    "mountPath": {
+                      "type": "string"
+                    },
+                    "serviceId": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
                 }
               }
             }
@@ -1203,7 +1294,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/diskWithCursor/properties/disk"
+                  "$ref": "#/paths/~1disks/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -1268,7 +1359,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/diskWithCursor/properties/disk"
+                  "$ref": "#/paths/~1disks/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -1438,7 +1529,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/diskWithCursor/properties/disk"
+                  "$ref": "#/paths/~1disks/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -1915,7 +2006,7 @@
                       "type": "boolean"
                     },
                     "notificationsToSend": {
-                      "$ref": "#/paths/~1notification-settings~1owners~1%7BownerId%7D/patch/requestBody/content/application~1json/schema/properties/notificationsToSend"
+                      "$ref": "#/paths/~1notification-settings~1owners~1{ownerId}/patch/requestBody/content/application~1json/schema/properties/notificationsToSend"
                     }
                   }
                 }
@@ -1978,7 +2069,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/paths/~1notification-settings~1owners~1%7BownerId%7D/get/responses/200/content/application~1json/schema"
+                  "$ref": "#/paths/~1notification-settings~1owners~1{ownerId}/get/responses/200/content/application~1json/schema"
                 }
               }
             }
@@ -2085,10 +2176,10 @@
                       "type": "string"
                     },
                     "previewNotificationsEnabled": {
-                      "$ref": "#/components/schemas/notificationOverrideWithCursor/properties/override/properties/previewNotificationsEnabled"
+                      "$ref": "#/paths/~1notification-settings~1overrides~1services~1{serviceId}/patch/requestBody/content/application~1json/schema/properties/previewNotificationsEnabled"
                     },
                     "notificationsToSend": {
-                      "$ref": "#/components/schemas/notificationOverrideWithCursor/properties/override/properties/notificationsToSend"
+                      "$ref": "#/paths/~1notification-settings~1overrides~1services~1{serviceId}/patch/requestBody/content/application~1json/schema/properties/notificationsToSend"
                     }
                   }
                 }
@@ -2127,10 +2218,21 @@
                 "type": "object",
                 "properties": {
                   "previewNotificationsEnabled": {
-                    "$ref": "#/components/schemas/notificationOverrideWithCursor/properties/override/properties/previewNotificationsEnabled"
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "false",
+                      "true"
+                    ]
                   },
                   "notificationsToSend": {
-                    "$ref": "#/components/schemas/notificationOverrideWithCursor/properties/override/properties/notificationsToSend"
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "none",
+                      "failure",
+                      "all"
+                    ]
                   }
                 }
               }
@@ -2143,7 +2245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/paths/~1notification-settings~1overrides~1services~1%7BserviceId%7D/get/responses/200/content/application~1json/schema"
+                  "$ref": "#/paths/~1notification-settings~1overrides~1services~1{serviceId}/get/responses/200/content/application~1json/schema"
                 }
               }
             }
@@ -3363,7 +3465,43 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/servicePOST/properties/envVars"
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "generateValue"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "generateValue": {
+                          "type": "boolean",
+                          "description": "If true, Render generates a strong random value for this environment variable on creation. Cannot be combined with `value`."
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }
@@ -3635,7 +3773,19 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/servicePOST/properties/secretFiles/items"
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "content"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -5098,7 +5248,56 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+                "type": "object",
+                "required": [
+                  "enabled",
+                  "min",
+                  "max",
+                  "criteria"
+                ],
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "min": {
+                    "type": "integer",
+                    "description": "The minimum number of instances for the service"
+                  },
+                  "max": {
+                    "type": "integer",
+                    "description": "The maximum number of instances for the service"
+                  },
+                  "criteria": {
+                    "type": "object",
+                    "required": [
+                      "cpu",
+                      "memory"
+                    ],
+                    "properties": {
+                      "cpu": {
+                        "type": "object",
+                        "required": [
+                          "enabled",
+                          "percentage"
+                        ],
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "percentage": {
+                            "type": "integer",
+                            "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
+                          }
+                        }
+                      },
+                      "memory": {
+                        "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema/properties/criteria/properties/cpu"
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -5109,7 +5308,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+                  "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
                 }
               }
             }
@@ -5415,7 +5614,49 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/jobWithCursor/properties/job"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "serviceId",
+                    "startCommand",
+                    "planId",
+                    "createdAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/paths/~1services~1{serviceId}~1jobs~1{jobId}/parameters/1/schema"
+                    },
+                    "serviceId": {
+                      "type": "string",
+                      "example": "srv-xxxxx"
+                    },
+                    "startCommand": {
+                      "type": "string",
+                      "example": "echo 'hello world'"
+                    },
+                    "planId": {
+                      "type": "string",
+                      "example": "plan-srv-004"
+                    },
+                    "status": {
+                      "$ref": "#/paths/~1services~1{serviceId}~1jobs/get/parameters/2/schema/items"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2021-07-15T07:20:05.777035-07:00"
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2021-07-15T07:20:05.777035-07:00"
+                    },
+                    "finishedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2021-07-15T07:20:05.777035-07:00"
+                    }
+                  }
                 }
               }
             }
@@ -5471,7 +5712,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/jobWithCursor/properties/job"
+                  "$ref": "#/paths/~1services~1{serviceId}~1jobs/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -5503,7 +5744,7 @@
           "$ref": "#/components/parameters/serviceIdParam"
         },
         {
-          "$ref": "#/paths/~1services~1%7BserviceId%7D~1jobs~1%7BjobId%7D/parameters/1"
+          "$ref": "#/paths/~1services~1{serviceId}~1jobs~1{jobId}/parameters/1"
         }
       ],
       "post": {
@@ -5519,7 +5760,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/jobWithCursor/properties/job"
+                  "$ref": "#/paths/~1services~1{serviceId}~1jobs/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -5577,6 +5818,54 @@
           },
           "404": {
             "$ref": "#/components/responses/404NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/429RateLimit"
+          },
+          "500": {
+            "$ref": "#/components/responses/500InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/503ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/services/{serviceId}/outbound-ips": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/serviceIdParam"
+        }
+      ],
+      "get": {
+        "summary": "Retrieve service outbound IPs",
+        "description": "Retrieve the IP addresses the service's outbound traffic originates from.\n\nA service uses either a dedicated IP set that applies to it, or the shared Render IPs for its region.\n",
+        "operationId": "retrieve-service-outbound-ips",
+        "tags": [
+          "Services"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/outboundIps"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/404NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/406NotAcceptable"
           },
           "429": {
             "$ref": "#/components/responses/429RateLimit"
@@ -5697,7 +5986,7 @@
                   ],
                   "properties": {
                     "id": {
-                      "$ref": "#/paths/~1events~1%7BeventId%7D/parameters/0/schema"
+                      "$ref": "#/paths/~1events~1{eventId}/parameters/0/schema"
                     },
                     "timestamp": {
                       "type": "string",
@@ -5707,12 +5996,904 @@
                       "type": "string"
                     },
                     "type": {
-                      "$ref": "#/components/schemas/webhookEventWithCursor/properties/webhookEvent/properties/eventType"
+                      "type": "string",
+                      "enum": [
+                        "artifact_fetch_failed",
+                        "artifact_source_changed",
+                        "autoscaling_config_changed",
+                        "autoscaling_ended",
+                        "autoscaling_started",
+                        "branch_deleted",
+                        "build_ended",
+                        "build_started",
+                        "commit_ignored",
+                        "cron_job_run_ended",
+                        "cron_job_run_started",
+                        "deploy_ended",
+                        "deploy_started",
+                        "disk_created",
+                        "disk_updated",
+                        "disk_deleted",
+                        "image_pull_failed",
+                        "instance_count_changed",
+                        "job_run_ended",
+                        "maintenance_mode_enabled",
+                        "maintenance_mode_uri_updated",
+                        "maintenance_ended",
+                        "maintenance_started",
+                        "pipeline_minutes_exhausted",
+                        "plan_changed",
+                        "pre_deploy_ended",
+                        "pre_deploy_started",
+                        "server_available",
+                        "server_failed",
+                        "server_hardware_failure",
+                        "server_restarted",
+                        "service_resumed",
+                        "service_suspended",
+                        "zero_downtime_redeploy_ended",
+                        "zero_downtime_redeploy_started",
+                        "edge_cache_enabled",
+                        "edge_cache_disabled",
+                        "edge_cache_purged",
+                        "auto_deploy_disabled",
+                        "auto_deploy_enabled",
+                        "postgres_available",
+                        "postgres_backup_completed",
+                        "postgres_backup_failed",
+                        "postgres_backup_started",
+                        "postgres_cluster_leader_changed",
+                        "postgres_connection_pool_changed",
+                        "postgres_connection_pool_enabled_changed",
+                        "postgres_created",
+                        "postgres_disk_size_changed",
+                        "postgres_disk_autoscaling_enabled_changed",
+                        "postgres_ha_status_changed",
+                        "postgres_restarted",
+                        "postgres_unavailable",
+                        "postgres_upgrade_failed",
+                        "postgres_upgrade_started",
+                        "postgres_upgrade_succeeded",
+                        "postgres_restore_failed",
+                        "postgres_restore_succeeded",
+                        "postgres_read_replicas_changed",
+                        "postgres_pitr_checkpoint_started",
+                        "postgres_pitr_checkpoint_failed",
+                        "postgres_pitr_checkpoint_completed",
+                        "postgres_read_replica_stale",
+                        "postgres_wal_archive_failed",
+                        "key_value_available",
+                        "key_value_config_restart",
+                        "key_value_unhealthy"
+                      ]
                     },
                     "details": {
                       "oneOf": [
                         {
-                          "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details"
+                          "title": "Service Event Details",
+                          "oneOf": [
+                            {
+                              "title": "Artifact Fetch Failed",
+                              "type": "object",
+                              "required": [
+                                "artifactId",
+                                "message"
+                              ],
+                              "properties": {
+                                "artifactId": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Artifact Source Changed",
+                              "type": "object",
+                              "properties": {
+                                "fromArtifactSourceId": {
+                                  "type": "string",
+                                  "description": "The previously linked artifact source. Absent when the service was newly attached."
+                                },
+                                "toArtifactSourceId": {
+                                  "type": "string",
+                                  "description": "The newly linked artifact source. Absent when the service was detached."
+                                }
+                              }
+                            },
+                            {
+                              "title": "Autoscaling Config Changed",
+                              "type": "object",
+                              "required": [
+                                "toConfig"
+                              ],
+                              "properties": {
+                                "fromConfig": {
+                                  "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
+                                },
+                                "toConfig": {
+                                  "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Autoscaling Ended",
+                              "type": "object",
+                              "required": [
+                                "fromInstances",
+                                "toInstances"
+                              ],
+                              "properties": {
+                                "fromInstances": {
+                                  "type": "integer"
+                                },
+                                "toInstances": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Autoscaling Started",
+                              "type": "object",
+                              "required": [
+                                "fromInstances",
+                                "toInstances"
+                              ],
+                              "properties": {
+                                "fromInstances": {
+                                  "type": "integer"
+                                },
+                                "toInstances": {
+                                  "type": "integer"
+                                },
+                                "currentCPU": {
+                                  "type": "integer",
+                                  "x-go-type": "int64"
+                                },
+                                "targetCPU": {
+                                  "type": "integer",
+                                  "x-go-type": "int64"
+                                },
+                                "currentMemory": {
+                                  "type": "integer",
+                                  "x-go-type": "int64"
+                                },
+                                "targetMemory": {
+                                  "type": "integer",
+                                  "x-go-type": "int64"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Branch Deleted",
+                              "type": "object",
+                              "required": [
+                                "deletedBranch",
+                                "newBranch"
+                              ],
+                              "properties": {
+                                "deletedBranch": {
+                                  "type": "string"
+                                },
+                                "newBranch": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Build Ended",
+                              "type": "object",
+                              "required": [
+                                "buildId",
+                                "status",
+                                "reason",
+                                "buildStatus"
+                              ],
+                              "properties": {
+                                "buildId": {
+                                  "type": "string"
+                                },
+                                "buildStatus": {
+                                  "type": "string",
+                                  "enum": [
+                                    "succeeded",
+                                    "failed",
+                                    "canceled"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "object",
+                                  "properties": {
+                                    "buildFailed": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/reason/properties/newBuild"
+                                    },
+                                    "newBuild": {
+                                      "type": "object",
+                                      "required": [
+                                        "id"
+                                      ],
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    "newDeploy": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/reason/properties/newBuild"
+                                    },
+                                    "failure": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/reason"
+                                    }
+                                  }
+                                },
+                                "status": {
+                                  "deprecated": true,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Build Started",
+                              "type": "object",
+                              "required": [
+                                "buildId",
+                                "trigger"
+                              ],
+                              "properties": {
+                                "buildId": {
+                                  "type": "string"
+                                },
+                                "trigger": {
+                                  "type": "object",
+                                  "required": [
+                                    "firstBuild",
+                                    "envUpdated",
+                                    "manual",
+                                    "deployedByRender",
+                                    "clearCache",
+                                    "rollback"
+                                  ],
+                                  "properties": {
+                                    "firstBuild": {
+                                      "description": "Deploy was triggered by service creation",
+                                      "type": "boolean"
+                                    },
+                                    "envUpdated": {
+                                      "description": "Deploy was triggered by an environment update",
+                                      "type": "boolean"
+                                    },
+                                    "manual": {
+                                      "description": "Deploy was triggered manually from the dashboard",
+                                      "type": "boolean"
+                                    },
+                                    "user": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
+                                    },
+                                    "updatedProperty": {
+                                      "description": "Updated property that triggered the deploy",
+                                      "type": "string"
+                                    },
+                                    "newCommit": {
+                                      "description": "Commit that triggered the deploy",
+                                      "type": "string"
+                                    },
+                                    "deployedByRender": {
+                                      "description": "Deploy was triggered by Render",
+                                      "type": "boolean"
+                                    },
+                                    "clearCache": {
+                                      "description": "Whether the cache was cleared for the deploy",
+                                      "type": "boolean"
+                                    },
+                                    "rollback": {
+                                      "description": "Whether the deploy was triggered by a rollback",
+                                      "type": "boolean"
+                                    },
+                                    "rollbackTargetDeployId": {
+                                      "description": "Deploy ID that was rolled back to",
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "title": "Commit Ignored",
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "url"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "description": "the commit id",
+                                  "type": "string"
+                                },
+                                "url": {
+                                  "description": "the commit url",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Cron Job Run Ended",
+                              "type": "object",
+                              "required": [
+                                "cronJobRunId",
+                                "status"
+                              ],
+                              "properties": {
+                                "cronJobRunId": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "canceled",
+                                    "pending",
+                                    "successful",
+                                    "unsuccessful"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "object",
+                                  "required": [
+                                    "evicted"
+                                  ],
+                                  "properties": {
+                                    "evicted": {
+                                      "type": "boolean"
+                                    },
+                                    "evictionReason": {
+                                      "type": "string",
+                                      "description": "Details about why the application was evicted."
+                                    },
+                                    "nonZeroExit": {
+                                      "type": "integer",
+                                      "description": "If present, the application exited with the specified non-zero status."
+                                    },
+                                    "earlyExit": {
+                                      "type": "boolean",
+                                      "description": "If true, the application exited early. Services besides cron jobs should not exit unless receiving a `SIGTERM` signal from Render."
+                                    },
+                                    "oomKilled": {
+                                      "type": "object",
+                                      "required": [
+                                        "memoryLimit"
+                                      ],
+                                      "properties": {
+                                        "memoryLimit": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    "timedOutSeconds": {
+                                      "type": "integer",
+                                      "format": "int64"
+                                    },
+                                    "unhealthy": {
+                                      "type": "string"
+                                    },
+                                    "timedOutReason": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "user": {
+                                  "type": "object",
+                                  "description": "User who triggered the action",
+                                  "required": [
+                                    "id",
+                                    "email"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "email": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "title": "Cron Job Run Started",
+                              "type": "object",
+                              "required": [
+                                "cronJobRunId"
+                              ],
+                              "properties": {
+                                "cronJobRunId": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Deploy Ended",
+                              "type": "object",
+                              "required": [
+                                "deployId",
+                                "reason",
+                                "status",
+                                "deployStatus"
+                              ],
+                              "properties": {
+                                "deployId": {
+                                  "type": "string"
+                                },
+                                "reason": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/reason"
+                                },
+                                "deployStatus": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/buildStatus"
+                                },
+                                "status": {
+                                  "deprecated": true,
+                                  "type": "integer"
+                                },
+                                "artifactId": {
+                                  "type": "string",
+                                  "description": "Set when the deploy shipped an artifact published by the service's linked artifact source."
+                                }
+                              }
+                            },
+                            {
+                              "title": "Deploy Started",
+                              "type": "object",
+                              "required": [
+                                "deployId",
+                                "trigger"
+                              ],
+                              "properties": {
+                                "deployId": {
+                                  "type": "string"
+                                },
+                                "trigger": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/7/properties/trigger"
+                                },
+                                "artifactId": {
+                                  "type": "string",
+                                  "description": "Set when the deploy ships an artifact published by the service's linked artifact source."
+                                }
+                              }
+                            },
+                            {
+                              "title": "Disk Created",
+                              "type": "object",
+                              "required": [
+                                "diskId",
+                                "sizeGB"
+                              ],
+                              "properties": {
+                                "diskId": {
+                                  "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
+                                },
+                                "sizeGB": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Disk Updated",
+                              "type": "object",
+                              "required": [
+                                "diskId",
+                                "fromSizeGB",
+                                "toSizeGB"
+                              ],
+                              "properties": {
+                                "diskId": {
+                                  "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
+                                },
+                                "fromSizeGB": {
+                                  "type": "integer"
+                                },
+                                "toSizeGB": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Disk Deleted",
+                              "type": "object",
+                              "required": [
+                                "diskId"
+                              ],
+                              "properties": {
+                                "diskId": {
+                                  "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Image Pull Failed",
+                              "type": "object",
+                              "required": [
+                                "message",
+                                "imageURL"
+                              ],
+                              "properties": {
+                                "message": {
+                                  "type": "string"
+                                },
+                                "imageURL": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Initial Deploy Hook Started",
+                              "type": "object",
+                              "required": [
+                                "deployId"
+                              ],
+                              "properties": {
+                                "deployId": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Initial Deploy Hook Ended",
+                              "type": "object",
+                              "required": [
+                                "deployId"
+                              ],
+                              "properties": {
+                                "deployId": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Instance Count Changed",
+                              "type": "object",
+                              "required": [
+                                "fromInstances",
+                                "toInstances"
+                              ],
+                              "properties": {
+                                "fromInstances": {
+                                  "type": "integer"
+                                },
+                                "toInstances": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Job Run Ended",
+                              "type": "object",
+                              "required": [
+                                "jobId",
+                                "status"
+                              ],
+                              "properties": {
+                                "jobId": {
+                                  "$ref": "#/paths/~1services~1{serviceId}~1jobs~1{jobId}/parameters/1/schema"
+                                },
+                                "status": {
+                                  "$ref": "#/paths/~1services~1{serviceId}~1jobs/get/parameters/2/schema/items"
+                                },
+                                "reason": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/reason"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Maintenance Mode Enabled",
+                              "type": "object",
+                              "required": [
+                                "enabled"
+                              ],
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Maintenance Mode URI Updated",
+                              "type": "object",
+                              "required": [
+                                "fromURI",
+                                "toURI"
+                              ],
+                              "properties": {
+                                "fromURI": {
+                                  "type": "string"
+                                },
+                                "toURI": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Maintenance Ended",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Maintenance Started",
+                              "type": "object",
+                              "required": [
+                                "trigger"
+                              ],
+                              "properties": {
+                                "trigger": {
+                                  "type": "object",
+                                  "required": [
+                                    "manual",
+                                    "startedByRender"
+                                  ],
+                                  "properties": {
+                                    "user": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
+                                    },
+                                    "manual": {
+                                      "description": "Maintenance was triggered manually",
+                                      "type": "boolean"
+                                    },
+                                    "startedByRender": {
+                                      "description": "Maintenance was triggered by Render",
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "title": "Pipeline Minutes Exhausted",
+                              "type": "object",
+                              "required": [
+                                "buildId",
+                                "trigger"
+                              ],
+                              "properties": {
+                                "buildId": {
+                                  "type": "string"
+                                },
+                                "trigger": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/7/properties/trigger"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Instance Type Changed",
+                              "type": "object",
+                              "required": [
+                                "from",
+                                "to"
+                              ],
+                              "properties": {
+                                "from": {
+                                  "type": "string"
+                                },
+                                "to": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Pre Deploy Ended",
+                              "type": "object",
+                              "required": [
+                                "deployCommandExecutionId",
+                                "deployId",
+                                "status",
+                                "preDeployStatus",
+                                "reason"
+                              ],
+                              "properties": {
+                                "deployCommandExecutionId": {
+                                  "type": "string"
+                                },
+                                "deployId": {
+                                  "type": "string"
+                                },
+                                "preDeployStatus": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/buildStatus"
+                                },
+                                "reason": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/6/properties/reason"
+                                },
+                                "status": {
+                                  "deprecated": true,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Pre Deploy Started",
+                              "type": "object",
+                              "required": [
+                                "deployCommandExecutionId",
+                                "deployId"
+                              ],
+                              "properties": {
+                                "deployCommandExecutionId": {
+                                  "type": "string"
+                                },
+                                "deployId": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Server Available",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Server Failed",
+                              "type": "object",
+                              "properties": {
+                                "instanceID": {
+                                  "type": "string",
+                                  "pattern": "^srv-[0-9a-z]{20}-[0-9a-z]{5}$",
+                                  "example": "srv-d0cjkelq67qs70c2pugg-sbpkm"
+                                },
+                                "reason": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/reason"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Server Hardware Failure",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Server Restarted",
+                              "type": "object",
+                              "required": [
+                                "triggeredByUser"
+                              ],
+                              "properties": {
+                                "triggeredByUser": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              }
+                            },
+                            {
+                              "title": "Service Resumed",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Service Suspended",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Suspender Added",
+                              "type": "object",
+                              "required": [
+                                "actor"
+                              ],
+                              "properties": {
+                                "actor": {
+                                  "type": "string"
+                                },
+                                "suspendedByUser": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Suspender Removed",
+                              "type": "object",
+                              "required": [
+                                "actor"
+                              ],
+                              "properties": {
+                                "actor": {
+                                  "type": "string"
+                                },
+                                "resumedByUser": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Zero Downtime Redeploy Ended",
+                              "type": "object"
+                            },
+                            {
+                              "title": "Zero Downtime Redeploy Started",
+                              "type": "object",
+                              "required": [
+                                "trigger"
+                              ],
+                              "properties": {
+                                "trigger": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Edge Cache Disabled",
+                              "type": "object",
+                              "required": [
+                                "trigger"
+                              ],
+                              "properties": {
+                                "trigger": {
+                                  "type": "object",
+                                  "required": [
+                                    "manual",
+                                    "system"
+                                  ],
+                                  "properties": {
+                                    "manual": {
+                                      "description": "Edge Cache change was triggered manually from the dashboard",
+                                      "type": "boolean"
+                                    },
+                                    "user": {
+                                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
+                                    },
+                                    "system": {
+                                      "description": "Edge Cache Change was triggered by Render",
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "title": "Edge Cache Enabled",
+                              "type": "object",
+                              "required": [
+                                "trigger"
+                              ],
+                              "properties": {
+                                "trigger": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/39/properties/trigger"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Edge Cache Purged",
+                              "required": [
+                                "trigger"
+                              ],
+                              "properties": {
+                                "trigger": {
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/39/properties/trigger"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Auto Deploy Disabled",
+                              "type": "object",
+                              "required": [
+                                "reason"
+                              ],
+                              "properties": {
+                                "reason": {
+                                  "description": "Why auto-deploy was disabled (manual_deploy, rollback, or setting_change)",
+                                  "type": "string"
+                                },
+                                "fromTrigger": {
+                                  "description": "The auto-deploy trigger value immediately before it was disabled",
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/43/properties/newTrigger"
+                                }
+                              }
+                            },
+                            {
+                              "title": "Auto Deploy Enabled",
+                              "type": "object",
+                              "properties": {
+                                "newTrigger": {
+                                  "description": "The auto-deploy trigger value after it was re-enabled",
+                                  "type": "string",
+                                  "enum": [
+                                    "commit",
+                                    "off",
+                                    "checksPass"
+                                  ]
+                                }
+                              }
+                            }
+                          ]
                         },
                         {
                           "title": "Postgres Event Details",
@@ -5751,7 +6932,7 @@
                               ],
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 },
                                 "from": {
                                   "type": "string"
@@ -5769,7 +6950,7 @@
                               ],
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 },
                                 "enabled": {
                                   "type": "boolean"
@@ -5781,7 +6962,7 @@
                               "type": "object",
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 }
                               }
                             },
@@ -5794,7 +6975,7 @@
                               ],
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 },
                                 "fromDiskSize": {
                                   "type": "integer"
@@ -5841,7 +7022,7 @@
                               "type": "object",
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 }
                               }
                             },
@@ -5874,7 +7055,7 @@
                               ],
                               "properties": {
                                 "user": {
-                                  "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
+                                  "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0/oneOf/9/properties/user"
                                 },
                                 "fromVersion": {
                                   "type": "string"
@@ -6527,7 +7708,7 @@
                       "type": "string"
                     },
                     "preview": {
-                      "$ref": "#/paths/~1logs~1streams~1owner~1%7BownerId%7D/put/requestBody/content/application~1json/schema/properties/preview"
+                      "$ref": "#/paths/~1logs~1streams~1owner~1{ownerId}/put/requestBody/content/application~1json/schema/properties/preview"
                     }
                   }
                 }
@@ -6614,7 +7795,7 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/paths/~1logs~1streams~1owner~1%7BownerId%7D/get/responses/200"
+            "$ref": "#/paths/~1logs~1streams~1owner~1{ownerId}/get/responses/200"
           },
           "400": {
             "$ref": "#/components/responses/400BadRequest"
@@ -6747,7 +7928,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/paths/~1logs~1streams~1resource~1%7BresourceId%7D/get/responses/200/content/application~1json/schema"
+                    "$ref": "#/paths/~1logs~1streams~1resource~1{resourceId}/get/responses/200/content/application~1json/schema"
                   }
                 }
               }
@@ -6874,10 +8055,10 @@
                 ],
                 "properties": {
                   "endpoint": {
-                    "$ref": "#/paths/~1logs~1streams~1owner~1%7BownerId%7D/put/requestBody/content/application~1json/schema/properties/endpoint"
+                    "$ref": "#/paths/~1logs~1streams~1owner~1{ownerId}/put/requestBody/content/application~1json/schema/properties/endpoint"
                   },
                   "token": {
-                    "$ref": "#/paths/~1logs~1streams~1owner~1%7BownerId%7D/put/requestBody/content/application~1json/schema/properties/token"
+                    "$ref": "#/paths/~1logs~1streams~1owner~1{ownerId}/put/requestBody/content/application~1json/schema/properties/token"
                   },
                   "setting": {
                     "$ref": "#/paths/~1logs~1streams~1resource/get/parameters/3/schema/items"
@@ -6900,7 +8081,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/paths/~1logs~1streams~1resource~1%7BresourceId%7D/get/responses/200"
+            "$ref": "#/paths/~1logs~1streams~1resource~1{resourceId}/get/responses/200"
           },
           "400": {
             "$ref": "#/components/responses/400BadRequest"
@@ -6999,7 +8180,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/paths/~1metrics-stream~1%7BownerId%7D/put/responses/200/content/application~1json/schema"
+                  "$ref": "#/paths/~1metrics-stream~1{ownerId}/put/responses/200/content/application~1json/schema"
                 }
               }
             }
@@ -7076,7 +8257,7 @@
                       "type": "string"
                     },
                     "provider": {
-                      "$ref": "#/paths/~1metrics-stream~1%7BownerId%7D/put/requestBody/content/application~1json/schema/properties/provider"
+                      "$ref": "#/paths/~1metrics-stream~1{ownerId}/put/requestBody/content/application~1json/schema/properties/provider"
                     },
                     "url": {
                       "description": "The endpoint URL to stream metrics to",
@@ -7778,17 +8959,14 @@
             }
           },
           "400": {
-            "description": "Bad request - invalid date range",
+            "description": "Bad request, such as a time range that predates traffic source\ndata availability. The error body's optional `code` field\nidentifies specific failures that clients can handle\nmachine-readably.\n\nError codes:\n- `too_many_resources`: the query requests more resources than\n  the breakdown supports (maximum 30)\n",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "bandwidth sources data is only available after 2025-03-09"
-                    }
-                  }
+                  "$ref": "#/components/schemas/error"
+                },
+                "example": {
+                  "message": "bandwidth sources data is only available after 2025-03-09"
                 }
               }
             }
@@ -11927,7 +13105,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/paths/~1maintenance~1%7BmaintenanceRunID%7D/get/responses/200/content/application~1json/schema"
+                    "$ref": "#/paths/~1maintenance~1{maintenanceRunID}/get/responses/200/content/application~1json/schema"
                   }
                 }
               }
@@ -11990,7 +13168,7 @@
                   ],
                   "properties": {
                     "id": {
-                      "$ref": "#/paths/~1maintenance~1%7BmaintenanceRunID%7D/get/parameters/0/schema"
+                      "$ref": "#/paths/~1maintenance~1{maintenanceRunID}/get/parameters/0/schema"
                     },
                     "type": {
                       "type": "string"
@@ -12044,7 +13222,7 @@
         "operationId": "update-maintenance",
         "parameters": [
           {
-            "$ref": "#/paths/~1maintenance~1%7BmaintenanceRunID%7D/get/parameters/0"
+            "$ref": "#/paths/~1maintenance~1{maintenanceRunID}/get/parameters/0"
           }
         ],
         "requestBody": {
@@ -12099,7 +13277,7 @@
         "operationId": "trigger-maintenance",
         "parameters": [
           {
-            "$ref": "#/paths/~1maintenance~1%7BmaintenanceRunID%7D/get/parameters/0"
+            "$ref": "#/paths/~1maintenance~1{maintenanceRunID}/get/parameters/0"
           }
         ],
         "responses": {
@@ -12163,7 +13341,11 @@
                     "type": "boolean"
                   },
                   "eventFilter": {
-                    "$ref": "#/components/schemas/webhookWithCursor/properties/webhook/properties/eventFilter"
+                    "type": "array",
+                    "description": "The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.",
+                    "items": {
+                      "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/type"
+                    }
                   }
                 }
               }
@@ -12176,7 +13358,35 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/webhookWithCursor/properties/webhook"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "url",
+                    "secret",
+                    "enabled",
+                    "eventFilter"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/paths/~1webhooks~1{webhookId}/parameters/0/schema"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "secret": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "eventFilter": {
+                      "$ref": "#/paths/~1webhooks/post/requestBody/content/application~1json/schema/properties/eventFilter"
+                    }
+                  }
                 }
               }
             }
@@ -12281,7 +13491,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/webhookWithCursor/properties/webhook"
+                  "$ref": "#/paths/~1webhooks/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -12327,7 +13537,7 @@
                     "type": "boolean"
                   },
                   "eventFilter": {
-                    "$ref": "#/components/schemas/webhookWithCursor/properties/webhook/properties/eventFilter"
+                    "$ref": "#/paths/~1webhooks/post/requestBody/content/application~1json/schema/properties/eventFilter"
                   }
                 }
               }
@@ -12340,7 +13550,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/webhookWithCursor/properties/webhook"
+                  "$ref": "#/paths/~1webhooks/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -12397,7 +13607,7 @@
     "/webhooks/{webhookId}/events": {
       "parameters": [
         {
-          "$ref": "#/paths/~1webhooks~1%7BwebhookId%7D/parameters/0"
+          "$ref": "#/paths/~1webhooks~1{webhookId}/parameters/0"
         }
       ],
       "get": {
@@ -12562,20 +13772,70 @@
                     "type": "string"
                   },
                   "buildConfig": {
-                    "$ref": "#/components/schemas/workflowWithCursor/properties/workflow/properties/buildConfig"
+                    "type": "object",
+                    "required": [
+                      "buildCommand",
+                      "repo",
+                      "runtime"
+                    ],
+                    "properties": {
+                      "branch": {
+                        "type": "string",
+                        "description": "The branch to use for the build, if applicable."
+                      },
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "The command to run to build the workflow."
+                      },
+                      "repo": {
+                        "type": "string",
+                        "description": "The repository URL to use for the build."
+                      },
+                      "rootDir": {
+                        "type": "string",
+                        "description": "The root directory of the repository to use for the build, if applicable."
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "enum": [
+                          "elixir",
+                          "go",
+                          "node",
+                          "python",
+                          "ruby"
+                        ],
+                        "description": "The runtime environment for the workflow (e.g., node, python, etc.)."
+                      }
+                    }
                   },
                   "runCommand": {
                     "type": "string",
                     "description": "The command to run the workflow"
                   },
                   "region": {
-                    "$ref": "#/components/schemas/workflowWithCursor/properties/workflow/properties/region"
+                    "type": "string",
+                    "enum": [
+                      "frankfurt",
+                      "oregon",
+                      "ohio",
+                      "singapore",
+                      "virginia"
+                    ],
+                    "default": "oregon",
+                    "description": "Defaults to \"oregon\""
                   },
                   "autoDeployTrigger": {
-                    "$ref": "#/components/schemas/workflowWithCursor/properties/workflow/properties/autoDeployTrigger"
+                    "type": "string",
+                    "enum": [
+                      "commit",
+                      "off",
+                      "checksPass"
+                    ],
+                    "default": "commit",
+                    "description": "Controls autodeploy behavior. \"commit\" deploys when a commit is pushed to the branch. \"checksPass\" waits for CI checks to pass before deploying. \"off\" disables autodeploy."
                   },
                   "envVars": {
-                    "$ref": "#/components/schemas/servicePOST/properties/envVars"
+                    "$ref": "#/paths/~1services~1{serviceId}~1env-vars/put/requestBody/content/application~1json/schema"
                   }
                 }
               }
@@ -12588,7 +13848,55 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/workflowWithCursor/properties/workflow"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt",
+                    "updatedAt",
+                    "ownerId",
+                    "region",
+                    "runCommand",
+                    "buildConfig"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "ownerId": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "buildConfig": {
+                      "$ref": "#/paths/~1workflows/post/requestBody/content/application~1json/schema/properties/buildConfig"
+                    },
+                    "runCommand": {
+                      "type": "string",
+                      "description": "Command to run the workflow."
+                    },
+                    "region": {
+                      "$ref": "#/paths/~1workflows/post/requestBody/content/application~1json/schema/properties/region"
+                    },
+                    "environmentId": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "autoDeployTrigger": {
+                      "$ref": "#/paths/~1workflows/post/requestBody/content/application~1json/schema/properties/autoDeployTrigger"
+                    }
+                  }
                 }
               }
             }
@@ -12639,7 +13947,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/workflowWithCursor/properties/workflow"
+                  "$ref": "#/paths/~1workflows/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -12682,14 +13990,14 @@
                     "type": "string"
                   },
                   "buildConfig": {
-                    "$ref": "#/components/schemas/workflowWithCursor/properties/workflow/properties/buildConfig"
+                    "$ref": "#/paths/~1workflows/post/requestBody/content/application~1json/schema/properties/buildConfig"
                   },
                   "runCommand": {
                     "type": "string",
                     "description": "The command to run the workflow"
                   },
                   "autoDeployTrigger": {
-                    "$ref": "#/components/schemas/workflowWithCursor/properties/workflow/properties/autoDeployTrigger"
+                    "$ref": "#/paths/~1workflows/post/requestBody/content/application~1json/schema/properties/autoDeployTrigger"
                   }
                 }
               }
@@ -12702,7 +14010,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/workflowWithCursor/properties/workflow"
+                  "$ref": "#/paths/~1workflows/post/responses/201/content/application~1json/schema"
                 }
               }
             }
@@ -12896,7 +14204,42 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/workflowVersionWithCursor/properties/workflowVersion"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "workflowId",
+                    "name",
+                    "image",
+                    "createdAt",
+                    "updatedAt",
+                    "status"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workflowId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "building",
+                        "registering",
+                        "build_failed",
+                        "registration_failed",
+                        "ready"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -13040,7 +14383,30 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/taskWithCursor/properties/task"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "workflowId": {
+                      "type": "string"
+                    },
+                    "workflowVersionId": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -13188,7 +14554,84 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/taskRunWithCursor/properties/taskRun"
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "taskId",
+                    "status",
+                    "parentTaskRunId",
+                    "rootTaskRunId",
+                    "retries",
+                    "attempts"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "$ref": "#/paths/~1task-runs~1{taskRunId}/get/responses/200/content/application~1json/schema/properties/status"
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "completedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "parentTaskRunId": {
+                      "type": "string"
+                    },
+                    "parentTaskAttempt": {
+                      "type": "integer",
+                      "description": "The 0-indexed attempt of the parent task run that spawned this task run. Omitted for root task runs and for task runs created before this field was introduced."
+                    },
+                    "rootTaskRunId": {
+                      "type": "string"
+                    },
+                    "retries": {
+                      "type": "integer"
+                    },
+                    "attempts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "startedAt",
+                          "attempt"
+                        ],
+                        "properties": {
+                          "taskRunId": {
+                            "type": "string",
+                            "description": "The ID of the task run this attempt belongs to."
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "description": "The 0-indexed attempt number."
+                          },
+                          "status": {
+                            "$ref": "#/paths/~1task-runs~1{taskRunId}/get/responses/200/content/application~1json/schema/properties/status"
+                          },
+                          "enqueuedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -13365,7 +14808,16 @@
                       "type": "string"
                     },
                     "status": {
-                      "$ref": "#/components/schemas/taskRunWithCursor/properties/taskRun/properties/status"
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "completed",
+                        "succeeded",
+                        "failed",
+                        "canceled",
+                        "paused"
+                      ]
                     },
                     "results": {
                       "type": "array",
@@ -13389,6 +14841,10 @@
                     "parentTaskRunId": {
                       "type": "string"
                     },
+                    "parentTaskAttempt": {
+                      "type": "integer",
+                      "description": "The 0-indexed attempt of the parent task run that spawned this task run. Omitted for root task runs and for task runs created before this field was introduced."
+                    },
                     "rootTaskRunId": {
                       "type": "string"
                     },
@@ -13401,11 +14857,20 @@
                         "type": "object",
                         "required": [
                           "status",
-                          "startedAt"
+                          "startedAt",
+                          "attempt"
                         ],
                         "properties": {
+                          "taskRunId": {
+                            "type": "string",
+                            "description": "The ID of the task run this attempt belongs to."
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "description": "The 0-indexed attempt number."
+                          },
                           "status": {
-                            "$ref": "#/components/schemas/taskRunWithCursor/properties/taskRun/properties/status"
+                            "$ref": "#/paths/~1task-runs~1{taskRunId}/get/responses/200/content/application~1json/schema/properties/status"
                           },
                           "enqueuedAt": {
                             "type": "string",
@@ -13424,7 +14889,7 @@
                             "description": "Error message if the task attempt failed."
                           },
                           "results": {
-                            "$ref": "#/paths/~1task-runs~1%7BtaskRunId%7D/get/responses/200/content/application~1json/schema/properties/results"
+                            "$ref": "#/paths/~1task-runs~1{taskRunId}/get/responses/200/content/application~1json/schema/properties/results"
                           }
                         }
                       }
@@ -14021,6 +15486,7 @@
               "CreateProjectEvent",
               "CreateRedisEvent",
               "CreateSSOConnectionEvent",
+              "CreateSavedSearchEvent",
               "CreateServerDiskEvent",
               "CreateServerEvent",
               "CreateWebhookEvent",
@@ -14036,6 +15502,7 @@
               "DeleteProjectEvent",
               "DeleteRedisEvent",
               "DeleteSSOConnectionEvent",
+              "DeleteSavedSearchEvent",
               "DeleteServerDiskEvent",
               "DeleteServerEvent",
               "DeleteWebhookEvent",
@@ -14251,42 +15718,7 @@
         ],
         "properties": {
           "workflowVersion": {
-            "type": "object",
-            "required": [
-              "id",
-              "workflowId",
-              "name",
-              "image",
-              "createdAt",
-              "updatedAt",
-              "status"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "workflowId": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "created",
-                  "building",
-                  "registering",
-                  "build_failed",
-                  "registration_failed",
-                  "ready"
-                ]
-              }
-            }
+            "$ref": "#/paths/~1workflowversions~1{workflowVersionId}/get/responses/200/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -14301,105 +15733,7 @@
         ],
         "properties": {
           "workflow": {
-            "type": "object",
-            "required": [
-              "id",
-              "name",
-              "createdAt",
-              "updatedAt",
-              "ownerId",
-              "region",
-              "runCommand",
-              "buildConfig"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "ownerId": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "buildConfig": {
-                "type": "object",
-                "required": [
-                  "buildCommand",
-                  "repo",
-                  "runtime"
-                ],
-                "properties": {
-                  "branch": {
-                    "type": "string",
-                    "description": "The branch to use for the build, if applicable."
-                  },
-                  "buildCommand": {
-                    "type": "string",
-                    "description": "The command to run to build the workflow."
-                  },
-                  "repo": {
-                    "type": "string",
-                    "description": "The repository URL to use for the build."
-                  },
-                  "rootDir": {
-                    "type": "string",
-                    "description": "The root directory of the repository to use for the build, if applicable."
-                  },
-                  "runtime": {
-                    "type": "string",
-                    "enum": [
-                      "elixir",
-                      "go",
-                      "node",
-                      "python",
-                      "ruby"
-                    ],
-                    "description": "The runtime environment for the workflow (e.g., node, python, etc.)."
-                  }
-                }
-              },
-              "runCommand": {
-                "type": "string",
-                "description": "Command to run the workflow."
-              },
-              "region": {
-                "type": "string",
-                "enum": [
-                  "frankfurt",
-                  "oregon",
-                  "ohio",
-                  "singapore",
-                  "virginia"
-                ],
-                "default": "oregon",
-                "description": "Defaults to \"oregon\""
-              },
-              "environmentId": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "autoDeployTrigger": {
-                "type": "string",
-                "enum": [
-                  "commit",
-                  "off",
-                  "checksPass"
-                ],
-                "default": "commit",
-                "description": "Controls autodeploy behavior. \"commit\" deploys when a commit is pushed to the branch. \"checksPass\" waits for CI checks to pass before deploying. \"off\" disables autodeploy."
-              }
-            }
+            "$ref": "#/paths/~1workflows/post/responses/201/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -14414,30 +15748,7 @@
         ],
         "properties": {
           "task": {
-            "type": "object",
-            "required": [
-              "id",
-              "name",
-              "createdAt"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "workflowId": {
-                "type": "string"
-              },
-              "workflowVersionId": {
-                "type": "string"
-              }
-            }
+            "$ref": "#/paths/~1tasks~1{taskId}/get/responses/200/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -14823,56 +16134,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "type": "object",
-            "required": [
-              "enabled",
-              "min",
-              "max",
-              "criteria"
-            ],
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false
-              },
-              "min": {
-                "type": "integer",
-                "description": "The minimum number of instances for the service"
-              },
-              "max": {
-                "type": "integer",
-                "description": "The maximum number of instances for the service"
-              },
-              "criteria": {
-                "type": "object",
-                "required": [
-                  "cpu",
-                  "memory"
-                ],
-                "properties": {
-                  "cpu": {
-                    "type": "object",
-                    "required": [
-                      "enabled",
-                      "percentage"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "percentage": {
-                        "type": "integer",
-                        "description": "Determines when your service will be scaled. If the average resource utilization is significantly above/below the target, we will increase/decrease the number of instances.\n"
-                      }
-                    }
-                  },
-                  "memory": {
-                    "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling/properties/criteria/properties/cpu"
-                  }
-                }
-              }
-            }
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "cache": {
             "$ref": "#/components/schemas/cache"
@@ -14887,7 +16149,7 @@
             ],
             "properties": {
               "id": {
-                "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
+                "$ref": "#/paths/~1disks~1{diskId}/parameters/0/schema"
               },
               "name": {
                 "type": "string"
@@ -15023,7 +16285,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "disk": {
             "$ref": "#/components/schemas/webServiceDetails/properties/disk"
@@ -15121,40 +16383,7 @@
         "type": "object",
         "properties": {
           "disk": {
-            "type": "object",
-            "required": [
-              "id",
-              "name",
-              "sizeGB",
-              "mountPath",
-              "createdAt",
-              "updatedAt"
-            ],
-            "properties": {
-              "id": {
-                "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
-              },
-              "name": {
-                "type": "string"
-              },
-              "sizeGB": {
-                "type": "integer"
-              },
-              "mountPath": {
-                "type": "string"
-              },
-              "serviceId": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              }
-            }
+            "$ref": "#/paths/~1disks/post/responses/201/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -15207,7 +16436,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "disk": {
             "$ref": "#/components/schemas/webServiceDetails/properties/disk"
@@ -15352,60 +16581,12 @@
             "type": "string"
           },
           "envVars": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "type": "object",
-                  "required": [
-                    "key",
-                    "value"
-                  ],
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    },
-                    "value": {
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "type": "object",
-                  "required": [
-                    "key",
-                    "generateValue"
-                  ],
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    },
-                    "generateValue": {
-                      "type": "boolean",
-                      "description": "If true, Render generates a strong random value for this environment variable on creation. Cannot be combined with `value`."
-                    }
-                  }
-                }
-              ]
-            }
+            "$ref": "#/paths/~1services~1{serviceId}~1env-vars/put/requestBody/content/application~1json/schema"
           },
           "secretFiles": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "name",
-                "content"
-              ],
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "content": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/paths/~1services~1{serviceId}~1secret-files/put/requestBody/content/application~1json/schema/items"
             }
           },
           "environmentId": {
@@ -15513,7 +16694,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "disk": {
             "$ref": "#/components/schemas/serviceDisk"
@@ -15576,7 +16757,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "disk": {
             "$ref": "#/components/schemas/serviceDisk"
@@ -15623,7 +16804,7 @@
         ],
         "properties": {
           "autoscaling": {
-            "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
+            "$ref": "#/paths/~1services~1{serviceId}~1autoscaling/put/requestBody/content/application~1json/schema"
           },
           "disk": {
             "$ref": "#/components/schemas/serviceDisk"
@@ -16046,21 +17227,10 @@
                 "type": "string"
               },
               "previewNotificationsEnabled": {
-                "type": "string",
-                "enum": [
-                  "default",
-                  "false",
-                  "true"
-                ]
+                "$ref": "#/paths/~1notification-settings~1overrides~1services~1{serviceId}/patch/requestBody/content/application~1json/schema/properties/previewNotificationsEnabled"
               },
               "notificationsToSend": {
-                "type": "string",
-                "enum": [
-                  "default",
-                  "none",
-                  "failure",
-                  "all"
-                ]
+                "$ref": "#/paths/~1notification-settings~1overrides~1services~1{serviceId}/patch/requestBody/content/application~1json/schema/properties/notificationsToSend"
               }
             }
           },
@@ -16601,8 +17771,46 @@
           },
           "message": {
             "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "A stable, machine-readable identifier present on specific errors that clients can handle specially. Each endpoint documents the codes it can return. The errorCode schema lists the full vocabulary of codes."
           }
         }
+      },
+      "errorCode": {
+        "type": "string",
+        "description": "The machine-readable codes that can appear in the error object's \"code\" field. The field is a plain string so new codes are not breaking changes; this vocabulary exists so generated clients get typed constants. OpenAPI cannot deprecate individual enum values, so deprecation notes live in x-enum-descriptions.",
+        "enum": [
+          "multiple_regions",
+          "duplicate_saved_search_name",
+          "too_many_resources",
+          "preauth_consent_required",
+          "preauth_declined",
+          "preauth_attempt_spent",
+          "preauth_no_payment_method",
+          "preauth_unavailable"
+        ],
+        "x-enum-varnames": [
+          "ErrorCodeMultipleRegions",
+          "ErrorCodeDuplicateSavedSearchName",
+          "ErrorCodeTooManyResources",
+          "ErrorCodePreauthConsentRequired",
+          "ErrorCodePreauthDeclined",
+          "ErrorCodePreauthAttemptSpent",
+          "ErrorCodePreauthNoPaymentMethod",
+          "ErrorCodePreauthUnavailable"
+        ],
+        "x-enum-descriptions": [
+          "A metrics query over resources spanning multiple regions is not supported.",
+          "A saved-search create or rename hit a name already used in the project.",
+          "A metrics query over more resources than the query supports; the bandwidth per-source breakdown caps at 30.",
+          "The plan needs a spend authorization the requester has not accepted.",
+          "The owner's card declined the spend authorization.",
+          "The owner's one authorization attempt has already been declined.",
+          "The plan needs a spend authorization and no payment method is on file.",
+          "The authorization could not be attempted; the operation can be retried."
+        ]
       },
       "pullRequestPreviewsEnabled": {
         "type": "string",
@@ -17181,7 +18389,7 @@
             ],
             "properties": {
               "id": {
-                "$ref": "#/paths/~1maintenance~1%7BmaintenanceRunID%7D/get/parameters/0/schema"
+                "$ref": "#/paths/~1maintenance~1{maintenanceRunID}/get/parameters/0/schema"
               },
               "type": {
                 "type": "string"
@@ -17562,12 +18770,12 @@
             "type": "string"
           },
           "envVars": {
-            "$ref": "#/components/schemas/servicePOST/properties/envVars"
+            "$ref": "#/paths/~1services~1{serviceId}~1env-vars/put/requestBody/content/application~1json/schema"
           },
           "secretFiles": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/servicePOST/properties/secretFiles/items"
+              "$ref": "#/paths/~1services~1{serviceId}~1secret-files/put/requestBody/content/application~1json/schema/items"
             }
           },
           "serviceIds": {
@@ -17752,7 +18960,37 @@
             "description": "The ID of the workspace to create the database for"
           },
           "plan": {
-            "$ref": "#/components/schemas/postgres/properties/plan"
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "standard",
+              "pro",
+              "pro_plus",
+              "custom",
+              "basic_256mb",
+              "basic_1gb",
+              "basic_4gb",
+              "pro_4gb",
+              "pro_8gb",
+              "pro_16gb",
+              "pro_32gb",
+              "pro_64gb",
+              "pro_128gb",
+              "pro_192gb",
+              "pro_256gb",
+              "pro_384gb",
+              "pro_512gb",
+              "accelerated_16gb",
+              "accelerated_32gb",
+              "accelerated_64gb",
+              "accelerated_128gb",
+              "accelerated_256gb",
+              "accelerated_384gb",
+              "accelerated_512gb",
+              "accelerated_768gb",
+              "accelerated_1024gb"
+            ]
           },
           "diskSizeGB": {
             "type": "integer",
@@ -17795,7 +19033,7 @@
             "type": "string"
           },
           "plan": {
-            "$ref": "#/components/schemas/postgres/properties/plan"
+            "$ref": "#/components/schemas/postgresPOSTInput/properties/plan"
           },
           "diskSizeGB": {
             "type": "integer",
@@ -18004,37 +19242,7 @@
             "$ref": "#/components/schemas/owner"
           },
           "plan": {
-            "type": "string",
-            "enum": [
-              "free",
-              "starter",
-              "standard",
-              "pro",
-              "pro_plus",
-              "custom",
-              "basic_256mb",
-              "basic_1gb",
-              "basic_4gb",
-              "pro_4gb",
-              "pro_8gb",
-              "pro_16gb",
-              "pro_32gb",
-              "pro_64gb",
-              "pro_128gb",
-              "pro_192gb",
-              "pro_256gb",
-              "pro_384gb",
-              "pro_512gb",
-              "accelerated_16gb",
-              "accelerated_32gb",
-              "accelerated_64gb",
-              "accelerated_128gb",
-              "accelerated_256gb",
-              "accelerated_384gb",
-              "accelerated_512gb",
-              "accelerated_768gb",
-              "accelerated_1024gb"
-            ]
+            "$ref": "#/components/schemas/postgresPOSTInput/properties/plan"
           },
           "diskSizeGB": {
             "type": "integer"
@@ -18157,7 +19365,7 @@
             "$ref": "#/components/schemas/owner"
           },
           "plan": {
-            "$ref": "#/components/schemas/postgres/properties/plan"
+            "$ref": "#/components/schemas/postgresPOSTInput/properties/plan"
           },
           "diskSizeGB": {
             "type": "integer"
@@ -18289,53 +19497,7 @@
         ],
         "properties": {
           "blueprint": {
-            "type": "object",
-            "required": [
-              "id",
-              "name",
-              "status",
-              "autoSync",
-              "repo",
-              "branch",
-              "path"
-            ],
-            "properties": {
-              "id": {
-                "$ref": "#/paths/~1blueprints~1%7BblueprintId%7D/parameters/0/schema"
-              },
-              "name": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "created",
-                  "paused",
-                  "in_sync",
-                  "syncing",
-                  "error"
-                ]
-              },
-              "autoSync": {
-                "type": "boolean",
-                "description": "Automatically sync changes to render.yaml"
-              },
-              "repo": {
-                "type": "string"
-              },
-              "branch": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string",
-                "description": "Path to the Blueprint file in the repository",
-                "example": "render.yaml"
-              },
-              "lastSync": {
-                "type": "string",
-                "format": "date-time"
-              }
-            }
+            "$ref": "#/paths/~1blueprints~1{blueprintId}/patch/responses/200/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -18418,7 +19580,7 @@
             ],
             "properties": {
               "id": {
-                "$ref": "#/paths/~1events~1%7BeventId%7D/parameters/0/schema"
+                "$ref": "#/paths/~1events~1{eventId}/parameters/0/schema"
               },
               "timestamp": {
                 "type": "string",
@@ -18431,830 +19593,7 @@
                 "$ref": "#/components/parameters/eventTypeParam/schema/anyOf/0"
               },
               "details": {
-                "title": "Service Event Details",
-                "oneOf": [
-                  {
-                    "title": "Artifact Fetch Failed",
-                    "type": "object",
-                    "required": [
-                      "artifactId",
-                      "message"
-                    ],
-                    "properties": {
-                      "artifactId": {
-                        "type": "string"
-                      },
-                      "message": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Artifact Source Changed",
-                    "type": "object",
-                    "properties": {
-                      "fromArtifactSourceId": {
-                        "type": "string",
-                        "description": "The previously linked artifact source. Absent when the service was newly attached."
-                      },
-                      "toArtifactSourceId": {
-                        "type": "string",
-                        "description": "The newly linked artifact source. Absent when the service was detached."
-                      }
-                    }
-                  },
-                  {
-                    "title": "Autoscaling Config Changed",
-                    "type": "object",
-                    "required": [
-                      "toConfig"
-                    ],
-                    "properties": {
-                      "fromConfig": {
-                        "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
-                      },
-                      "toConfig": {
-                        "$ref": "#/components/schemas/webServiceDetails/properties/autoscaling"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Autoscaling Ended",
-                    "type": "object",
-                    "required": [
-                      "fromInstances",
-                      "toInstances"
-                    ],
-                    "properties": {
-                      "fromInstances": {
-                        "type": "integer"
-                      },
-                      "toInstances": {
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Autoscaling Started",
-                    "type": "object",
-                    "required": [
-                      "fromInstances",
-                      "toInstances"
-                    ],
-                    "properties": {
-                      "fromInstances": {
-                        "type": "integer"
-                      },
-                      "toInstances": {
-                        "type": "integer"
-                      },
-                      "currentCPU": {
-                        "type": "integer",
-                        "x-go-type": "int64"
-                      },
-                      "targetCPU": {
-                        "type": "integer",
-                        "x-go-type": "int64"
-                      },
-                      "currentMemory": {
-                        "type": "integer",
-                        "x-go-type": "int64"
-                      },
-                      "targetMemory": {
-                        "type": "integer",
-                        "x-go-type": "int64"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Branch Deleted",
-                    "type": "object",
-                    "required": [
-                      "deletedBranch",
-                      "newBranch"
-                    ],
-                    "properties": {
-                      "deletedBranch": {
-                        "type": "string"
-                      },
-                      "newBranch": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Build Ended",
-                    "type": "object",
-                    "required": [
-                      "buildId",
-                      "status",
-                      "reason",
-                      "buildStatus"
-                    ],
-                    "properties": {
-                      "buildId": {
-                        "type": "string"
-                      },
-                      "buildStatus": {
-                        "type": "string",
-                        "enum": [
-                          "succeeded",
-                          "failed",
-                          "canceled"
-                        ]
-                      },
-                      "reason": {
-                        "type": "object",
-                        "properties": {
-                          "buildFailed": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/reason/properties/newBuild"
-                          },
-                          "newBuild": {
-                            "type": "object",
-                            "required": [
-                              "id"
-                            ],
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "newDeploy": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/reason/properties/newBuild"
-                          },
-                          "failure": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/reason"
-                          }
-                        }
-                      },
-                      "status": {
-                        "deprecated": true,
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Build Started",
-                    "type": "object",
-                    "required": [
-                      "buildId",
-                      "trigger"
-                    ],
-                    "properties": {
-                      "buildId": {
-                        "type": "string"
-                      },
-                      "trigger": {
-                        "type": "object",
-                        "required": [
-                          "firstBuild",
-                          "envUpdated",
-                          "manual",
-                          "deployedByRender",
-                          "clearCache",
-                          "rollback"
-                        ],
-                        "properties": {
-                          "firstBuild": {
-                            "description": "Deploy was triggered by service creation",
-                            "type": "boolean"
-                          },
-                          "envUpdated": {
-                            "description": "Deploy was triggered by an environment update",
-                            "type": "boolean"
-                          },
-                          "manual": {
-                            "description": "Deploy was triggered manually from the dashboard",
-                            "type": "boolean"
-                          },
-                          "user": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
-                          },
-                          "updatedProperty": {
-                            "description": "Updated property that triggered the deploy",
-                            "type": "string"
-                          },
-                          "newCommit": {
-                            "description": "Commit that triggered the deploy",
-                            "type": "string"
-                          },
-                          "deployedByRender": {
-                            "description": "Deploy was triggered by Render",
-                            "type": "boolean"
-                          },
-                          "clearCache": {
-                            "description": "Whether the cache was cleared for the deploy",
-                            "type": "boolean"
-                          },
-                          "rollback": {
-                            "description": "Whether the deploy was triggered by a rollback",
-                            "type": "boolean"
-                          },
-                          "rollbackTargetDeployId": {
-                            "description": "Deploy ID that was rolled back to",
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "title": "Commit Ignored",
-                    "type": "object",
-                    "required": [
-                      "id",
-                      "url"
-                    ],
-                    "properties": {
-                      "id": {
-                        "description": "the commit id",
-                        "type": "string"
-                      },
-                      "url": {
-                        "description": "the commit url",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Cron Job Run Ended",
-                    "type": "object",
-                    "required": [
-                      "cronJobRunId",
-                      "status"
-                    ],
-                    "properties": {
-                      "cronJobRunId": {
-                        "type": "string"
-                      },
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "canceled",
-                          "pending",
-                          "successful",
-                          "unsuccessful"
-                        ]
-                      },
-                      "reason": {
-                        "type": "object",
-                        "required": [
-                          "evicted"
-                        ],
-                        "properties": {
-                          "evicted": {
-                            "type": "boolean"
-                          },
-                          "evictionReason": {
-                            "type": "string",
-                            "description": "Details about why the application was evicted."
-                          },
-                          "nonZeroExit": {
-                            "type": "integer",
-                            "description": "If present, the application exited with the specified non-zero status."
-                          },
-                          "earlyExit": {
-                            "type": "boolean",
-                            "description": "If true, the application exited early. Services besides cron jobs should not exit unless receiving a `SIGTERM` signal from Render."
-                          },
-                          "oomKilled": {
-                            "type": "object",
-                            "required": [
-                              "memoryLimit"
-                            ],
-                            "properties": {
-                              "memoryLimit": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "timedOutSeconds": {
-                            "type": "integer",
-                            "format": "int64"
-                          },
-                          "unhealthy": {
-                            "type": "string"
-                          },
-                          "timedOutReason": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "user": {
-                        "type": "object",
-                        "description": "User who triggered the action",
-                        "required": [
-                          "id",
-                          "email"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "title": "Cron Job Run Started",
-                    "type": "object",
-                    "required": [
-                      "cronJobRunId"
-                    ],
-                    "properties": {
-                      "cronJobRunId": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Deploy Ended",
-                    "type": "object",
-                    "required": [
-                      "deployId",
-                      "reason",
-                      "status",
-                      "deployStatus"
-                    ],
-                    "properties": {
-                      "deployId": {
-                        "type": "string"
-                      },
-                      "reason": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/reason"
-                      },
-                      "deployStatus": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/buildStatus"
-                      },
-                      "status": {
-                        "deprecated": true,
-                        "type": "integer"
-                      },
-                      "artifactId": {
-                        "type": "string",
-                        "description": "Set when the deploy shipped an artifact published by the service's linked artifact source."
-                      }
-                    }
-                  },
-                  {
-                    "title": "Deploy Started",
-                    "type": "object",
-                    "required": [
-                      "deployId",
-                      "trigger"
-                    ],
-                    "properties": {
-                      "deployId": {
-                        "type": "string"
-                      },
-                      "trigger": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/7/properties/trigger"
-                      },
-                      "artifactId": {
-                        "type": "string",
-                        "description": "Set when the deploy ships an artifact published by the service's linked artifact source."
-                      }
-                    }
-                  },
-                  {
-                    "title": "Disk Created",
-                    "type": "object",
-                    "required": [
-                      "diskId",
-                      "sizeGB"
-                    ],
-                    "properties": {
-                      "diskId": {
-                        "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
-                      },
-                      "sizeGB": {
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Disk Updated",
-                    "type": "object",
-                    "required": [
-                      "diskId",
-                      "fromSizeGB",
-                      "toSizeGB"
-                    ],
-                    "properties": {
-                      "diskId": {
-                        "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
-                      },
-                      "fromSizeGB": {
-                        "type": "integer"
-                      },
-                      "toSizeGB": {
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Disk Deleted",
-                    "type": "object",
-                    "required": [
-                      "diskId"
-                    ],
-                    "properties": {
-                      "diskId": {
-                        "$ref": "#/paths/~1disks~1%7BdiskId%7D/parameters/0/schema"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Image Pull Failed",
-                    "type": "object",
-                    "required": [
-                      "message",
-                      "imageURL"
-                    ],
-                    "properties": {
-                      "message": {
-                        "type": "string"
-                      },
-                      "imageURL": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Initial Deploy Hook Started",
-                    "type": "object",
-                    "required": [
-                      "deployId"
-                    ],
-                    "properties": {
-                      "deployId": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Initial Deploy Hook Ended",
-                    "type": "object",
-                    "required": [
-                      "deployId"
-                    ],
-                    "properties": {
-                      "deployId": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Instance Count Changed",
-                    "type": "object",
-                    "required": [
-                      "fromInstances",
-                      "toInstances"
-                    ],
-                    "properties": {
-                      "fromInstances": {
-                        "type": "integer"
-                      },
-                      "toInstances": {
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Job Run Ended",
-                    "type": "object",
-                    "required": [
-                      "jobId",
-                      "status"
-                    ],
-                    "properties": {
-                      "jobId": {
-                        "$ref": "#/paths/~1services~1%7BserviceId%7D~1jobs~1%7BjobId%7D/parameters/1/schema"
-                      },
-                      "status": {
-                        "$ref": "#/paths/~1services~1%7BserviceId%7D~1jobs/get/parameters/2/schema/items"
-                      },
-                      "reason": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/reason"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Maintenance Mode Enabled",
-                    "type": "object",
-                    "required": [
-                      "enabled"
-                    ],
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Maintenance Mode URI Updated",
-                    "type": "object",
-                    "required": [
-                      "fromURI",
-                      "toURI"
-                    ],
-                    "properties": {
-                      "fromURI": {
-                        "type": "string"
-                      },
-                      "toURI": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Maintenance Ended",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Maintenance Started",
-                    "type": "object",
-                    "required": [
-                      "trigger"
-                    ],
-                    "properties": {
-                      "trigger": {
-                        "type": "object",
-                        "required": [
-                          "manual",
-                          "startedByRender"
-                        ],
-                        "properties": {
-                          "user": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
-                          },
-                          "manual": {
-                            "description": "Maintenance was triggered manually",
-                            "type": "boolean"
-                          },
-                          "startedByRender": {
-                            "description": "Maintenance was triggered by Render",
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "title": "Pipeline Minutes Exhausted",
-                    "type": "object",
-                    "required": [
-                      "buildId",
-                      "trigger"
-                    ],
-                    "properties": {
-                      "buildId": {
-                        "type": "string"
-                      },
-                      "trigger": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/7/properties/trigger"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Instance Type Changed",
-                    "type": "object",
-                    "required": [
-                      "from",
-                      "to"
-                    ],
-                    "properties": {
-                      "from": {
-                        "type": "string"
-                      },
-                      "to": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Pre Deploy Ended",
-                    "type": "object",
-                    "required": [
-                      "deployCommandExecutionId",
-                      "deployId",
-                      "status",
-                      "preDeployStatus",
-                      "reason"
-                    ],
-                    "properties": {
-                      "deployCommandExecutionId": {
-                        "type": "string"
-                      },
-                      "deployId": {
-                        "type": "string"
-                      },
-                      "preDeployStatus": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/buildStatus"
-                      },
-                      "reason": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/6/properties/reason"
-                      },
-                      "status": {
-                        "deprecated": true,
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Pre Deploy Started",
-                    "type": "object",
-                    "required": [
-                      "deployCommandExecutionId",
-                      "deployId"
-                    ],
-                    "properties": {
-                      "deployCommandExecutionId": {
-                        "type": "string"
-                      },
-                      "deployId": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Server Available",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Server Failed",
-                    "type": "object",
-                    "properties": {
-                      "instanceID": {
-                        "type": "string",
-                        "pattern": "^srv-[0-9a-z]{20}-[0-9a-z]{5}$",
-                        "example": "srv-d0cjkelq67qs70c2pugg-sbpkm"
-                      },
-                      "reason": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/reason"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Server Hardware Failure",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Server Restarted",
-                    "type": "object",
-                    "required": [
-                      "triggeredByUser"
-                    ],
-                    "properties": {
-                      "triggeredByUser": {
-                        "type": "string",
-                        "nullable": true
-                      }
-                    }
-                  },
-                  {
-                    "title": "Service Resumed",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Service Suspended",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Suspender Added",
-                    "type": "object",
-                    "required": [
-                      "actor"
-                    ],
-                    "properties": {
-                      "actor": {
-                        "type": "string"
-                      },
-                      "suspendedByUser": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Suspender Removed",
-                    "type": "object",
-                    "required": [
-                      "actor"
-                    ],
-                    "properties": {
-                      "actor": {
-                        "type": "string"
-                      },
-                      "resumedByUser": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Zero Downtime Redeploy Ended",
-                    "type": "object"
-                  },
-                  {
-                    "title": "Zero Downtime Redeploy Started",
-                    "type": "object",
-                    "required": [
-                      "trigger"
-                    ],
-                    "properties": {
-                      "trigger": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Edge Cache Disabled",
-                    "type": "object",
-                    "required": [
-                      "trigger"
-                    ],
-                    "properties": {
-                      "trigger": {
-                        "type": "object",
-                        "required": [
-                          "manual",
-                          "system"
-                        ],
-                        "properties": {
-                          "manual": {
-                            "description": "Edge Cache change was triggered manually from the dashboard",
-                            "type": "boolean"
-                          },
-                          "user": {
-                            "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/9/properties/user"
-                          },
-                          "system": {
-                            "description": "Edge Cache Change was triggered by Render",
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "title": "Edge Cache Enabled",
-                    "type": "object",
-                    "required": [
-                      "trigger"
-                    ],
-                    "properties": {
-                      "trigger": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/39/properties/trigger"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Edge Cache Purged",
-                    "required": [
-                      "trigger"
-                    ],
-                    "properties": {
-                      "trigger": {
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/39/properties/trigger"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Auto Deploy Disabled",
-                    "type": "object",
-                    "required": [
-                      "reason"
-                    ],
-                    "properties": {
-                      "reason": {
-                        "description": "Why auto-deploy was disabled (manual_deploy, rollback, or setting_change)",
-                        "type": "string"
-                      },
-                      "fromTrigger": {
-                        "description": "The auto-deploy trigger value immediately before it was disabled",
-                        "$ref": "#/components/schemas/serviceEventWithCursor/properties/event/properties/details/oneOf/43/properties/newTrigger"
-                      }
-                    }
-                  },
-                  {
-                    "title": "Auto Deploy Enabled",
-                    "type": "object",
-                    "properties": {
-                      "newTrigger": {
-                        "description": "The auto-deploy trigger value after it was re-enabled",
-                        "type": "string",
-                        "enum": [
-                          "commit",
-                          "off",
-                          "checksPass"
-                        ]
-                      }
-                    }
-                  }
-                ]
+                "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/details/oneOf/0"
               }
             }
           }
@@ -19268,49 +19607,7 @@
         ],
         "properties": {
           "job": {
-            "type": "object",
-            "required": [
-              "id",
-              "serviceId",
-              "startCommand",
-              "planId",
-              "createdAt"
-            ],
-            "properties": {
-              "id": {
-                "$ref": "#/paths/~1services~1%7BserviceId%7D~1jobs~1%7BjobId%7D/parameters/1/schema"
-              },
-              "serviceId": {
-                "type": "string",
-                "example": "srv-xxxxx"
-              },
-              "startCommand": {
-                "type": "string",
-                "example": "echo 'hello world'"
-              },
-              "planId": {
-                "type": "string",
-                "example": "plan-srv-004"
-              },
-              "status": {
-                "$ref": "#/paths/~1services~1%7BserviceId%7D~1jobs/get/parameters/2/schema/items"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2021-07-15T07:20:05.777035-07:00"
-              },
-              "startedAt": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2021-07-15T07:20:05.777035-07:00"
-              },
-              "finishedAt": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2021-07-15T07:20:05.777035-07:00"
-              }
-            }
+            "$ref": "#/paths/~1services~1{serviceId}~1jobs/post/responses/201/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -19340,39 +19637,7 @@
         ],
         "properties": {
           "webhook": {
-            "type": "object",
-            "required": [
-              "id",
-              "name",
-              "url",
-              "secret",
-              "enabled",
-              "eventFilter"
-            ],
-            "properties": {
-              "id": {
-                "$ref": "#/paths/~1webhooks~1%7BwebhookId%7D/parameters/0/schema"
-              },
-              "url": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "secret": {
-                "type": "string"
-              },
-              "enabled": {
-                "type": "boolean"
-              },
-              "eventFilter": {
-                "type": "array",
-                "description": "The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.",
-                "items": {
-                  "$ref": "#/components/schemas/webhookEventWithCursor/properties/webhookEvent/properties/eventType"
-                }
-              }
-            }
+            "$ref": "#/paths/~1webhooks/post/responses/201/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -19404,76 +19669,7 @@
                 "description": "the id of the event that triggered the webhook"
               },
               "eventType": {
-                "type": "string",
-                "enum": [
-                  "artifact_fetch_failed",
-                  "artifact_source_changed",
-                  "autoscaling_config_changed",
-                  "autoscaling_ended",
-                  "autoscaling_started",
-                  "branch_deleted",
-                  "build_ended",
-                  "build_started",
-                  "commit_ignored",
-                  "cron_job_run_ended",
-                  "cron_job_run_started",
-                  "deploy_ended",
-                  "deploy_started",
-                  "disk_created",
-                  "disk_updated",
-                  "disk_deleted",
-                  "image_pull_failed",
-                  "instance_count_changed",
-                  "job_run_ended",
-                  "maintenance_mode_enabled",
-                  "maintenance_mode_uri_updated",
-                  "maintenance_ended",
-                  "maintenance_started",
-                  "pipeline_minutes_exhausted",
-                  "plan_changed",
-                  "pre_deploy_ended",
-                  "pre_deploy_started",
-                  "server_available",
-                  "server_failed",
-                  "server_hardware_failure",
-                  "server_restarted",
-                  "service_resumed",
-                  "service_suspended",
-                  "zero_downtime_redeploy_ended",
-                  "zero_downtime_redeploy_started",
-                  "edge_cache_enabled",
-                  "edge_cache_disabled",
-                  "edge_cache_purged",
-                  "auto_deploy_disabled",
-                  "auto_deploy_enabled",
-                  "postgres_available",
-                  "postgres_backup_completed",
-                  "postgres_backup_failed",
-                  "postgres_backup_started",
-                  "postgres_cluster_leader_changed",
-                  "postgres_connection_pool_changed",
-                  "postgres_connection_pool_enabled_changed",
-                  "postgres_created",
-                  "postgres_disk_size_changed",
-                  "postgres_disk_autoscaling_enabled_changed",
-                  "postgres_ha_status_changed",
-                  "postgres_restarted",
-                  "postgres_unavailable",
-                  "postgres_upgrade_failed",
-                  "postgres_upgrade_started",
-                  "postgres_upgrade_succeeded",
-                  "postgres_restore_failed",
-                  "postgres_restore_succeeded",
-                  "postgres_read_replicas_changed",
-                  "postgres_pitr_checkpoint_started",
-                  "postgres_pitr_checkpoint_failed",
-                  "postgres_pitr_checkpoint_completed",
-                  "postgres_read_replica_stale",
-                  "postgres_wal_archive_failed",
-                  "key_value_available",
-                  "key_value_config_restart",
-                  "key_value_unhealthy"
-                ]
+                "$ref": "#/paths/~1events~1{eventId}/get/responses/200/content/application~1json/schema/properties/type"
               },
               "sentAt": {
                 "type": "string",
@@ -19512,6 +19708,39 @@
           }
         }
       },
+      "outboundIps": {
+        "type": "object",
+        "required": [
+          "type",
+          "ips"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "dedicated"
+            ],
+            "x-enum-varnames": [
+              "OutboundIpsTypeShared",
+              "OutboundIpsTypeDedicated"
+            ],
+            "description": "`dedicated` if a dedicated IP set applies to the resource, `shared` if its traffic originates from the shared Render IPs for its region.\n"
+          },
+          "dedicatedIpId": {
+            "type": "string",
+            "description": "The dedicated IP set the traffic originates from. Only present when `type` is `dedicated`.",
+            "example": "egs-abc123"
+          },
+          "ips": {
+            "type": "array",
+            "description": "The IP addresses the resource's outbound traffic originates from.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "taskRunWithCursor": {
         "type": "object",
         "required": [
@@ -19520,80 +19749,7 @@
         ],
         "properties": {
           "taskRun": {
-            "type": "object",
-            "required": [
-              "id",
-              "taskId",
-              "status",
-              "parentTaskRunId",
-              "rootTaskRunId",
-              "retries",
-              "attempts"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "taskId": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "pending",
-                  "running",
-                  "completed",
-                  "succeeded",
-                  "failed",
-                  "canceled",
-                  "paused"
-                ]
-              },
-              "startedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "completedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "parentTaskRunId": {
-                "type": "string"
-              },
-              "rootTaskRunId": {
-                "type": "string"
-              },
-              "retries": {
-                "type": "integer"
-              },
-              "attempts": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "status",
-                    "startedAt"
-                  ],
-                  "properties": {
-                    "status": {
-                      "$ref": "#/components/schemas/taskRunWithCursor/properties/taskRun/properties/status"
-                    },
-                    "enqueuedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "completedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/paths/~1task-runs/post/responses/202/content/application~1json/schema"
           },
           "cursor": {
             "$ref": "#/components/schemas/cursor"
@@ -19682,12 +19838,55 @@
           }
         }
       },
-      "429RateLimit": {
-        "description": "Rate limit has been surpassed.",
+      "413RequestEntityTooLarge": {
+        "description": "The request body exceeded the maximum allowed size.",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      },
+      "429RateLimit": {
+        "description": "Rate limit has been surpassed.\n\nRate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and\n`RateLimit-Reset` on successful responses so clients can track their remaining quota.\n",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying the request.",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            }
+          },
+          "RateLimit-Limit": {
+            "description": "Maximum number of requests allowed in the current window.",
+            "schema": {
+              "type": "integer",
+              "example": 100
+            }
+          },
+          "RateLimit-Remaining": {
+            "description": "Number of requests remaining in the current window. Always `0` for this response.",
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          "RateLimit-Reset": {
+            "description": "Seconds until the current rate limit window resets.",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "message": "rate limit exceeded"
             }
           }
         }

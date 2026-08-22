@@ -1,6 +1,6 @@
 # render-useful-mcp
 
-> An unofficial, complete Model Context Protocol (MCP) server for the Render Public API. It exposes all 207 Render endpoints as MCP tools, generated from Render's own OpenAPI document, plus 5 higher-level workflow tools. Runs locally over stdio; MIT licensed; not affiliated with Render.
+> An unofficial, complete Model Context Protocol (MCP) server for the Render Public API. It exposes all 208 Render endpoints as MCP tools, generated from Render's own OpenAPI document, plus 5 higher-level workflow tools. Runs locally over stdio; MIT licensed; not affiliated with Render.
 
 Use it to let an AI assistant manage Render services, deploys, cron jobs, Postgres, Key Value, disks, environment groups, logs and metrics.
 
@@ -19,7 +19,7 @@ Requires Node.js 20.11 or newer. Get an API key from Render Dashboard → Accoun
 ## Docs
 
 - [Overview and install](https://lusrodri.github.io/render-useful-mcp/): what it is, every install route, configuration variables
-- [Tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html): all 212 tools with descriptions, grouped by toolset
+- [Tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html): all 213 tools with descriptions, grouped by toolset
 - [Full text for LLMs](https://lusrodri.github.io/render-useful-mcp/llms-full.txt): everything above in one file
 - [README](https://github.com/LuSrodri/render-useful-mcp#readme): design notes and development
 - [Privacy](https://github.com/LuSrodri/render-useful-mcp/blob/main/PRIVACY.md): no telemetry, no backend, key never written to disk

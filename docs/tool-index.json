@@ -1,7 +1,7 @@
 {
   "$comment": "GENERATED FILE — run `npm run docs` to rebuild from src/generated/operations.json.",
   "specVersion": "1.0.0",
-  "totalTools": 212,
+  "totalTools": 213,
   "tools": [
     {
       "name": "render_add_disk",
@@ -1212,6 +1212,13 @@
       "name": "render_retrieve_service_notification_overrides",
       "toolset": "webhooks",
       "summary": "Retrieve notification override.",
+      "readOnly": true,
+      "destructive": false
+    },
+    {
+      "name": "render_retrieve_service_outbound_ips",
+      "toolset": "services",
+      "summary": "Retrieve service outbound IPs.",
       "readOnly": true,
       "destructive": false
     },
