@@ -1,6 +1,6 @@
 {
-  "$comment": "Written by .github/workflows/spec-sync.yml. Its only job is to be a commit: GitHub disables scheduled workflows after 60 days of repository inactivity, and a disabled workflow cannot re-enable itself. Seeded by hand so the mechanism is visible in the repository rather than only in the workflow.",
-  "lastHeartbeat": "2026-08-07T00:00:00Z",
+  "$comment": "Written by .github/workflows/spec-sync.yml. Its only job is to be a commit: GitHub disables scheduled workflows after 60 days of repository inactivity, and a disabled workflow cannot re-enable itself.",
+  "lastHeartbeat": "2026-08-27T16:49:18Z",
   "workflow": "spec-sync",
   "intervalDays": 20
 }
