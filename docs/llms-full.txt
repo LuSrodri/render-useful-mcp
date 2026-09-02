@@ -1,6 +1,6 @@
 # render-useful-mcp — full reference
 
-> Unofficial MCP server for the Render Public API. 212 tools: all 207 endpoints of Render's Public API (spec 1.0.0), generated from Render's OpenAPI document, plus 5 workflow tools. Local stdio server, MIT licensed, no telemetry. Not affiliated with Render.
+> Unofficial MCP server for the Render Public API. 213 tools: all 208 endpoints of Render's Public API (spec 1.0.0), generated from Render's OpenAPI document, plus 5 workflow tools. Local stdio server, MIT licensed, no telemetry. Not affiliated with Render.
 
 Source: https://github.com/LuSrodri/render-useful-mcp
 Package: https://www.npmjs.com/package/render-useful-mcp
@@ -134,7 +134,7 @@ Always available, in any toolset configuration.
 One tool per Render endpoint, named `render_<operation_id>`. All toolsets are on by default;
 `RENDER_MCP_TOOLSETS` narrows the surface.
 
-### services (42 tools)
+### services (43 tools)
 
 Services, deploys, custom domains, one-off jobs, cron job runs and events.
 
@@ -172,6 +172,7 @@ Services, deploys, custom domains, one-off jobs, cron job runs and events.
 - `render_retrieve_job` — Retrieve job.
 - `render_retrieve_secret_file` — Retrieve secret file.
 - `render_retrieve_service` — Retrieve service.
+- `render_retrieve_service_outbound_ips` — Retrieve service outbound IPs.
 - `render_rollback_deploy` — Roll back deploy.
 - `render_run_cron_job` — Trigger cron job run.
 - `render_scale_service` — Scale instance count.

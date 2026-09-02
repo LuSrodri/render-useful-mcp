@@ -6,7 +6,7 @@ Written in TypeScript. Every API tool is generated from Render's own OpenAPI doc
 
 <!-- generated:tool-counts -->
 
-**212 tools**: all 207 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
+**213 tools**: all 208 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
 <!-- /generated:tool-counts -->
 
 📖 **[Documentation site](https://lusrodri.github.io/render-useful-mcp/)** · [tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html) · [llms.txt](https://lusrodri.github.io/render-useful-mcp/llms.txt)
@@ -149,7 +149,7 @@ claude mcp add render --scope user \
 
 | Toolset        | Tools | Covers                                                                          |
 | -------------- | ----- | ------------------------------------------------------------------------------- |
-| `services`     | 42    | Services, deploys, custom domains, one-off jobs, cron job runs and events       |
+| `services`     | 43    | Services, deploys, custom domains, one-off jobs, cron job runs and events       |
 | `metrics`      | 23    | CPU, memory, bandwidth, HTTP, disk and connection metrics, plus metrics streams |
 | `postgres`     | 21    | Postgres instances, users, exports, recovery and query insights                 |
 | `workflows`    | 15    | Render Workflows and workflow tasks (public beta)                               |
