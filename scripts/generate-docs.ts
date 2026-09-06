@@ -447,19 +447,49 @@ ${JSON.stringify(
 `;
 }
 
+/** The `<lastmod>` already published for each URL, so a page that did not move keeps its date. */
+function publishedDates(): Map<string, string> {
+  const dates = new Map<string, string>();
+  let current: string;
+  try {
+    current = readFileSync(resolve(ROOT, 'docs/sitemap.xml'), 'utf8');
+  } catch {
+    return dates;
+  }
+  const entry = /<loc>([^<]+)<\/loc>\s*<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g;
+  for (const match of current.matchAll(entry)) {
+    dates.set(match[1]!, match[2]!);
+  }
+  return dates;
+}
+
+/**
+ * `<lastmod>` is the day the page it describes last changed, not the day this script ran.
+ *
+ * Stamping today on every run put the sitemap at odds with the committed copy the moment the
+ * UTC date rolled over, so `--check` failed in CI for any branch whose docs were generated
+ * the day before — a failure that says nothing about whether the docs match the catalogue.
+ * Carrying the published date forward for an unchanged page is stable and is what the
+ * sitemap protocol asks for; a page whose content moved this run gets today.
+ *
+ * The landing page is dated by its generated regions, so a hand edit elsewhere in it leaves
+ * the date where it was. Bumping it would mean asking git what the file used to look like,
+ * and a stale hint on one page is the cheaper of the two failures.
+ */
 function renderSitemap(): string {
   const today = new Date().toISOString().slice(0, 10);
+  const published = publishedDates();
   const pages = [
-    { loc: `${SITE_URL}/`, priority: '1.0' },
-    { loc: `${SITE_URL}/tools.html`, priority: '0.8' },
+    { loc: `${SITE_URL}/`, source: 'docs/index.html', priority: '1.0' },
+    { loc: `${SITE_URL}/tools.html`, source: 'docs/tools.html', priority: '0.8' },
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages
-  .map(
-    (page) =>
-      `  <url>\n    <loc>${page.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <priority>${page.priority}</priority>\n  </url>`,
-  )
+  .map((page) => {
+    const lastmod = changed.has(page.source) ? today : (published.get(page.loc) ?? today);
+    return `  <url>\n    <loc>${page.loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>${page.priority}</priority>\n  </url>`;
+  })
   .join('\n')}
 </urlset>
 `;
@@ -501,6 +531,14 @@ function renderToolIndexJson(): string {
 
 const stale: string[] = [];
 
+/**
+ * Documents whose rendered content differs from what is on disk this run.
+ *
+ * The sitemap dates its entries from this, so it has to be recorded even in `--check` mode,
+ * where nothing is written.
+ */
+const changed = new Set<string>();
+
 function emit(relativePath: string, contents: string): void {
   const target = resolve(ROOT, relativePath);
   let current: string | undefined;
@@ -510,6 +548,7 @@ function emit(relativePath: string, contents: string): void {
     current = undefined;
   }
   if (current === contents) return;
+  changed.add(relativePath);
 
   if (check) {
     stale.push(relativePath);
@@ -548,6 +587,8 @@ async function emitRegions(relativePath: string, regions: Readonly<Record<string
   }
 
   if (updated === original) return;
+  changed.add(relativePath);
+
   if (check) {
     stale.push(relativePath);
     return;
