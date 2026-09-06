@@ -151,8 +151,8 @@ describe('MCP server', () => {
 
   it('exposes every Render endpoint by default', async () => {
     const { tools } = await client.listTools();
-    // 207 generated operations + 4 workflow tools + the toolsets meta-tool.
-    expect(tools).toHaveLength(212);
+    // 208 generated operations + 4 workflow tools + the toolsets meta-tool.
+    expect(tools).toHaveLength(213);
   });
 
   it('keeps the tool list fixed across calls, as the protocol requires', async () => {
@@ -210,7 +210,7 @@ describe('protocol revision 2026-07-28', () => {
     const { client } = await connect({ body: [] }, {}, 'modern');
     const result = (await client.listTools()) as Record<string, unknown> & { tools: unknown[] };
 
-    expect(result.tools).toHaveLength(212);
+    expect(result.tools).toHaveLength(213);
     // `resultType` is not asserted here: the client consumes the discriminator while
     // lifting the result, so it is a wire-level field the caller never sees.
     // `ttlMs` and `cacheScope` are required on cacheable results.

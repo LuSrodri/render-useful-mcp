@@ -6,7 +6,7 @@ Written in TypeScript. Every API tool is generated from Render's own OpenAPI doc
 
 <!-- generated:tool-counts -->
 
-**212 tools**: all 207 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
+**213 tools**: all 208 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
 <!-- /generated:tool-counts -->
 
 📖 **[Documentation site](https://lusrodri.github.io/render-useful-mcp/)** · [tool catalogue](https://lusrodri.github.io/render-useful-mcp/tools.html) · [llms.txt](https://lusrodri.github.io/render-useful-mcp/llms.txt)
@@ -149,10 +149,10 @@ claude mcp add render --scope user \
 
 | Toolset        | Tools | Covers                                                                          |
 | -------------- | ----- | ------------------------------------------------------------------------------- |
-| `services`     | 42    | Services, deploys, custom domains, one-off jobs, cron job runs and events       |
+| `services`     | 43    | Services, deploys, custom domains, one-off jobs, cron job runs and events       |
 | `metrics`      | 23    | CPU, memory, bandwidth, HTTP, disk and connection metrics, plus metrics streams |
 | `postgres`     | 21    | Postgres instances, users, exports, recovery and query insights                 |
-| `workflows`    | 15    | Render Workflows and workflow tasks (public beta)                               |
+| `workflows`    | 15    | Render Workflows and workflow tasks                                             |
 | `env-groups`   | 13    | Environment groups, their variables and secret files                            |
 | `projects`     | 12    | Projects and environments                                                       |
 | `webhooks`     | 11    | Webhooks and notification settings/overrides                                    |
@@ -209,7 +209,7 @@ A generated tool is only as good as what the spec says about it, and Render's sp
 
 **`oneOf` branches keep their names, and say which one applies.** Dereferencing a `$ref` normally throws away the schema's name, which leaves `serviceDetails` on `render_create_service` as five structurally similar anonymous objects with nothing to say which one goes with which `type`. Each branch now carries its name from Render's spec as a `title`, so `cron_job` → `cronJobDetailsPOST` and `runtime: docker` → `dockerDetails` are decisions a model can actually make.
 
-Naming the branches makes the choice readable but not checkable, and Render's spec carries no `discriminator`: under `oneOf`'s exactly-one rule, a branch that requires nothing — `staticSiteDetailsPOST` — accepts every payload, which leaves the other four unreachable. [`src/tools/schema-unions.ts`](src/tools/schema-unions.ts) rewrites those unions into `if`/`then` rules keyed on the property that selects them, so the mapping is part of the schema rather than advice in a description, and a wrong-branch field is rejected by name instead of as `must match exactly one schema in oneOf`. A build invariant fails the generator if any `oneOf` branch is left unreachable, and `test/payloads.test.ts` checks the property against real payloads for all 207 tools.
+Naming the branches makes the choice readable but not checkable, and Render's spec carries no `discriminator`: under `oneOf`'s exactly-one rule, a branch that requires nothing — `staticSiteDetailsPOST` — accepts every payload, which leaves the other four unreachable. [`src/tools/schema-unions.ts`](src/tools/schema-unions.ts) rewrites those unions into `if`/`then` rules keyed on the property that selects them, so the mapping is part of the schema rather than advice in a description, and a wrong-branch field is rejected by name instead of as `must match exactly one schema in oneOf`. A build invariant fails the generator if any `oneOf` branch is left unreachable, and `test/payloads.test.ts` checks the property against real payloads for all 208 tools.
 
 **Fields no caller can fill are removed.** Render's spec reuses response schemas inside request bodies in a couple of places, which drags in values the server generates: a cron job's Docker branch asks for a whole `registryCredential` object requiring the credential's `id` and the timestamp of its last change, where a web service takes a plain `registryCredentialId`. A field that can only be filled with invented values is worse than no field, so [`src/tools/schema-repairs.ts`](src/tools/schema-repairs.ts) drops it and the usage note points at `image.registryCredentialId`, which is where Render actually takes the reference. The generator throws if an entry stops matching, so a fix upstream shows up as a build failure.
 
@@ -286,7 +286,7 @@ sync runs `npm run docs` so an API change and the prose describing it arrive in 
 reviewable pull request. Numbers in the docs cannot silently drift from the catalogue —
 which they had, before this existed.
 
-The test suite covers catalogue invariants (all 207 operations, no dangling `$ref`, path params required, annotations match HTTP semantics), request mapping, retry and pagination behaviour, the composite tools, and a full in-memory MCP client/server round trip.
+The test suite covers catalogue invariants (all 208 operations, no dangling `$ref`, path params required, annotations match HTTP semantics), request mapping, retry and pagination behaviour, the composite tools, and a full in-memory MCP client/server round trip.
 
 ### Building the desktop extension
 

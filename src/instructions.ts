@@ -2,7 +2,7 @@
  * The server's `instructions` string, sent once in the `initialize` result.
  *
  * Per-tool descriptions can only ever describe one tool. What they cannot say is which of
- * 212 tools to reach for first, or that a name has to become an id before anything else
+ * 213 tools to reach for first, or that a name has to become an id before anything else
  * works — advice that would otherwise have to be repeated on every tool that needs it.
  * Saying it once here costs one short block per session instead.
  *

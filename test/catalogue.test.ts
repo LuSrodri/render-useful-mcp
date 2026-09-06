@@ -15,7 +15,7 @@ const operations = loadOperations();
 
 describe('generated catalogue', () => {
   it('covers every operation in the Render spec', () => {
-    expect(operations).toHaveLength(207);
+    expect(operations).toHaveLength(208);
     expect(catalogue.baseUrl).toBe('https://api.render.com/v1');
   });
 

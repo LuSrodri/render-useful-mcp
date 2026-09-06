@@ -3,7 +3,7 @@
  *
  * The mapping from a flat argument object back to an HTTP request is fully driven by the
  * metadata the generator emitted (`pathParams`, `queryParams`, `bodyMode`, `bodyProps`),
- * so there is exactly one code path for all 207 endpoints.
+ * so there is exactly one code path for all 208 endpoints.
  */
 import type { OperationDefinition } from '../generated/types.js';
 import { loadOperations } from '../generated/catalogue.js';

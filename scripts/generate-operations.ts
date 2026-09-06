@@ -183,7 +183,7 @@ function dereference(node: unknown, seen: readonly string[] = []): unknown {
  * name across as `title` restores that link (`cronJobDetailsPOST` ⇄ `type: "cron_job"`,
  * `dockerDetails` ⇄ `runtime: "docker"`) at the cost of one string per branch.
  *
- * Scoped to branch members on purpose: titling every inlined `$ref` would bloat all 207
+ * Scoped to branch members on purpose: titling every inlined `$ref` would bloat all 208
  * schemas to solve ambiguity that only exists here.
  */
 function dereferenceBranch(member: unknown, seen: readonly string[]): unknown {
