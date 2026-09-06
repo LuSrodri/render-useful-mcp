@@ -471,6 +471,10 @@ function publishedDates(): Map<string, string> {
  * the day before — a failure that says nothing about whether the docs match the catalogue.
  * Carrying the published date forward for an unchanged page is stable and is what the
  * sitemap protocol asks for; a page whose content moved this run gets today.
+ *
+ * The landing page is dated by its generated regions, so a hand edit elsewhere in it leaves
+ * the date where it was. Bumping it would mean asking git what the file used to look like,
+ * and a stale hint on one page is the cheaper of the two failures.
  */
 function renderSitemap(): string {
   const today = new Date().toISOString().slice(0, 10);
