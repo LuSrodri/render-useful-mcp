@@ -4,7 +4,7 @@
  * The low-level `Server` is used rather than the `McpServer` façade because tool schemas
  * are generated JSON Schema, not Standard Schema. `McpServer.registerTool` only accepts a
  * `StandardSchemaWithJSON` (Zod v4, ArkType, Valibot), so going through it would mean
- * converting 207 spec-derived schemas twice and losing constraints along the way. Here the
+ * converting 208 spec-derived schemas twice and losing constraints along the way. Here the
  * spec's schemas reach the client untouched.
  */
 import { Server, type CallToolResult } from '@modelcontextprotocol/server';

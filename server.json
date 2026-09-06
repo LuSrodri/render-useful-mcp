@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.LuSrodri/render-useful-mcp",
   "title": "Render Useful MCP",
-  "description": "MCP server for the Render Public API: all 207 endpoints plus workflow tools.",
+  "description": "MCP server for the Render Public API: all 208 endpoints plus workflow tools.",
   "version": "1.4.0",
   "websiteUrl": "https://github.com/LuSrodri/render-useful-mcp#readme",
   "repository": {

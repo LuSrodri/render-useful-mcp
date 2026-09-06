@@ -155,7 +155,7 @@ describe('argument validation', () => {
   });
 
   it('accepts a valid argument set for every generated tool schema', () => {
-    // Compiling all 207 schemas proves none of them is malformed JSON Schema.
+    // Compiling all 208 schemas proves none of them is malformed JSON Schema.
     for (const op of operations) {
       expect(() => validateArgs(op.name, op.inputSchema, buildMinimalArgs(op)), op.name).not.toThrow();
     }

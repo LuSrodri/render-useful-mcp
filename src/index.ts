@@ -39,7 +39,7 @@ export function main(): void {
   const config = loadConfig({ version });
   const logger = createLogger(config.logLevel);
 
-  // Built once and shared by every instance the factory produces: the 212 tool
+  // Built once and shared by every instance the factory produces: the 213 tool
   // definitions are immutable, and rebuilding them per connection would be pure waste.
   const registry = new ToolRegistry({
     enabledToolsets: config.toolsets,

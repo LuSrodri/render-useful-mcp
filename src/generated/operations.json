@@ -491,7 +491,7 @@
       "path": "/task-runs/{taskRunId}",
       "title": "Cancel task run",
       "description": "Cancel task run. Cancel a running task run with the provided ID. Calls `DELETE /task-runs/{taskRunId}` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -969,7 +969,13 @@
               "standard",
               "pro",
               "pro_plus",
-              "custom"
+              "custom",
+              "256mb",
+              "1g",
+              "5g",
+              "10g",
+              "20g",
+              "40g"
             ]
           },
           "region": {
@@ -1140,7 +1146,30 @@
               "accelerated_384gb",
               "accelerated_512gb",
               "accelerated_768gb",
-              "accelerated_1024gb"
+              "accelerated_1024gb",
+              "0.1c-256mb",
+              "0.5c-1g",
+              "1c-2g",
+              "1c-4g",
+              "2c-4g",
+              "2c-8g",
+              "2c-16g",
+              "4c-16g",
+              "4c-32g",
+              "8c-32g",
+              "8c-64g",
+              "16c-64g",
+              "16c-128g",
+              "32c-128g",
+              "32c-256g",
+              "48c-192g",
+              "48c-384g",
+              "64c-256g",
+              "64c-512g",
+              "96c-384g",
+              "96c-768g",
+              "128c-512g",
+              "128c-1024g"
             ]
           },
           "diskSizeGB": {
@@ -1449,7 +1478,13 @@
               "standard",
               "pro",
               "pro_plus",
-              "custom"
+              "custom",
+              "256mb",
+              "1g",
+              "5g",
+              "10g",
+              "20g",
+              "40g"
             ],
             "x-enum-varnames": [
               "RedisPlanFree",
@@ -1457,7 +1492,13 @@
               "RedisPlanStandard",
               "RedisPlanPro",
               "RedisPlanPro_plus",
-              "RedisPlanCustom"
+              "RedisPlanCustom",
+              "RedisPlan256mb",
+              "RedisPlan1g",
+              "RedisPlan5g",
+              "RedisPlan10g",
+              "RedisPlan20g",
+              "RedisPlan40g"
             ]
           },
           "region": {
@@ -2104,11 +2145,25 @@
                         "standard_legacy",
                         "standard_plus_legacy",
                         "pro_legacy",
-                        "pro_plus_legacy"
+                        "pro_plus_legacy",
+                        "0.5c-512mb",
+                        "1c-2g",
+                        "2c-4g",
+                        "2c-8g",
+                        "2c-16g",
+                        "4c-8g",
+                        "4c-16g",
+                        "4c-32g",
+                        "8c-16g",
+                        "8c-32g",
+                        "8c-64g",
+                        "12c-24g",
+                        "12c-48g",
+                        "12c-96g"
                       ],
                       "example": "starter",
-                      "description": "The instance type to use. If omitted, defaults to `starter` when creating a new service.",
-                      "default": "starter"
+                      "description": "The compute plan to use. If omitted, defaults to `0.5c-512mb` when creating a new service.",
+                      "default": "0.5c-512mb"
                     },
                     "preDeployCommand": {
                       "type": "string"
@@ -2426,10 +2481,24 @@
                         "pro",
                         "pro_plus",
                         "pro_max",
-                        "pro_ultra"
+                        "pro_ultra",
+                        "0.5c-512mb",
+                        "1c-2g",
+                        "2c-4g",
+                        "2c-8g",
+                        "2c-16g",
+                        "4c-8g",
+                        "4c-16g",
+                        "4c-32g",
+                        "8c-16g",
+                        "8c-32g",
+                        "8c-64g",
+                        "12c-24g",
+                        "12c-48g",
+                        "12c-96g"
                       ],
-                      "default": "starter",
-                      "description": "Defaults to `starter` when creating a new database."
+                      "default": "0.5c-512mb",
+                      "description": "Defaults to `0.5c-512mb` when creating a new service."
                     },
                     "preDeployCommand": {
                       "type": "string"
@@ -2720,10 +2789,24 @@
                         "pro",
                         "pro_plus",
                         "pro_max",
-                        "pro_ultra"
+                        "pro_ultra",
+                        "0.5c-512mb",
+                        "1c-2g",
+                        "2c-4g",
+                        "2c-8g",
+                        "2c-16g",
+                        "4c-8g",
+                        "4c-16g",
+                        "4c-32g",
+                        "8c-16g",
+                        "8c-32g",
+                        "8c-64g",
+                        "12c-24g",
+                        "12c-48g",
+                        "12c-96g"
                       ],
-                      "default": "starter",
-                      "description": "Defaults to `starter` when creating a new database."
+                      "default": "0.5c-512mb",
+                      "description": "Defaults to `0.5c-512mb` when creating a new service."
                     },
                     "preDeployCommand": {
                       "type": "string"
@@ -2923,10 +3006,24 @@
                         "pro",
                         "pro_plus",
                         "pro_max",
-                        "pro_ultra"
+                        "pro_ultra",
+                        "0.5c-512mb",
+                        "1c-2g",
+                        "2c-4g",
+                        "2c-8g",
+                        "2c-16g",
+                        "4c-8g",
+                        "4c-16g",
+                        "4c-32g",
+                        "8c-16g",
+                        "8c-32g",
+                        "8c-64g",
+                        "12c-24g",
+                        "12c-48g",
+                        "12c-96g"
                       ],
-                      "default": "starter",
-                      "description": "Defaults to `starter` when creating a new database."
+                      "default": "0.5c-512mb",
+                      "description": "Defaults to `0.5c-512mb` when creating a new service."
                     },
                     "region": {
                       "type": "string",
@@ -3046,7 +3143,7 @@
       "path": "/task-runs",
       "title": "Run task",
       "description": "Run task. Kicks off a run of the workflow task with the provided ID, passing the provided input data. Calls `POST /task-runs` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -3065,7 +3162,8 @@
         "properties": {
           "task": {
             "type": "string",
-            "description": "A task slug in the format workflow-slug/task-name. An optional version can be appended (workflow-slug/task-name:version). If no version is provided, the latest version is used.",
+            "pattern": "\\S",
+            "description": "A task slug in the format workflow-slug/task-name. An optional version can be appended (workflow-slug/task-name:version). If no version is provided, the latest version is used. Cannot be blank.",
             "example": "my-workflow-slug/my-task, my-workflow-slug/my-task:SHA123"
           },
           "input": {
@@ -3227,7 +3325,7 @@
       "path": "/workflows",
       "title": "Create a workflow",
       "description": "Create a workflow. Create a new workflow service with the specified configuration. Calls `POST /workflows` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -3273,7 +3371,8 @@
               },
               "repo": {
                 "type": "string",
-                "description": "The repository URL to use for the build."
+                "pattern": "\\S",
+                "description": "The repository URL to use for the build. Cannot be blank."
               },
               "rootDir": {
                 "type": "string",
@@ -3294,7 +3393,8 @@
           },
           "runCommand": {
             "type": "string",
-            "description": "The command to run the workflow"
+            "pattern": "\\S",
+            "description": "The command to run the workflow. Cannot be blank."
           },
           "region": {
             "type": "string",
@@ -3376,7 +3476,7 @@
       "path": "/workflowversions",
       "title": "Deploy a workflow version",
       "description": "Deploy a workflow version. Creates and deploys a new version of a workflow. Calls `POST /workflowversions` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -4262,7 +4362,7 @@
       "path": "/workflows/{workflowId}",
       "title": "Delete workflow",
       "description": "Delete workflow. Delete the workflow service with the provided ID. Calls `DELETE /workflows/{workflowId}` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -5495,7 +5595,7 @@
       "path": "/tasks/{taskId}",
       "title": "Retrieve task",
       "description": "Retrieve task. Retrieve the workflow task with the provided ID. Calls `GET /tasks/{taskId}` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -5530,7 +5630,7 @@
       "path": "/task-runs/{taskRunId}",
       "title": "Retrieve task run",
       "description": "Retrieve task run. Retrieve the workflow task run with the provided ID. Calls `GET /task-runs/{taskRunId}` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -5717,7 +5817,7 @@
       "path": "/workflows/{workflowId}",
       "title": "Retrieve workflow",
       "description": "Retrieve workflow. Retrieve the workflow service with the provided ID. Calls `GET /workflows/{workflowId}` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -5752,7 +5852,7 @@
       "path": "/workflowversions/{workflowVersionId}",
       "title": "Retrieve workflow version",
       "description": "Retrieve workflow version. Retrieve the specific workflow service version with the provided ID. Calls `GET /workflowversions/{workflowVersionId}` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -6084,7 +6184,8 @@
       "streaming": false,
       "pathParams": [],
       "queryParams": [
-        "ownerId"
+        "ownerId",
+        "environmentId"
       ],
       "bodyMode": "none",
       "bodyProps": [],
@@ -6094,6 +6195,10 @@
           "ownerId": {
             "type": "string",
             "description": "The ID of the workspace to list dedicated IP sets for."
+          },
+          "environmentId": {
+            "type": "string",
+            "description": "Filter dedicated IP sets limited to this environment. Excludes workspace-scoped dedicated IP sets.\n\nThe environment must belong to the workspace named by `ownerId`."
           }
         },
         "required": [
@@ -6548,6 +6653,8 @@
                   "disk_created",
                   "disk_updated",
                   "disk_deleted",
+                  "service_disk_usage_high",
+                  "service_disk_usage_recovered",
                   "image_pull_failed",
                   "initial_deploy_hook_ended",
                   "initial_deploy_hook_started",
@@ -8750,7 +8857,7 @@
       "path": "/task-runs",
       "title": "List task runs",
       "description": "List task runs. List task runs that match the provided filters. If no filters are provided, all task runs accessible by the authenticated user are returned. Calls `GET /task-runs` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -8830,7 +8937,7 @@
       "path": "/tasks",
       "title": "List tasks",
       "description": "List tasks. List workflow tasks that match the provided filters. If no filters are provided, all task definitions accessible by the authenticated user are returned. Calls `GET /tasks` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -9013,7 +9120,7 @@
       "path": "/workflowversions",
       "title": "List workflow versions",
       "description": "List workflow versions. List known versions of the workflow service with the provided ID. Calls `GET /workflowversions` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -9077,7 +9184,7 @@
       "path": "/workflows",
       "title": "List workflows",
       "description": "List workflows. List workflows that match the provided filters. If no filters are provided, all workflows accessible by the authenticated user are returned. Calls `GET /workflows` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -9357,10 +9464,24 @@
               "standard_legacy",
               "standard_plus_legacy",
               "pro_legacy",
-              "pro_plus_legacy"
+              "pro_plus_legacy",
+              "0.5c-512mb",
+              "1c-2g",
+              "2c-4g",
+              "2c-8g",
+              "2c-16g",
+              "4c-8g",
+              "4c-16g",
+              "4c-32g",
+              "8c-16g",
+              "8c-32g",
+              "8c-64g",
+              "12c-24g",
+              "12c-48g",
+              "12c-96g"
             ],
             "example": "starter",
-            "description": "The instance type to use. Legacy variants (`*_legacy`) identify grandfathered plans no longer offered for new services. Note that base services on any paid instance type can't create preview instances with the `free` instance type."
+            "description": "The compute plan to use. Legacy variants (`*_legacy`) identify grandfathered plans no longer offered for new services. Note that base services on any paid compute plan can't create preview instances with the `free` plan."
           }
         },
         "required": [
@@ -9531,8 +9652,7 @@
           }
         },
         "required": [
-          "postgresId",
-          "restoreTime"
+          "postgresId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -10941,6 +11061,41 @@
       }
     },
     {
+      "name": "render_retrieve_service_outbound_ips",
+      "operationId": "retrieve-service-outbound-ips",
+      "method": "GET",
+      "path": "/services/{serviceId}/outbound-ips",
+      "title": "Retrieve service outbound IPs",
+      "description": "Retrieve service outbound IPs. Retrieve the IP addresses the service's outbound traffic originates from. A service uses either a dedicated IP set that applies to it, or the shared Render IPs for its region. Calls `GET /services/{serviceId}/outbound-ips` on the Render Public API.",
+      "tag": "Services",
+      "toolset": "services",
+      "deprecated": false,
+      "readOnly": true,
+      "destructive": false,
+      "idempotent": true,
+      "streaming": false,
+      "pathParams": [
+        "serviceId"
+      ],
+      "queryParams": [],
+      "bodyMode": "none",
+      "bodyProps": [],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "description": "The ID of the service"
+          }
+        },
+        "required": [
+          "serviceId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "name": "render_retrieve_webhook",
       "operationId": "retrieve-webhook",
       "method": "GET",
@@ -11102,8 +11257,8 @@
       "method": "GET",
       "path": "/task-runs/events",
       "title": "Stream realtime events (SSE)",
-      "description": "Stream realtime events (SSE). Establishes a unidirectional event stream. The server sends events as lines formatted per the SSE spec. Clients SHOULD set `Accept: text/event-stream` and keep the connection open. This endpoint streams server-sent events; the tool returns the events received before its timeout. Calls `GET /task-runs/events` on the Render Public API.",
-      "tag": "Workflow Tasks (Beta)",
+      "description": "Stream realtime events (SSE). Establishes a unidirectional event stream. The server sends events as lines formatted per the SSE spec. Clients should set `Accept: text/event-stream` and keep the connection open. The server sends a `task.completed` event whenever a requested task run reaches any terminal state (`completed`, `failed`, or `canceled`). The `status` field of the payload indicates which state was reached. The server automatically closes the stream in the following cases: - All requested task runs have reached a terminal state. - The stream has not sent any events for 30 minutes. For tasks with a timeout higher than 30 minutes, waiting clients should fall back to polling with the [Retrieve task run](https://api-docs.render.com/reference/gettaskrun) endpoint. This endpoint streams server-sent events; the tool returns the events received before its timeout. Calls `GET /task-runs/events` on the Render Public API.",
+      "tag": "Workflow Tasks",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": true,
@@ -12154,7 +12309,13 @@
               "standard",
               "pro",
               "pro_plus",
-              "custom"
+              "custom",
+              "256mb",
+              "1g",
+              "5g",
+              "10g",
+              "20g",
+              "40g"
             ]
           },
           "maxmemoryPolicy": {
@@ -12377,7 +12538,30 @@
               "accelerated_384gb",
               "accelerated_512gb",
               "accelerated_768gb",
-              "accelerated_1024gb"
+              "accelerated_1024gb",
+              "0.1c-256mb",
+              "0.5c-1g",
+              "1c-2g",
+              "1c-4g",
+              "2c-4g",
+              "2c-8g",
+              "2c-16g",
+              "4c-16g",
+              "4c-32g",
+              "8c-32g",
+              "8c-64g",
+              "16c-64g",
+              "16c-128g",
+              "32c-128g",
+              "32c-256g",
+              "48c-192g",
+              "48c-384g",
+              "64c-256g",
+              "64c-512g",
+              "96c-384g",
+              "96c-768g",
+              "128c-512g",
+              "128c-1024g"
             ]
           },
           "diskSizeGB": {
@@ -12541,7 +12725,13 @@
               "standard",
               "pro",
               "pro_plus",
-              "custom"
+              "custom",
+              "256mb",
+              "1g",
+              "5g",
+              "10g",
+              "20g",
+              "40g"
             ],
             "x-enum-varnames": [
               "RedisPlanFree",
@@ -12549,7 +12739,13 @@
               "RedisPlanStandard",
               "RedisPlanPro",
               "RedisPlanPro_plus",
-              "RedisPlanCustom"
+              "RedisPlanCustom",
+              "RedisPlan256mb",
+              "RedisPlan1g",
+              "RedisPlan5g",
+              "RedisPlan10g",
+              "RedisPlan20g",
+              "RedisPlan40g"
             ]
           },
           "maxmemoryPolicy": {
@@ -12985,10 +13181,24 @@
                       "standard_legacy",
                       "standard_plus_legacy",
                       "pro_legacy",
-                      "pro_plus_legacy"
+                      "pro_plus_legacy",
+                      "0.5c-512mb",
+                      "1c-2g",
+                      "2c-4g",
+                      "2c-8g",
+                      "2c-16g",
+                      "4c-8g",
+                      "4c-16g",
+                      "4c-32g",
+                      "8c-16g",
+                      "8c-32g",
+                      "8c-64g",
+                      "12c-24g",
+                      "12c-48g",
+                      "12c-96g"
                     ],
                     "example": "starter",
-                    "description": "The instance type to use. Legacy variants (`*_legacy`) identify grandfathered plans no longer offered for new services. Note that base services on any paid instance type can't create preview instances with the `free` instance type."
+                    "description": "The compute plan to use. Legacy variants (`*_legacy`) identify grandfathered plans no longer offered for new services. Note that base services on any paid compute plan can't create preview instances with the `free` plan."
                   },
                   "preDeployCommand": {
                     "type": "string"
@@ -13114,7 +13324,8 @@
                               "type": "string"
                             },
                             "registryCredentialId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Optional reference to the registry credential for this build. Omit the field to leave the stored credential unchanged; send an empty string to clear it."
                             }
                           },
                           "additionalProperties": false
@@ -13176,10 +13387,24 @@
                       "pro",
                       "pro_plus",
                       "pro_max",
-                      "pro_ultra"
+                      "pro_ultra",
+                      "0.5c-512mb",
+                      "1c-2g",
+                      "2c-4g",
+                      "2c-8g",
+                      "2c-16g",
+                      "4c-8g",
+                      "4c-16g",
+                      "4c-32g",
+                      "8c-16g",
+                      "8c-32g",
+                      "8c-64g",
+                      "12c-24g",
+                      "12c-48g",
+                      "12c-96g"
                     ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
+                    "default": "0.5c-512mb",
+                    "description": "Defaults to `0.5c-512mb` when creating a new service."
                   },
                   "preDeployCommand": {
                     "type": "string"
@@ -13261,7 +13486,8 @@
                               "type": "string"
                             },
                             "registryCredentialId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Optional reference to the registry credential for this build. Omit the field to leave the stored credential unchanged; send an empty string to clear it."
                             }
                           },
                           "additionalProperties": false
@@ -13323,10 +13549,24 @@
                       "pro",
                       "pro_plus",
                       "pro_max",
-                      "pro_ultra"
+                      "pro_ultra",
+                      "0.5c-512mb",
+                      "1c-2g",
+                      "2c-4g",
+                      "2c-8g",
+                      "2c-16g",
+                      "4c-8g",
+                      "4c-16g",
+                      "4c-32g",
+                      "8c-16g",
+                      "8c-32g",
+                      "8c-64g",
+                      "12c-24g",
+                      "12c-48g",
+                      "12c-96g"
                     ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
+                    "default": "0.5c-512mb",
+                    "description": "Defaults to `0.5c-512mb` when creating a new service."
                   },
                   "preDeployCommand": {
                     "type": "string"
@@ -13408,7 +13648,8 @@
                               "type": "string"
                             },
                             "registryCredentialId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Optional reference to the registry credential for this build. Omit the field to leave the stored credential unchanged; send an empty string to clear it."
                             }
                           },
                           "additionalProperties": false
@@ -13470,10 +13711,24 @@
                       "pro",
                       "pro_plus",
                       "pro_max",
-                      "pro_ultra"
+                      "pro_ultra",
+                      "0.5c-512mb",
+                      "1c-2g",
+                      "2c-4g",
+                      "2c-8g",
+                      "2c-16g",
+                      "4c-8g",
+                      "4c-16g",
+                      "4c-32g",
+                      "8c-16g",
+                      "8c-32g",
+                      "8c-64g",
+                      "12c-24g",
+                      "12c-48g",
+                      "12c-96g"
                     ],
-                    "default": "starter",
-                    "description": "Defaults to `starter` when creating a new database."
+                    "default": "0.5c-512mb",
+                    "description": "Defaults to `0.5c-512mb` when creating a new service."
                   },
                   "schedule": {
                     "type": "string"
@@ -13523,7 +13778,8 @@
                               "type": "string"
                             },
                             "registryCredentialId": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Optional reference to the registry credential for this build. Omit the field to leave the stored credential unchanged; send an empty string to clear it."
                             }
                           },
                           "additionalProperties": false
@@ -13713,7 +13969,7 @@
       "path": "/workflows/{workflowId}",
       "title": "Update workflow",
       "description": "Update workflow. Update the workflow service with the provided ID. Calls `PATCH /workflows/{workflowId}` on the Render Public API.",
-      "tag": "Workflows (Beta)",
+      "tag": "Workflows",
       "toolset": "workflows",
       "deprecated": false,
       "readOnly": false,
@@ -13743,11 +13999,7 @@
           },
           "buildConfig": {
             "type": "object",
-            "required": [
-              "buildCommand",
-              "repo",
-              "runtime"
-            ],
+            "description": "A partial update to a workflow's build config. Every field is optional; omitted fields are left unchanged.",
             "properties": {
               "branch": {
                 "type": "string",
@@ -13759,7 +14011,8 @@
               },
               "repo": {
                 "type": "string",
-                "description": "The repository URL to use for the build."
+                "pattern": "\\S",
+                "description": "The repository URL to use for the build. Cannot be blank."
               },
               "rootDir": {
                 "type": "string",
@@ -13780,7 +14033,8 @@
           },
           "runCommand": {
             "type": "string",
-            "description": "The command to run the workflow"
+            "pattern": "\\S",
+            "description": "The command to run the workflow. Cannot be blank."
           },
           "autoDeployTrigger": {
             "type": "string",
@@ -13926,7 +14180,7 @@
       "method": "POST",
       "path": "/blueprints/validate",
       "title": "Validate Blueprint",
-      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The provided Blueprint file cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API. Usage: Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.",
+      "description": "Validate Blueprint. Validate a `render.yaml` Blueprint file without creating or modifying any resources. This endpoint checks the syntax and structure of the Blueprint, validates that all required fields are present, and returns a plan indicating the resources that would be created. Requests to this endpoint use `Content-Type: multipart/form-data`. The request body (including the Blueprint file) cannot exceed 10MB in size. Calls `POST /blueprints/validate` on the Render Public API. Usage: Pass the `render.yaml` contents as text in `file` — a path is not read for you. Validate before render_update_blueprint, which syncs whatever is in the repository.",
       "tag": "Blueprints",
       "toolset": "blueprints",
       "deprecated": false,

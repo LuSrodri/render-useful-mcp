@@ -34,7 +34,7 @@ rather than failing later on the first API call.
 
 <!-- generated:tool-counts -->
 
-**212 tools**: all 207 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
+**213 tools**: all 208 operations of the Render Public API (spec version 1.0.0), plus 5 workflow tools for the sequences the raw API makes tedious.
 <!-- /generated:tool-counts -->
 
 <!-- generated:workflow-tools -->

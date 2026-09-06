@@ -185,7 +185,7 @@ describe('mcpb manifest', () => {
   });
 
   it('defaults to a toolset selection the server accepts', () => {
-    // The default deliberately differs from the package default of all 17 toolsets: 207 tool
+    // The default deliberately differs from the package default of all 17 toolsets: 208 tool
     // definitions is a large, permanent context cost in a desktop client. It still has to be
     // a selection `parseToolsets` can resolve.
     const value = userConfig['toolsets']?.['default'];
@@ -195,7 +195,7 @@ describe('mcpb manifest', () => {
   });
 
   it('declares the workflow tools by their real names', () => {
-    // `tools_generated` covers the 207 API tools; the five listed by hand are what a
+    // `tools_generated` covers the 208 API tools; the five listed by hand are what a
     // directory listing shows, so a rename that skipped this file would advertise tools that
     // do not exist.
     const declared = (mcpb['tools'] as Array<Record<string, unknown>>).map((tool) => String(tool['name']));

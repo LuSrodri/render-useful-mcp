@@ -1,5 +1,5 @@
 /**
- * Toolsets group the 207 generated tools into coherent, independently switchable bundles.
+ * Toolsets group the 208 generated tools into coherent, independently switchable bundles.
  *
  * Exposing all of them at once costs a lot of context and measurably degrades tool
  * selection, so the server ships a sensible default and lets operators narrow the surface
@@ -45,7 +45,7 @@ export const TOOLSET_DESCRIPTIONS: Readonly<Record<ToolsetId, string>> = {
   registry: 'Container registry credentials.',
   network: 'Dedicated outbound IP sets.',
   maintenance: 'Scheduled maintenance runs.',
-  workflows: 'Render Workflows and workflow tasks (public beta).',
+  workflows: 'Render Workflows and workflow tasks.',
   deprecated: 'Legacy Redis endpoints that Render has superseded by the Key Value API.',
 };
 
@@ -89,8 +89,8 @@ export const TOOLSET_BY_TAG: Readonly<Record<string, ToolsetId>> = {
   'Registry Credentials': 'registry',
   'Dedicated IPs': 'network',
   Maintenance: 'maintenance',
-  'Workflows (Beta)': 'workflows',
-  'Workflow Tasks (Beta)': 'workflows',
+  Workflows: 'workflows',
+  'Workflow Tasks': 'workflows',
   'Redis (Deprecated)': 'deprecated',
 };
 

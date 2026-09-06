@@ -60,7 +60,7 @@ const toolsetRows: readonly ToolsetRow[] = registry
   .map((entry) => ({ id: entry.toolset, tools: entry.tools, description: entry.description }))
   .sort((a, b) => b.tools - a.tools || a.id.localeCompare(b.id));
 
-/** The lead sentence of a description: enough to identify a tool, short enough to list 212 of. */
+/** The lead sentence of a description: enough to identify a tool, short enough to list 213 of. */
 function summarise(tool: ToolDefinition): string {
   const firstSentence = /^.*?[.!?](?=\s|$)/.exec(withoutUsage(tool))?.[0] ?? withoutUsage(tool);
   return firstSentence.trim();
