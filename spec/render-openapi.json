@@ -13851,7 +13851,7 @@
                       },
                       "buildCommand": {
                         "type": "string",
-                        "description": "The command to run to build the workflow."
+                        "description": "The command to run to build the workflow. Required for every runtime except docker, which builds from its Dockerfile."
                       },
                       "repo": {
                         "type": "string",
@@ -14059,7 +14059,7 @@
                       },
                       "buildCommand": {
                         "type": "string",
-                        "description": "The command to run to build the workflow."
+                        "description": "The command to run to build the workflow. Required for every runtime except docker, which builds from its Dockerfile."
                       },
                       "repo": {
                         "type": "string",
@@ -15760,6 +15760,7 @@
           },
           "suspended": {
             "type": "string",
+            "title": "serviceSuspendedState",
             "enum": [
               "suspended",
               "not_suspended"
@@ -17906,7 +17907,14 @@
           "snapshot_creating",
           "snapshot_not_available",
           "snapshot_plan_mismatch",
-          "snapshot_not_found"
+          "snapshot_not_found",
+          "invalid_sandbox_group_id",
+          "invalid_snapshot_id",
+          "invalid_owner_id",
+          "invalid_status",
+          "invalid_cursor",
+          "invalid_limit",
+          "invalid_snapshot_name"
         ],
         "x-enum-varnames": [
           "ErrorCodeMultipleRegions",
@@ -17923,7 +17931,14 @@
           "ErrorCodeSnapshotCreating",
           "ErrorCodeSnapshotNotAvailable",
           "ErrorCodeSnapshotPlanMismatch",
-          "ErrorCodeSnapshotNotFound"
+          "ErrorCodeSnapshotNotFound",
+          "ErrorCodeInvalidSandboxGroupID",
+          "ErrorCodeInvalidSnapshotID",
+          "ErrorCodeInvalidOwnerID",
+          "ErrorCodeInvalidStatus",
+          "ErrorCodeInvalidCursor",
+          "ErrorCodeInvalidLimit",
+          "ErrorCodeInvalidSnapshotName"
         ],
         "x-enum-descriptions": [
           "A metrics query over resources spanning multiple regions is not supported.",
@@ -17940,7 +17955,14 @@
           "A snapshot delete was requested while the capture is still in progress.",
           "A sandbox create named a source snapshot that is not available.",
           "A sandbox create named a runtime source snapshot with a different plan.",
-          "A sandbox create named a source snapshot that does not exist."
+          "A sandbox create named a source snapshot that does not exist.",
+          "A request path named a sandbox group ID that is not a well-formed sbg- identifier.",
+          "A request path named a snapshot ID that is not a well-formed snp- identifier.",
+          "A list request omitted ownerId or named more than one.",
+          "A list request filtered on a status value outside the resource's status vocabulary.",
+          "A list request passed a cursor that is malformed or not visible to the caller.",
+          "A list request passed a limit that is not a positive integer within the route's maximum.",
+          "A snapshot name is empty, longer than 64 characters, or starts with snp-."
         ]
       },
       "pullRequestPreviewsEnabled": {
@@ -19803,10 +19825,15 @@
       "user": {
         "type": "object",
         "required": [
+          "id",
           "email",
           "name"
         ],
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "The authenticated user's ID."
+          },
           "email": {
             "type": "string"
           },
